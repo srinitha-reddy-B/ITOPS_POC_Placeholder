@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Signing in…</title>
+<style>body{font:15px system-ui,"Segoe UI",sans-serif;color:#17212b;background:#f5f7fa;display:grid;place-items:center;height:100vh;margin:0}</style></head>
+<body>
+<p id="m">Completing the Keycloak sign-in…</p>
+<script>
+  // Keycloak redirects here with ?code&state (or ?error). Hand it to the console window that opened us.
+  const p = new URLSearchParams(location.search);
+  const msg = { type: "cc-oidc-callback", code: p.get("code"), state: p.get("state"), error: p.get("error"), error_description: p.get("error_description") };
+  if (!msg.code && !msg.error) {
+    location.replace("/crystal-clean/ops/");   // opened directly: nothing to complete
+  } else if (window.opener && !window.opener.closed) {
+    window.opener.postMessage(msg, location.origin);
+    window.close();
+  } else {
+    // Popup blocked or opened directly: continue in this tab.
+    sessionStorage.setItem("cc-oidc-callback", JSON.stringify(msg));
+    location.replace("/crystal-clean/ops/");
+  }
+</script>
+</body>
+</html>

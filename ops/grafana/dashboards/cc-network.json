@@ -1,0 +1,436 @@
+{
+  "uid": "cc-network",
+  "title": "Crystal Clean \u00b7 4 \u00b7 Branch connectivity (lab links)",
+  "description": "Blackbox Exporter probes. The branch links are Toxiproxy lab proxies on this machine, not Crystal Clean's network.",
+  "tags": [
+    "crystal-clean",
+    "ops-console"
+  ],
+  "timezone": "browser",
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "schemaVersion": 39,
+  "editable": false,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Chicago North probe loss",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - avg by (facility) (avg_over_time(probe_success{link=\"vpn-wan\",facility=\"CC-CHICAGO-NORTH\"}[30s])))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Chicago North latency",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "1000 * avg by (facility) (avg_over_time((probe_duration_seconds{link=\"vpn-wan\",facility=\"CC-CHICAGO-NORTH\"} and probe_success == 1)[30s:5s]))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 300
+              },
+              {
+                "color": "red",
+                "value": 700
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Indianapolis probe loss",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - avg by (facility) (avg_over_time(probe_success{link=\"vpn-wan\",facility=\"CC-INDIANAPOLIS\"}[30s])))",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Keycloak reachable",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "avg_over_time(probe_success{service=\"Keycloak SSO\"}[1m]) * 100",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0
+              },
+              {
+                "color": "green",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Probe loss by facility",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - avg by (facility) (avg_over_time(probe_success{link=\"vpn-wan\",facility=\"CC-CHICAGO-NORTH\"}[30s])))",
+          "legendFormat": "CC-CHICAGO-NORTH",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "100 * (1 - avg by (facility) (avg_over_time(probe_success{link=\"vpn-wan\",facility=\"CC-INDIANAPOLIS\"}[30s])))",
+          "legendFormat": "CC-INDIANAPOLIS",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 5
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            },
+            "lineWidth": 2,
+            "fillOpacity": 8
+          },
+          "max": 100,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Round-trip time by facility",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "1000 * avg by (facility) (avg_over_time((probe_duration_seconds{link=\"vpn-wan\",facility=\"CC-CHICAGO-NORTH\"} and probe_success == 1)[30s:5s]))",
+          "legendFormat": "CC-CHICAGO-NORTH",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "1000 * avg by (facility) (avg_over_time((probe_duration_seconds{link=\"vpn-wan\",facility=\"CC-INDIANAPOLIS\"} and probe_success == 1)[30s:5s]))",
+          "legendFormat": "CC-INDIANAPOLIS",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 300
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            },
+            "lineWidth": 2,
+            "fillOpacity": 8
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Probe success by endpoint",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "cc-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success",
+          "legendFormat": "{{facility}} {{service}} ({{link}})",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "cc-prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "off"
+            },
+            "lineWidth": 2,
+            "fillOpacity": 8
+          },
+          "max": 1,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        }
+      }
+    }
+  ]
+}

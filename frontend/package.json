@@ -1,0 +1,17 @@
+{
+  "name": "tachyon-aura-frontend",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Frontend for the Tachyon Aura Agent Factory and the Point32Health Control Tower. Serves the UI and proxies /api and /connect to the FastAPI backend.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "node server.mjs --dev",
+    "start": "node server.mjs",
+    "build": "node scripts/build-p32.mjs",
+    "build:ops": "npm --prefix ops-console ci && npm --prefix ops-console run build",
+    "test": "node --test scripts/p32.test.mjs"
+  }
+}

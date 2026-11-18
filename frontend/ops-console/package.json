@@ -1,0 +1,23 @@
+{
+  "name": "crystal-clean-ops-console",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Crystal Clean Ops Console (React + React Flow). Built into ../dist/crystal-clean/ops and served by ../server.mjs.",
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.12.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.7.0",
+    "vite": "5.4.21"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}

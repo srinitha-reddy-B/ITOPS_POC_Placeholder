@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crystal Clean Digital FrontDoor</title>
+<link rel="icon" href="/crystal-clean/logo.webp">
+<style>
+:root{--navy:#0b2c4d;--navy2:#0a5c9e;--ink:#14161f;--muted:#5b6070;--line:#e6e8ef;--bg:#f6f7fb;--green:#3fbf5a;--green-d:#2e9a46;--indigo:#0a5c9e;--indigo-d:#084a80;--red:#b42318;--red-bg:#fdecec;--ok-bg:#e8f7ee;--warn-bg:#fff4dc}
+*{box-sizing:border-box}html,body{margin:0}body{transition:opacity .35s ease;animation:pfade .4s ease;font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:#fff}
+a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+/* nav */
+.nav{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+.brand img{height:30px}.brand small{display:block;font-size:10px;letter-spacing:.14em;font-weight:500;color:var(--muted);text-transform:uppercase}
+.links{display:flex;gap:22px;font-size:13.5px;margin-left:auto}.links a{color:#2c3042}.links a:hover{color:var(--indigo-d)}
+.btn{border-radius:999px;padding:9px 18px;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.btn.dark{background:var(--navy);border-color:var(--navy);color:#fff}.btn.green{background:var(--green);border-color:var(--green);color:#04210f}
+.btn.ghost{background:transparent;border-color:rgba(255,255,255,.35);color:#fff}
+@media(max-width:860px){.links{display:none}.nav .wrap{justify-content:space-between}}
+/* hero */
+.hero{background:radial-gradient(1200px 500px at 85% 10%,#0a5c9e 0,transparent 60%),linear-gradient(135deg,var(--navy) 0,#0f4c81 100%);color:#fff;padding:84px 0 150px}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+@media(max-width:900px){.hero .wrap{grid-template-columns:1fr}}
+.tag{display:inline-block;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:5px 12px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);font-weight:700}
+.hero h1{font-size:clamp(38px,5.4vw,60px);line-height:1.04;margin:20px 0 18px;letter-spacing:-.03em}.hero h1 em{font-style:normal;color:var(--green)}
+.hero p{color:#cfe3f3;max-width:520px;font-size:16px}
+.cta{display:flex;gap:12px;margin:26px 0 22px;flex-wrap:wrap}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chips span{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px 10px;color:#e3f0fa}
+.chips i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px}
+.panel{position:relative;border-radius:18px;min-height:280px;overflow:hidden;background:linear-gradient(160deg,#0a5c9e,#0b2c4d 60%,#1f7a8c);box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.panel svg{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+.glass{position:absolute;left:18px;right:18px;bottom:18px;background:rgba(255,255,255,.9);color:var(--ink);border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.glass b{font-size:13px}.glass span{font-size:11.5px;color:var(--muted);display:block}
+.dot{width:30px;height:30px;border-radius:50%;background:#e1f7ea;color:var(--green-d);display:grid;place-items:center;flex:none}
+/* stats */
+.stats{margin-top:-78px;position:relative;z-index:2}
+.stats .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.stats .wrap{grid-template-columns:repeat(2,1fr)}}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 6px 24px rgba(11,44,77,.10)}
+.stat small{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.stat b{display:block;font-size:28px;letter-spacing:-.02em;margin:10px 0 6px}.stat span{font-size:11px;background:var(--bg);border-radius:6px;padding:2px 8px;color:var(--muted)}
+/* sections */
+section.s{padding:84px 0}section.s.alt{background:var(--bg)}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1.2fr;gap:48px;align-items:start}@media(max-width:900px){.two{grid-template-columns:1fr}}
+h2{font-size:clamp(28px,3.6vw,40px);line-height:1.08;letter-spacing:-.03em;margin:10px 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}@media(max-width:900px){.three{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}.card h3{margin:10px 0 6px;font-size:17px}.card p{margin:0;color:var(--muted);font-size:14px}
+.ic{width:38px;height:38px;border-radius:10px;background:#e8f3fb;color:var(--indigo-d);display:grid;place-items:center}
+footer{background:var(--navy);color:#b8cde0;padding:30px 0;font-size:13px}footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* login */
+.loginpg{min-height:calc(100vh - 68px);background:linear-gradient(180deg,#eaf4fb,#f6fafd);display:grid;place-items:center;padding:32px 16px}
+.lcard{width:100%;max-width:440px;background:#fff;border-radius:16px;box-shadow:0 14px 44px rgba(11,44,77,.16);padding:34px 34px 26px;text-align:center}
+.lcard img.logo{height:58px;margin-bottom:6px}.lcard h1{font-size:23px;margin:6px 0 4px;letter-spacing:-.02em}.lcard .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+.f{text-align:left;margin:0 0 16px}.f label{display:block;font-size:12px;font-weight:700;color:#4a4f63;margin-bottom:6px}
+.f input,.f textarea{width:100%;font:inherit;font-size:14px;padding:11px 13px;border:1px solid #dcdff0;border-radius:10px;background:#fff;color:var(--ink)}
+.f input:focus,.f textarea:focus{outline:2px solid #b4d2e8;border-color:var(--indigo)}.f textarea{min-height:84px;resize:vertical}
+.lbtn{width:100%;border:0;border-radius:10px;padding:12px;font-weight:700;font-size:15px;color:#fff;background:var(--indigo)}.lbtn:hover{background:var(--indigo-d)}.lbtn:disabled{opacity:.6;cursor:default}
+.msg{display:flex;gap:8px;text-align:left;border-radius:10px;padding:10px 12px;font-size:13px;margin:0 0 16px;line-height:1.5}
+.msg.bad{background:var(--red-bg);border:1px solid #f3b4b4;color:#8a1f1f}.msg.ok{background:var(--ok-bg);border:1px solid #a8dfbd;color:#14653a}.msg.wait{background:var(--warn-bg);border:1px solid #f0d49a;color:#7a4d00}
+.help{margin-top:18px;border-top:1px solid var(--line);padding-top:16px;font-size:13px;color:var(--muted)}
+.help a{color:var(--indigo-d);font-weight:600;cursor:pointer}
+.steps{list-style:none;margin:12px 0 0;padding:0;text-align:left}.steps li{display:flex;gap:10px;padding:7px 0;font-size:12.5px;border-bottom:1px solid var(--line);color:var(--ink)}.steps li:last-child{border:0}
+.steps .n{width:20px;height:20px;border-radius:50%;background:#eceef6;display:grid;place-items:center;font-size:11px;font-weight:700;flex:none}
+.steps li.done .n{background:var(--green);color:#fff}.steps li.now .n{background:var(--indigo);color:#fff}.steps small{display:block;color:var(--muted)}
+.steps a{color:var(--indigo-d)}
+.code{margin-top:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.5;background:rgba(0,0,0,.05);border-radius:8px;padding:8px 10px;word-break:break-word}
+.hint{font-size:11.5px;color:var(--muted);margin-top:14px}
+.hidden{display:none!important}
+.notice{background:#fff7e6;border-bottom:1px solid #f0d49a;color:#7a4d00;font-size:13px;text-align:center;padding:9px 16px}
+.notice a{color:#084a80;font-weight:700;margin-left:6px}
+.notice.ok{background:#eaf7ee;border-color:#a8dfbd;color:#14653a}
+@keyframes pfade{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="#/"><img src="/crystal-clean/logo.webp" alt="Crystal Clean" style="height:42px"><span><small style="font-size:11px">Digital FrontDoor</small></span></a>
+  <nav class="links"><a href="#/">Home</a><a href="#about">About</a><a href="#services">Services</a><a href="#how">How it works</a><a href="#contact">Contact</a></nav>
+  <a class="btn" href="#/login" id="navSign">Sign in</a>
+  <a class="btn hidden" href="#" id="navOut">Sign out</a>
+  <a class="btn dark" href="#/login?help=1">Get help</a>
+</div></header>
+
+<div id="notice" class="notice hidden"></div>
+<main id="landing">
+  <div class="hero"><div class="wrap">
+    <div>
+      <span class="tag">● Employee help, in one place</span>
+      <h1>IT that works.<br><em>People who care.</em></h1>
+      <p>One front door for IT problems, devices and HR. Tell us what you need in your own words, an AI agent routes it, and a person approves before anything changes.</p>
+      <div class="cta"><a class="btn green" href="#/login" id="ctaSign">Sign in →</a><a class="btn ghost" href="#services">Explore services</a></div>
+      <div class="chips"><span><i></i>Keycloak single sign-on</span><span><i></i>ServiceNow tickets</span><span><i></i>Human approval</span></div>
+    </div>
+    <div class="panel" aria-hidden="true">
+      <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><g fill="none" stroke="#9fd0f0" stroke-width="1.2"><path d="M40 260V90l70-30v200M110 260V120l60-24v164M170 260V70l90-40v230M260 260V110l70-28v178"/><path d="M60 120h30M60 150h30M60 180h30M130 140h20M130 170h20M190 90h50M190 120h50M190 150h50M190 180h50M280 140h30M280 170h30"/></g></svg>
+      <div class="glass"><span class="dot">✓</span><div><b>Trusted by your IT team</b><span>Every change is approved, logged and traceable in ServiceNow.</span></div></div>
+    </div>
+  </div></div>
+  <div class="stats"><div class="wrap">
+    <div class="stat"><small>Help channels</small><b>IT · Assets · HR</b><span>One place to ask</span></div>
+    <div class="stat"><small>Routing</small><b>AI-assisted</b><span>Understands plain language</span></div>
+    <div class="stat"><small>Changes</small><b>Approved</b><span>A person signs off</span></div>
+    <div class="stat"><small>Tracking</small><b>ServiceNow</b><span>Every ticket linked</span></div>
+  </div></div>
+  <section class="s" id="about"><div class="wrap two">
+    <div><div class="eyebrow">Who we are</div><h2>Help that finds you, not the other way round.</h2></div>
+    <div style="color:var(--muted)"><p>The Digital FrontDoor is Crystal Clean's employee help gateway, powered by Tachyon AURA. Agents work out what is wrong, gather the evidence and prepare the fix. The people who own each decision approve it.</p><p>Early-warning alerts reach you and the IT team before a problem turns into an outage.</p></div>
+  </div></section>
+  <section class="s alt" id="services"><div class="wrap"><div class="eyebrow">Services</div><h2>What you can ask for</h2>
+    <div class="three">
+      <div class="card"><div class="ic">⚙</div><h3>IT incidents</h3><p>Sign-in problems, slow apps, VPN, email. Raised in ServiceNow and tracked to resolution.</p></div>
+      <div class="card"><div class="ic">💻</div><h3>Devices and assets</h3><p>Faulty laptop, new monitor or a loaner. A person reviews and approves before anything changes.</p></div>
+      <div class="card"><div class="ic">👥</div><h3>HR requests</h3><p>Onboarding, leave and policy questions, with private matters routed to HR.</p></div>
+    </div></div></section>
+  <section class="s" id="how"><div class="wrap"><div class="eyebrow">How it works</div><h2>Can't sign in? Here's what happens.</h2>
+    <div class="three">
+      <div class="card"><div class="ic">1</div><h3>Tell the helpdesk</h3><p>From the sign-in page, say what is happening. A ServiceNow incident is raised for you.</p></div>
+      <div class="card"><div class="ic">2</div><h3>An IT engineer investigates</h3><p>Arya Hajarha runs a guided 8-stage investigation and restores your access.</p></div>
+      <div class="card"><div class="ic">3</div><h3>You sign in again</h3><p>Same username and password. The ticket is resolved automatically.</p></div>
+    </div></div></section>
+  <section class="s alt" id="contact"><div class="wrap two"><div><div class="eyebrow">Contact</div><h2>Need a hand right now?</h2></div>
+    <div><p style="color:var(--muted)">Use <b>Get help</b> in the menu. It works even when you can't sign in.</p><a class="btn dark" href="#/login?help=1">Get help</a></div></div></section>
+</main>
+
+<main id="login" class="loginpg hidden">
+  <div class="lcard">
+    <img class="logo" src="/crystal-clean/logo.webp" alt="Crystal Clean">
+    <h1 id="lt">Login to your Account</h1>
+    <p class="sub" id="ls">Sign in with your Crystal Clean username and password.</p>
+    <div id="signedIn" class="hidden"></div>
+    <div id="loginMsg"></div>
+    <form id="lf" autocomplete="on">
+      <div class="f"><label for="u">Username</label><input id="u" name="username" autocomplete="username" placeholder="Username" required></div>
+      <div class="f"><label for="p">Password</label><input id="p" name="password" type="password" autocomplete="current-password" placeholder="Password" required></div>
+      <button class="lbtn" id="lb" type="submit">Login</button>
+    </form>
+    <div class="help" id="helpBox"></div>
+    <p class="hint" id="lh">Checked against the Keycloak identity provider.</p>
+  </div>
+</main>
+
+<footer><div class="wrap"><span>© Crystal Clean Digital FrontDoor · Powered by Tachyon AURA</span><span>Proof-of-concept environment</span></div></footer>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const S = { status: null, openHelp: false, text: "", err: "", busy: "", hide: null, errId: "", prog: 0 };
+try { const u = JSON.parse(sessionStorage.getItem("cc-portal-ui") || "null"); if (u) { S.text = u.text || ""; S.openHelp = !!u.openHelp; } } catch (e) {}
+const saveUi = () => { try { sessionStorage.setItem("cc-portal-ui", JSON.stringify({ text: S.text, openHelp: S.openHelp })); } catch (e) {} };
+const PROG = ["Collecting diagnostics (realm, client, error ID)", "Creating the ServiceNow incident", "Routing it to IT Engineering"];
+
+async function api(op, payload = {}) {
+  try {
+    const r = await fetch("/api/p32/access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op, payload }) });
+    return await r.json();
+  } catch (e) { return { ok: false, error: "The server can't be reached. Is the backend running?" }; }
+}
+const msg = (kind, html) => { $("loginMsg").innerHTML = html ? `<div class="msg ${kind}">${html}</div>` : ""; };
+const req = () => { const r = S.status && S.status.request; return r && r.id !== S.hide ? r : null; };
+
+const SKEY = "cc-session";
+const getSession = () => { try { return JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) { return null; } };
+const setSession = (v) => { try { if (v) localStorage.setItem(SKEY, JSON.stringify(v)); else localStorage.removeItem(SKEY); } catch (e) {} };
+const appUrl = (v) => (v && v.landing && v.landing.charAt(0) === "/" ? v.landing : "/p32" + ((v && v.landing) || "#/"));
+// Fade the page out, then open the app. "replace" keeps the login screen out of the history.
+function goApp(v, replace) { document.body.style.opacity = "0"; setTimeout(() => { if (replace) location.replace(appUrl(v)); else location.assign(appUrl(v)); }, 320); }
+function applySession() {
+  const v = getSession();
+  $("navSign").textContent = v ? "Open portal" : "Sign in";
+  $("navSign").setAttribute("href", v ? appUrl(v) : "#/login");
+  $("ctaSign").textContent = v ? "Open your portal →" : "Sign in →";
+  $("ctaSign").setAttribute("href", v ? appUrl(v) : "#/login");
+  $("navOut").classList.toggle("hidden", !v);
+}
+for (const id of ["navSign", "ctaSign"]) $(id).addEventListener("click", (e) => { const v = getSession(); if (v) { e.preventDefault(); goApp(v, false); } });
+$("navOut").addEventListener("click", (e) => { e.preventDefault(); setSession(null); applySession(); route(); });
+function renderNotice(login) {
+  const r = req(); const el = $("notice");
+  if (login || !r) { el.classList.add("hidden"); return; }
+  const ok = r.status === "approved";
+  el.className = "notice" + (ok ? " ok" : "");
+  el.innerHTML = ok ? `Your sign-in access has been restored (${esc(r.incident)}). <a href="#/login">Sign in</a>` : `Your sign-in ticket ${esc(r.incident)} is with IT Engineering. <a href="#/login?help=1">View status</a>`;
+}
+function route() {
+  const [path, q] = location.hash.replace(/^#/, "").split("?");
+  const login = path === "/login";
+  const v = getSession();
+  applySession();
+  $("landing").classList.toggle("hidden", login);
+  $("login").classList.toggle("hidden", !login);
+  $("navSign").classList.toggle("hidden", login && !v);
+  renderNotice(login);
+  if (login) {
+    const inn = !!v;
+    for (const id of ["lf", "helpBox", "lh", "loginMsg"]) $(id).classList.toggle("hidden", inn);
+    $("signedIn").classList.toggle("hidden", !inn);
+    $("lt").textContent = inn ? "You're signed in" : "Login to your Account";
+    $("ls").textContent = inn ? `Signed in as ${v.name || v.username}.` : "Sign in with your Crystal Clean username and password.";
+    if (inn) {
+      $("signedIn").innerHTML = `<button class="lbtn" id="goOn">Continue to your portal</button><p style="margin:14px 0 0"><a id="outHere" style="cursor:pointer;color:var(--indigo-d);font-weight:600">Sign out</a></p>`;
+      $("goOn").onclick = () => goApp(v, false);
+      $("outHere").onclick = () => { setSession(null); route(); };
+    } else {
+      if (/help=1/.test(q || "")) { S.openHelp = true; saveUi(); }
+      try { if (!$("u").value) $("u").value = sessionStorage.getItem("cc-last-user") || ""; } catch (e) {}
+      refresh().then(renderHelp); renderHelp(); ($("u").value ? $("p") : $("u")).focus();
+    }
+  } else {
+    refresh().then(() => renderNotice(false));
+    if (path && path !== "/") { const el = document.getElementById(path.replace(/^\//, "")); if (el) el.scrollIntoView({ behavior: "smooth" }); }
+  }
+}
+window.addEventListener("hashchange", route);
+
+async function refresh() { const s = await api("status"); if (s.ok) S.status = s; }
+
+function renderHelp() {
+  const r = req();
+  const step = (n, done, now, t, s) => `<li class="${done ? "done" : now ? "now" : ""}"><span class="n">${done ? "✓" : n}</span><span><b>${t}</b><small>${s}</small></span></li>`;
+  let h;
+  if (r) {
+    const ap = r.status === "approved", dc = r.status === "declined", pend = r.status === "pending_approval";
+    h = `<div class="msg ${ap ? "ok" : dc ? "bad" : "wait"}"><span>${ap ? "<b>Your access has been restored.</b> Log in again with the same username and password." : dc ? "<b>The IT engineer needs a closer look.</b> The service desk will contact you." : "<b>IT Engineering is investigating.</b> This page updates by itself."}</span></div>
+      <ul class="steps">
+        ${step(1, true, false, "Request sent to the helpdesk", esc(r.created) + (r.error_id ? " · error " + esc(r.error_id) : ""))}
+        ${step(2, true, false, `Ticket ${esc(r.incident)} created in ServiceNow`, `<a href="${esc(r.url)}" target="_blank" rel="noopener">Open in ServiceNow ↗</a>`)}
+        ${step(3, ap || dc, pend, "IT engineering investigation", ap ? "Fixed " + esc(r.decided || "") : dc ? "Declined " + esc(r.decided || "") : "Arya Hajarha (IT engineer) is investigating")}
+        ${step(4, ap, false, "You can log in again", ap ? "Ticket resolved in ServiceNow" : "After the fix")}
+      </ul>${ap || dc ? `<p><a id="newHelp">Ask the helpdesk about something else</a></p>` : ""}`;
+  } else if (S.openHelp) {
+    h = `<div class="f"><label for="ht">Tell the helpdesk what is happening</label><textarea id="ht" placeholder="e.g. I am unable to sign in to my account">${esc(S.text)}</textarea></div>
+      ${S.err ? `<div class="msg bad">${esc(S.err)}</div>` : ""}
+      ${S.busy ? `<ul class="steps">${PROG.map((t, i) => `<li class="${i < S.prog ? "done" : i === S.prog ? "now" : ""}"><span class="n">${i < S.prog ? "✓" : i + 1}</span><span><b>${t}</b></span></li>`).join("")}</ul>` : `<button class="lbtn" id="hsend">Send to helpdesk</button>`}
+      <p class="hint" style="margin-top:10px">This raises a ServiceNow incident and sends it to IT Engineering.</p>`;
+  } else {
+    h = `Can't log in? <a id="openHelp">Contact the helpdesk</a>`;
+  }
+  $("helpBox").innerHTML = h;
+  const bind = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+  bind("openHelp", () => { S.openHelp = true; renderHelp(); });
+  bind("newHelp", () => { S.hide = (req() || {}).id; S.openHelp = true; msg("", ""); renderHelp(); });
+  bind("hsend", async () => {
+    if (S.text.trim().length < 6) { S.err = "Tell us briefly what is happening."; renderHelp(); return; }
+    S.busy = "t"; S.err = ""; S.prog = 0; renderHelp();
+    const tick = setInterval(() => { if (S.prog < PROG.length - 1) { S.prog += 1; renderHelp(); } }, 1800);
+    const t0 = Date.now();
+    const r = await api("raise_ticket", { text: S.text, error_id: S.errId });
+    const left = 5400 - (Date.now() - t0); if (left > 0) await new Promise((x) => setTimeout(x, left));
+    clearInterval(tick); S.prog = PROG.length;
+    S.busy = ""; if (!r.ok) S.err = r.error; else { S.text = ""; S.hide = null; }
+    await refresh(); renderHelp();
+  });
+  const ta = $("ht"); if (ta) ta.oninput = () => { S.text = ta.value; saveUi(); };
+  saveUi();
+}
+
+$("u").addEventListener("input", () => { try { sessionStorage.setItem("cc-last-user", $("u").value); } catch (e) {} });
+$("lf").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  $("lb").disabled = true; $("lb").textContent = "Signing in…"; msg("", "");
+  const r = await api("login", { username: $("u").value.trim(), password: $("p").value });
+  $("lb").disabled = false; $("lb").textContent = "Login";
+  if (r.ok && r.signed_in) {
+    const sess = { username: r.username, name: r.name, persona: r.persona, landing: r.landing || "#/", at: Date.now() };
+    setSession(sess);
+    try { if (r.persona) localStorage.setItem("p32-persona-v1", JSON.stringify({ id: r.persona, empDept: null })); } catch (e) {}
+    msg("ok", `<span><b>Welcome, ${esc(r.name || r.username)}.</b> Taking you to your portal…</span>`);
+    const nx = new URLSearchParams(location.hash.split("?")[1] || "").get("next");
+    setTimeout(() => { document.body.style.opacity = "0"; }, 600);
+    setTimeout(() => { if (nx && (nx.startsWith("/p32") || nx.startsWith("/crystal-clean/ops")) && !(sess.persona === "it_admin" && nx.startsWith("/p32"))) location.replace(nx); else location.replace(appUrl(sess)); }, 950);
+    return;
+  }
+  const net = !r.ok || r.kind === "network";
+  const d = r.detail; if (d) S.errId = d.error_id;
+  const code = d ? `<div class="code">HTTP ${esc(d.status)} ${esc(d.title)} · ${esc(d.endpoint)}<br>${esc(d.reason)}<br>Error ID ${esc(d.error_id)} · ${esc(d.at)}</div>` : "";
+  msg("bad", `<span><b>${net ? "Can't reach the sign-in service." : "Login failed."}</b> ${esc(r.error || "")}${net ? " You can ask the helpdesk for help below." : ""}${code}</span>`);
+  if (net) { S.openHelp = true; renderHelp(); }
+  await refresh(); renderHelp();
+});
+
+setInterval(async () => {
+  const before = JSON.stringify(S.status); await refresh();
+  if (before === JSON.stringify(S.status)) return;
+  if ($("login").classList.contains("hidden")) renderNotice(false);
+  else if (!getSession() && !(document.activeElement && document.activeElement.id === "ht")) renderHelp();
+}, 4000);
+window.addEventListener("pageshow", () => { document.body.style.opacity = ""; route(); });
+route();
+</script>
+</body>
+</html>

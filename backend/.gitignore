@@ -1,0 +1,10 @@
+.env
+.aura_state.json
+generated_scaffolds/
+.venv/
+__pycache__/
+*.pyc
+.p32_ai_usage.json
+.p32_*.json
+.p32_*.jsonl
+.cc_hub_*.json

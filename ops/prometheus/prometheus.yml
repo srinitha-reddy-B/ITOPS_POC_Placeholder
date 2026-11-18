@@ -1,0 +1,56 @@
+# Prometheus for the Crystal Clean Ops Console demo (started by backend/scripts/start_ops_stack.ps1).
+# Everything is local; scrape every 5 s so the demo shows changes quickly.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  external_labels:
+    environment: cc-demo
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+
+  # Real CPU, memory and disk of this machine. The demo disk V: is labelled as server CC-APP-SRV-01.
+  - job_name: windows
+    static_configs:
+      - targets: ["127.0.0.1:9182"]
+        labels: { server: CC-APP-SRV-01, site: "Demo lab (this machine)" }
+
+  # RouteOps Dispatch API: request rate, 5xx, latency, DB pool (use case 3).
+  - job_name: routeops
+    static_configs:
+      - targets: ["127.0.0.1:8090"]
+        labels: { app: routeops-dispatch, server: CC-APP-SRV-02 }
+
+  # Ops Console backend: Restic backup results and Keycloak sign-in counters (use cases 2 and 5).
+  - job_name: cc-backend
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["127.0.0.1:8001"]
+
+  # Network probes. Branch links go through Toxiproxy (the controllable demo WAN link);
+  # the "direct" target bypasses it so the agents can tell a link fault from a service fault.
+  - job_name: blackbox-http
+    metrics_path: /probe
+    params: { module: [http_2xx] }
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    static_configs:
+      - targets: ["http://127.0.0.1:18101/health"]
+        labels: { facility: CC-CHICAGO-NORTH, link: vpn-wan, service: "Branch ERP access" }
+      - targets: ["http://127.0.0.1:18102/health"]
+        labels: { facility: CC-CHICAGO-NORTH, link: vpn-wan, service: "Branch file share" }
+      - targets: ["http://127.0.0.1:18201/health"]
+        labels: { facility: CC-INDIANAPOLIS, link: vpn-wan, service: "Branch ERP access" }
+      - targets: ["http://127.0.0.1:8091/health"]
+        labels: { facility: DATA-CENTER, link: direct, service: "Branch services host" }
+      - targets: ["http://127.0.0.1:8080/realms/crystal-clean/.well-known/openid-configuration"]
+        labels: { facility: DATA-CENTER, link: direct, service: "Keycloak SSO" }
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115

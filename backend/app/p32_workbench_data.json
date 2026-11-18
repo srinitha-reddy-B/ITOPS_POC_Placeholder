@@ -1,0 +1,4154 @@
+{
+ "version": 1,
+ "note": "Synthetic demonstration data for the Point32Health Agentic Incident Workbench POC. Not real Point32Health incidents, systems, members, providers or employees. No PHI or PII.",
+ "groups": [
+  "Claims Platform Engineering",
+  "Member Digital Engineering",
+  "Provider Data Services",
+  "Integration Services",
+  "Identity & Access Management",
+  "Database Operations",
+  "Cloud Platform Operations",
+  "Network Operations",
+  "Service Desk"
+ ],
+ "use_cases": [
+  {
+   "id": "CLM",
+   "name": "Claims Processing and Adjudication",
+   "short": "Claims",
+   "icon": "file"
+  },
+  {
+   "id": "MBR",
+   "name": "Member Digital Experience",
+   "short": "Member digital",
+   "icon": "users"
+  },
+  {
+   "id": "PRV",
+   "name": "Provider and Eligibility Services",
+   "short": "Provider & eligibility",
+   "icon": "search"
+  },
+  {
+   "id": "INT",
+   "name": "Enterprise Integration and Data Exchange",
+   "short": "Integration",
+   "icon": "route"
+  },
+  {
+   "id": "IAM",
+   "name": "Identity, Access and Employee Technology",
+   "short": "Identity & access",
+   "icon": "shield"
+  }
+ ],
+ "incidents": [
+  {
+   "id": "DEMO-PAY-048",
+   "use_case": "CLM",
+   "servicenow_number": "INC0010048",
+   "title": "Payment API returning HTTP 504 after idle period",
+   "description": "Production Payment API is intermittently returning HTTP 504 Gateway Timeout on the first request after an idle period. The issue appears after the container app scales from zero to one replica. Subsequent requests succeed once the application is warm. Initial investigation suggests application startup may take longer than the API gateway (APIM) timeout.",
+   "service": "Payment API",
+   "ci": "payment-api-prod",
+   "reported_by": "Monitoring alert (documented ITOPS demo, INC0010048)",
+   "reported_min_ago": 70,
+   "priority": "2 - High",
+   "impact": "1 - High",
+   "urgency": "2 - Medium",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Payment calls after quiet periods fail with HTTP 504 and must be retried; Finance and provider remittance see intermittent failures.",
+   "complexity": "Single round: documented ITOPS demo scenario",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 45,
+      "source": "APIM gateway log",
+      "text": "HTTP 504 on POST /payments: backend did not respond within 30 s; occurs only on the first request after 15+ minutes without traffic."
+     },
+     {
+      "id": "L2",
+      "t": 44,
+      "source": "Container app system log",
+      "text": "Replica scaled 0 -> 1 at the time of each failing request; container ready after 38-44 s (image pull, runtime start, dependency warm-up)."
+     },
+     {
+      "id": "L3",
+      "t": 40,
+      "source": "Request traces",
+      "text": "Requests after the replica is warm complete in about 180 ms; no 504s while traffic is continuous."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "HTTP 504 rate on first request after idle",
+      "unit": "%",
+      "before": 100,
+      "threshold": 5,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-7301",
+      "t_hours": 72,
+      "title": "Payment API scale-to-zero enabled (cost optimisation)",
+      "detail": "Container app minimum replicas lowered from 1 to 0 for the production revision."
+     }
+    ],
+    "history": [
+     {
+      "id": "SYN-PAY-11",
+      "title": "Reporting API 504 after idle on scale-to-zero revision",
+      "resolution": "Minimum replicas set to 1; gateway timeout raised."
+     }
+    ],
+    "kb": [
+     {
+      "id": "SOP-APP-0142",
+      "title": "Payment API cold-start HTTP 504 remediation",
+      "summary": "Keep min replicas at 1 for production APIs and set the APIM backend timeout above the worst-case cold-start time."
+     }
+    ],
+    "cmdb": {
+     "class": "API service (container app behind APIM)",
+     "depends_on": [
+      "APIM gateway",
+      "payments database"
+     ],
+     "owner_group": "Cloud Platform Operations",
+     "environment": "Production (synthetic telemetry)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Cold start after scale-to-zero exceeds the 30 s gateway timeout",
+      "why": "504s occur only on the first request after idle, exactly when the replica scales from 0 to 1 and takes 38-44 s to become ready.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-7301"
+      ],
+      "confidence": 0.86
+     },
+     {
+      "title": "Payments database slow to accept new connections",
+      "why": "A slow dependency could delay the first request.",
+      "evidence": [],
+      "confidence": 0.09
+     },
+     {
+      "title": "Intermittent network loss between APIM and the container app",
+      "why": "Gateway timeouts can come from network drops.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Directly supported: the 504 timing matches every scale-up from zero.",
+     "Warm requests succeed in 180 ms, so the database is not the bottleneck.",
+     "Failures only after idle periods do not fit random network loss."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "Change CHG-DEMO-7301 set the Payment API container app to scale to zero; the first request after an idle period triggers a cold start of 38-44 seconds, which exceeds the 30 second APIM backend timeout, so the gateway returns HTTP 504 before the replica is ready.",
+    "contributing": [
+     "The APIM timeout was not reviewed when scale-to-zero was enabled.",
+     "No synthetic check calls the API after idle periods."
+    ],
+    "remediation": [
+     {
+      "step": "Record the current min/max replica settings and the APIM backend timeout in the incident.",
+      "expected": "Settings captured: min replicas 0, APIM timeout 30 s."
+     },
+     {
+      "step": "Set min replicas to 1 for the production revision (standard change template 'Scale settings').",
+      "expected": "One replica stays warm."
+     },
+     {
+      "step": "Raise the APIM backend timeout for the Payment API from 30 s to 60 s.",
+      "expected": "Gateway timeout exceeds the worst-case cold start."
+     },
+     {
+      "step": "Let the service idle for 15 minutes, then send a test payment request.",
+      "expected": "HTTP 200 on the first request after idle."
+     }
+    ],
+    "rollback": "Restore the previous scale settings and APIM timeout from the recorded values.",
+    "prevention": [
+     "Keep a minimum replica of 1 for latency-sensitive production APIs.",
+     "Alert when startup time approaches the gateway timeout; add a synthetic check after idle periods."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-CLM-001",
+   "use_case": "CLM",
+   "title": "Claims adjudication service intermittently returning HTTP 504 during peak processing",
+   "description": "Since about 09:10 ET the claims adjudication service returns intermittent HTTP 504 Gateway Timeout responses to the claims workbench. Roughly 1 in 6 adjudication requests fail and examiners have to resubmit. It is worst between 09:00 and 11:00 when volume peaks. Nothing was reported yesterday.",
+   "service": "Claims Adjudication Service",
+   "ci": "claims-adjudication-api",
+   "reported_by": "Jordan Ellis (Claims Operations, synthetic)",
+   "reported_min_ago": 95,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Claims examiners lose time resubmitting; adjudication throughput down about 15% during the morning peak.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 40,
+      "source": "API gateway access log",
+      "text": "504 on POST /adjudicate after 30.0 s upstream timeout; 212 of 1,290 requests in the last 30 min."
+     },
+     {
+      "id": "L2",
+      "t": 35,
+      "source": "claims-adjudication-api app log",
+      "text": "Request processing time spikes to 28-31 s; no exceptions logged at ERROR level."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Gateway 5xx rate",
+      "unit": "%",
+      "before": 16.4,
+      "threshold": 1,
+      "after": 0.3,
+      "after2": 0.3,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-3101",
+      "t_hours": 20,
+      "title": "claims-adjudication-api config release 24.11.2",
+      "detail": "Tuned datasource settings and logging levels."
+     }
+    ],
+    "history": [
+     {
+      "id": "DEMO-HIST-0412",
+      "title": "Claims adjudication slow after pricing engine patch",
+      "resolution": "Pricing engine cache warmed; latency recovered."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1201",
+      "title": "Claims adjudication API: diagnosing gateway timeouts",
+      "summary": "Check upstream latency, DB pool saturation and pricing engine response time before restarting pods."
+     }
+    ],
+    "cmdb": {
+     "class": "Application service",
+     "depends_on": [
+      "claims-db (PostgreSQL)",
+      "pricing-engine",
+      "api-gateway"
+     ],
+     "owner_group": "Claims Platform Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 33,
+      "source": "claims-adjudication-api datasource log (DEBUG)",
+      "text": "HikariPool-1 - Connection is not available, request timed out after 30000ms (total=40, active=40, idle=0, waiting=57)."
+     },
+     {
+      "id": "L4",
+      "t": 30,
+      "source": "pricing-engine metrics",
+      "text": "pricing-engine p95 latency 180 ms, unchanged from baseline."
+     },
+     {
+      "id": "L5",
+      "t": 0,
+      "source": "Config diff CHG-DEMO-3101",
+      "text": "datasource.maximumPoolSize changed from 100 to 40."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Database connection pool exhaustion in claims-adjudication-api",
+      "why": "Requests stall for ~30 s, matching a pool wait timeout; a datasource change shipped yesterday.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-3101"
+      ],
+      "confidence": 0.55
+     },
+     {
+      "title": "Slow pricing-engine dependency",
+      "why": "A previous incident had the same symptom after a pricing engine patch.",
+      "evidence": [
+       "DEMO-HIST-0412"
+      ],
+      "confidence": 0.3
+     },
+     {
+      "title": "API gateway timeout set too low",
+      "why": "Failures happen exactly at the 30 s gateway timeout.",
+      "evidence": [
+       "L1"
+      ],
+      "confidence": 0.15
+     }
+    ],
+    "critic": [
+     "Plausible, but no pool metrics yet; the change ticket only says 'tuned datasource settings'. Need pool saturation evidence.",
+     "No pricing-engine latency data was gathered; history alone is weak.",
+     "Raising the gateway timeout would hide the symptom; it doesn't explain why requests take 30 s."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "Config release CHG-DEMO-3101 lowered the claims-adjudication-api database pool from 100 to 40 connections; at peak volume all 40 are busy, requests wait the full 30 s pool timeout and the gateway returns 504.",
+    "contributing": [
+     "The pool size change was bundled with logging changes and not load tested.",
+     "No alert on connection-pool saturation."
+    ],
+    "remediation": [
+     {
+      "step": "Confirm pool saturation on the pool dashboard (active = max, waiting > 0).",
+      "expected": "Saturation confirmed during the failure window."
+     },
+     {
+      "step": "Restore datasource.maximumPoolSize to 100 through the approved config pipeline.",
+      "expected": "New config version deployed to all pods."
+     },
+     {
+      "step": "Rolling restart of claims-adjudication-api pods, one at a time.",
+      "expected": "All pods healthy; no request errors during the rollout."
+     },
+     {
+      "step": "Watch gateway 5xx rate for 15 minutes.",
+      "expected": "5xx rate below 1%."
+     }
+    ],
+    "rollback": "Re-apply config version 24.11.2 and restart pods if DB CPU exceeds 80% after the change.",
+    "prevention": [
+     "Alert when pool waiting > 0 for 5 minutes.",
+     "Load test datasource changes before release."
+    ],
+    "exec_fail": {
+     "step": 1,
+     "mode": "transient",
+     "error": "Config pipeline returned HTTP 503 (deployment agent busy). No change applied."
+    },
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-CLM-002",
+   "use_case": "CLM",
+   "title": "Nightly claims adjudication batch delayed; backlog of pending claims growing",
+   "description": "The nightly auto-adjudication batch, normally finished by 05:30 ET, was still running at 08:00. About 41,000 claims are still pending and the backlog is growing as new claims arrive. Downstream payment file cut-off is 12:00.",
+   "service": "Claims Batch Adjudication",
+   "ci": "claims-batch-scheduler",
+   "reported_by": "Priya Natarajan (Claims Production Support, synthetic)",
+   "reported_min_ago": 210,
+   "priority": "1 - Critical",
+   "impact": "1 - High",
+   "urgency": "1 - High",
+   "category": "Batch",
+   "group": "Claims Platform Engineering",
+   "business_impact": "Risk of missing the 12:00 payment file cut-off; provider payments could slip by a day.",
+   "complexity": "Straightforward investigation; verification needs a second pass",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 300,
+      "source": "Batch scheduler log",
+      "text": "Job CLM-AUTOADJ started 01:00; step 3 (adjudicate) throughput 140 claims/min vs normal 900."
+     },
+     {
+      "id": "L2",
+      "t": 290,
+      "source": "claims-db wait events",
+      "text": "Sessions from CLM-AUTOADJ waiting on lock: relation claim_header (RowExclusiveLock) blocked by pid 48812."
+     },
+     {
+      "id": "L3",
+      "t": 290,
+      "source": "claims-db session list",
+      "text": "pid 48812: month-end claims aging report, started 00:55, running SELECT ... FOR UPDATE on claim_header."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Pending claims backlog",
+      "unit": "claims",
+      "before": 41000,
+      "threshold": 5000,
+      "after": 12500,
+      "after2": 1800,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-3088",
+      "t_hours": 30,
+      "title": "Month-end reporting schedule update",
+      "detail": "Claims aging report moved from 22:00 to 00:55."
+     }
+    ],
+    "history": [
+     {
+      "id": "DEMO-HIST-0377",
+      "title": "Batch overrun during quarter-end reporting",
+      "resolution": "Report rescheduled outside batch window."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1188",
+      "title": "Claims batch window and reporting blackout",
+      "summary": "No locking reports on claim tables between 01:00 and 05:30."
+     }
+    ],
+    "cmdb": {
+     "class": "Batch job",
+     "depends_on": [
+      "claims-db (PostgreSQL)",
+      "batch-worker-pool"
+     ],
+     "owner_group": "Claims Platform Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Lock contention from the rescheduled month-end aging report",
+      "why": "Batch sessions wait on a lock held by the report, which was moved into the batch window.",
+      "evidence": [
+       "L2",
+       "L3",
+       "CHG-DEMO-3088"
+      ],
+      "confidence": 0.8
+     },
+     {
+      "title": "Not enough batch workers",
+      "why": "Throughput is far below normal.",
+      "evidence": [
+       "L1"
+      ],
+      "confidence": 0.15
+     },
+     {
+      "title": "Upstream claims intake file arrived late",
+      "why": "A late file would delay the start.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Strongly supported: lock chain and the schedule change line up.",
+     "Worker count is unchanged; low throughput is explained by lock waits.",
+     "The job started on time at 01:00, so a late file is contradicted."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "CHG-DEMO-3088 moved the month-end claims aging report to 00:55; its SELECT ... FOR UPDATE on claim_header blocks the 01:00 auto-adjudication batch, cutting throughput from 900 to 140 claims per minute.",
+    "contributing": [
+     "The reporting change did not check the batch blackout window in KB-DEMO-1188.",
+     "Batch has no alert for lock waits."
+    ],
+    "remediation": [
+     {
+      "step": "Get approval from the report owner to cancel the running aging report (pid 48812).",
+      "expected": "Owner approval recorded."
+     },
+     {
+      "step": "Cancel the report session with pg_cancel_backend (not terminate).",
+      "expected": "Lock released; batch sessions resume."
+     },
+     {
+      "step": "Monitor batch throughput for 10 minutes.",
+      "expected": "Throughput back to ~900 claims/min."
+     },
+     {
+      "step": "Reschedule the aging report to 22:00 via a change request.",
+      "expected": "Change raised for the schedule fix."
+     }
+    ],
+    "rollback": "No rollback needed for cancelling a read report; rerun the report after the batch completes.",
+    "prevention": [
+     "Add the batch window to the reporting change checklist.",
+     "Alert on lock waits > 5 min for batch sessions."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": true,
+    "followup": {
+     "step": "Temporarily raise CLM-AUTOADJ parallelism from 4 to 8 workers until the backlog is below 5,000, then restore 4.",
+     "expected": "Backlog drains before the 12:00 cut-off."
+    }
+   }
+  },
+  {
+   "id": "DEMO-CLM-003",
+   "use_case": "CLM",
+   "title": "Duplicate claim records created between claims intake and adjudication",
+   "description": "Claims examiners found duplicate claim records for the same claim control number in the adjudication queue since yesterday afternoon. About 2% of electronically received claims appear twice. Duplicates risk double payment if not caught.",
+   "service": "Claims Intake Processing",
+   "ci": "claims-intake-consumer",
+   "reported_by": "Marcus Odom (Claims Quality Assurance, synthetic)",
+   "reported_min_ago": 340,
+   "priority": "2 - High",
+   "impact": "1 - High",
+   "urgency": "2 - Medium",
+   "category": "Data",
+   "group": "",
+   "business_impact": "Potential duplicate payments; QA team manually reviewing ~600 claims per day.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 900,
+      "source": "claims-intake-consumer log",
+      "text": "WARN processing time 48 s for message batch; consumer lock lost, message abandoned."
+     },
+     {
+      "id": "L2",
+      "t": 880,
+      "source": "Adjudication queue report",
+      "text": "1,214 claim control numbers with 2 records since 14:00 yesterday."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Duplicate claim rate",
+      "unit": "%",
+      "before": 2.1,
+      "threshold": 0.05,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-3092",
+      "t_hours": 26,
+      "title": "Intake consumer performance tuning",
+      "detail": "Message lock duration reduced from 120 s to 30 s."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1150",
+      "title": "Claims intake message handling",
+      "summary": "Consumers must use the claim control number as the idempotency key."
+     }
+    ],
+    "cmdb": {
+     "class": "Integration consumer",
+     "depends_on": [
+      "event broker topic claims-received",
+      "claims-db (PostgreSQL)"
+     ],
+     "owner_group": "Claims Platform Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 870,
+      "source": "Broker delivery log",
+      "text": "Message 7f3a... delivered twice (deliveryCount=2) after lock expiry at 30 s; both deliveries committed."
+     },
+     {
+      "id": "L4",
+      "t": 860,
+      "source": "Code review note",
+      "text": "Idempotency check on claim control number is skipped when the claim source is EDI (feature flag edi_idempotency=false since 2025)."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Messages redelivered after shorter lock duration and processed twice",
+      "why": "Lock duration cut to 30 s while processing takes up to 48 s.",
+      "evidence": [
+       "L1",
+       "CHG-DEMO-3092"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Submitters sending the same claim twice",
+      "why": "Duplicates share a claim control number.",
+      "evidence": [
+       "L2"
+      ],
+      "confidence": 0.3
+     },
+     {
+      "title": "Database replication creating duplicate rows",
+      "why": "Duplicates appear in the adjudication queue.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "Redelivery explains duplicates only if idempotency is not enforced; KB says it should be. Need delivery counts and the idempotency path.",
+     "Submitter resends would carry different interchange numbers; not checked yet.",
+     "No replication errors reported; unsupported."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "CHG-DEMO-3092 cut the intake consumer's message lock from 120 s to 30 s; batches taking up to 48 s lose the lock and are redelivered, and because the claim-control-number idempotency check is disabled for EDI claims both deliveries are committed.",
+    "contributing": [
+     "Feature flag edi_idempotency has been off since an earlier migration.",
+     "No duplicate-claim monitor before adjudication."
+    ],
+    "remediation": [
+     {
+      "step": "Restore message lock duration to 120 s via config pipeline.",
+      "expected": "No abandoned-lock warnings."
+     },
+     {
+      "step": "Enable edi_idempotency in a staged rollout (10%, then 100%).",
+      "expected": "Second deliveries rejected as duplicates."
+     },
+     {
+      "step": "Run the read-only duplicate report for the affected window and hand the list to Claims QA.",
+      "expected": "List of 1,214 duplicates delivered."
+     },
+     {
+      "step": "Claims QA voids duplicates through the claims correction workflow after business sign-off.",
+      "expected": "Duplicates voided; none paid."
+     }
+    ],
+    "rollback": "Disable edi_idempotency if valid claims are rejected; lock duration change can be reverted independently.",
+    "prevention": [
+     "Duplicate claim monitor before adjudication.",
+     "Test lock duration against p99 processing time."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-CLM-004",
+   "use_case": "CLM",
+   "title": "Claims processing API response times elevated since release",
+   "description": "Claim lookup and line-detail calls from the claims workbench take 6-9 seconds instead of under 1 second since Sunday's release. No errors, just slow. All examiners affected.",
+   "service": "Claims Processing API",
+   "ci": "claims-processing-api",
+   "reported_by": "Alicia Grant (Claims Operations, synthetic)",
+   "reported_min_ago": 180,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "2 - Medium",
+   "category": "Performance",
+   "group": "",
+   "business_impact": "Examiner productivity down ~20%; no data impact.",
+   "complexity": "Straightforward",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 60,
+      "source": "APM trace sample",
+      "text": "GET /claims/{id}/lines: 7.2 s, of which 7.0 s in query claim_line WHERE member_ref = ?"
+     },
+     {
+      "id": "L2",
+      "t": 55,
+      "source": "claims-db query stats",
+      "text": "Seq Scan on claim_line (rows=38M) for member_ref predicate; previously Index Scan."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Line-detail p95 latency",
+      "unit": "ms",
+      "before": 7400,
+      "threshold": 1000,
+      "after": 420,
+      "after2": 420,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-3075",
+      "t_hours": 60,
+      "title": "Claims release 24.11 schema migration",
+      "detail": "Renamed claim_line.member_id to member_ref."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1094",
+      "title": "Schema migration checklist",
+      "summary": "Recreate dependent indexes when renaming indexed columns."
+     }
+    ],
+    "cmdb": {
+     "class": "Application service",
+     "depends_on": [
+      "claims-db (PostgreSQL)"
+     ],
+     "owner_group": "Claims Platform Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Index lost during the column rename in release 24.11",
+      "why": "Query plan changed from index scan to sequential scan on the renamed column.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-3075"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Database under-provisioned for current volume",
+      "why": "Queries are slow.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Network latency between API and database",
+      "why": "All calls are slow.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Well supported by the plan change.",
+     "No CPU or IO saturation evidence.",
+     "The trace shows time spent in the query, not the network."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "Release 24.11 migration CHG-DEMO-3075 renamed claim_line.member_id to member_ref with a drop-and-add that did not recreate the index, so line-detail queries do a sequential scan of 38 million rows.",
+    "contributing": [
+     "Migration checklist step to recreate indexes was skipped.",
+     "No query-plan regression test in the release pipeline."
+    ],
+    "remediation": [
+     {
+      "step": "Create index CONCURRENTLY on claim_line(member_ref) during business hours (non-blocking).",
+      "expected": "Index build completes without locking."
+     },
+     {
+      "step": "ANALYZE claim_line.",
+      "expected": "Planner statistics refreshed."
+     },
+     {
+      "step": "Confirm the query plan uses the new index.",
+      "expected": "Index Scan on claim_line_member_ref_idx."
+     },
+     {
+      "step": "Monitor line-detail p95 latency for 15 minutes.",
+      "expected": "p95 below 1,000 ms."
+     }
+    ],
+    "rollback": "DROP INDEX CONCURRENTLY if write latency on claim_line degrades by more than 20%.",
+    "prevention": [
+     "Add a plan-regression test for top 20 queries.",
+     "Enforce the index step in the migration checklist."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-CLM-005",
+   "use_case": "CLM",
+   "title": "Claims status updates not reflected consistently across internal applications",
+   "description": "Claims adjudicated this morning show 'Pended' in the customer service desktop but 'Paid' in the claims workbench. Customer service reps are giving members wrong status information.",
+   "service": "Claims Status Service",
+   "ci": "claims-status-api",
+   "reported_by": "Dana Whitfield (Member Services, synthetic)",
+   "reported_min_ago": 130,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Data",
+   "group": "",
+   "business_impact": "Wrong status given to members; repeat calls to the contact center.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 100,
+      "source": "claims-status-api log",
+      "text": "Cache HIT for claim status keys 97% of requests (normally ~60%)."
+     },
+     {
+      "id": "L2",
+      "t": 95,
+      "source": "Status event consumer",
+      "text": "Processed ClaimStatusChanged events normally; lag 2 s."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Status mismatch rate (sampled)",
+      "unit": "%",
+      "before": 18,
+      "threshold": 0.5,
+      "after": 0.2,
+      "after2": 0.2,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-3097",
+      "t_hours": 16,
+      "title": "claims-status-api cache configuration",
+      "detail": "Cache settings consolidated into shared config file."
+     }
+    ],
+    "history": [
+     {
+      "id": "DEMO-HIST-0401",
+      "title": "Status lag due to event consumer backlog",
+      "resolution": "Consumer scaled out."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1172",
+      "title": "Claims status cache design",
+      "summary": "Status cache entries have a 5-minute TTL and are invalidated on ClaimStatusChanged."
+     }
+    ],
+    "cmdb": {
+     "class": "Application service",
+     "depends_on": [
+      "status-cache (Redis)",
+      "event broker topic claim-status"
+     ],
+     "owner_group": "Claims Platform Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 90,
+      "source": "Config diff CHG-DEMO-3097",
+      "text": "statusCache.ttlSeconds 300 -> 86400; statusCache.invalidateOnEvent key missing in consolidated file (defaults to false)."
+     },
+     {
+      "id": "L4",
+      "t": 85,
+      "source": "Redis keyspace sample",
+      "text": "Key claim:status:C-…  TTL 79,412 s; value 'PENDED' while claims-db shows 'PAID'."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Status cache serving stale entries after config consolidation",
+      "why": "Cache hit ratio jumped to 97% after the cache config change.",
+      "evidence": [
+       "L1",
+       "CHG-DEMO-3097"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Status event consumer lagging",
+      "why": "A previous incident had the same symptom.",
+      "evidence": [
+       "DEMO-HIST-0401"
+      ],
+      "confidence": 0.35
+     },
+     {
+      "title": "Customer service desktop reading a different data source",
+      "why": "Only one app shows the wrong value.",
+      "evidence": [],
+      "confidence": 0.15
+     }
+    ],
+    "critic": [
+     "High hit ratio suggests staleness but doesn't prove it; need TTL and invalidation settings.",
+     "Contradicted: consumer lag is 2 s.",
+     "The desktop reads claims-status-api, same as other apps; unsupported."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "CHG-DEMO-3097 consolidated cache settings, raising the status cache TTL from 5 minutes to 24 hours and dropping invalidateOnEvent, so claims-status-api keeps serving the pre-adjudication status for up to a day.",
+    "contributing": [
+     "Config consolidation had no diff review for default values.",
+     "No staleness check between cache and claims-db."
+    ],
+    "remediation": [
+     {
+      "step": "Restore ttlSeconds=300 and invalidateOnEvent=true via config pipeline.",
+      "expected": "Config version deployed."
+     },
+     {
+      "step": "Flush claim:status:* keys in the status cache.",
+      "expected": "Cache repopulates from claims-db."
+     },
+     {
+      "step": "Sample 200 claims and compare cache vs claims-db status.",
+      "expected": "Mismatch rate below 0.5%."
+     },
+     {
+      "step": "Notify Member Services that status is accurate again.",
+      "expected": "Notice sent to contact center leads."
+     }
+    ],
+    "rollback": "Revert to previous config version; flushing the cache is safe and self-healing.",
+    "prevention": [
+     "Schema-validate cache config with required keys.",
+     "Hourly staleness sampling alert."
+    ],
+    "exec_fail": {
+     "step": 1,
+     "mode": "transient",
+     "error": "Cache flush command timed out (Redis replica failover in progress). No keys flushed."
+    },
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-MBR-001",
+   "use_case": "MBR",
+   "title": "Member portal login intermittently failing",
+   "description": "Members report the portal login sometimes fails with 'Something went wrong, please try again', then works on a second or third attempt. Contact center call volume about login is up 3x today.",
+   "service": "Member Portal",
+   "ci": "member-portal-web",
+   "reported_by": "Kevin Shaw (Digital Product, synthetic)",
+   "reported_min_ago": 75,
+   "priority": "2 - High",
+   "impact": "1 - High",
+   "urgency": "2 - Medium",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Members cannot reliably sign in; contact center volume up 3x for login issues.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 50,
+      "source": "member-portal-web log",
+      "text": "Token validation failed: IDX10501/iat in the future for ~33% of sign-ins."
+     },
+     {
+      "id": "L2",
+      "t": 48,
+      "source": "Load balancer",
+      "text": "Traffic evenly split across 3 web nodes (web-01, web-02, web-03)."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Login failure rate",
+      "unit": "%",
+      "before": 31,
+      "threshold": 1,
+      "after": 0.4,
+      "after2": 0.4,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-2210",
+      "t_hours": 22,
+      "title": "Monthly OS patching: member portal web tier",
+      "detail": "Applied OS image 2026.11 to web-01..03."
+     }
+    ],
+    "history": [
+     {
+      "id": "DEMO-HIST-0288",
+      "title": "Portal login failures after IdP certificate renewal",
+      "resolution": "Updated IdP metadata on portal."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-0931",
+      "title": "Portal sign-in troubleshooting",
+      "summary": "Check IdP metadata, token lifetimes and node clock sync."
+     }
+    ],
+    "cmdb": {
+     "class": "Web application",
+     "depends_on": [
+      "identity provider (member CIAM)",
+      "web-01",
+      "web-02",
+      "web-03"
+     ],
+     "owner_group": "Member Digital Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 45,
+      "source": "Per-node error breakdown",
+      "text": "100% of token failures on web-02; 0% on web-01 and web-03."
+     },
+     {
+      "id": "L4",
+      "t": 44,
+      "source": "web-02 system check",
+      "text": "Clock offset -94 s; time sync service stopped since patch reboot."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "One web node has clock skew, rejecting fresh tokens",
+      "why": "'iat in the future' errors appear on about a third of sign-ins, matching one of three nodes.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.45
+     },
+     {
+      "title": "Identity provider certificate or metadata mismatch",
+      "why": "Previous login incident had this cause.",
+      "evidence": [
+       "DEMO-HIST-0288"
+      ],
+      "confidence": 0.35
+     },
+     {
+      "title": "Patching broke a shared library on all nodes",
+      "why": "Started after patching.",
+      "evidence": [
+       "CHG-DEMO-2210"
+      ],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "The 1-in-3 pattern is suggestive but not proven per node; need a per-node breakdown and clock data.",
+     "A metadata mismatch would fail every sign-in, not a third.",
+     "A broken library would affect all nodes equally; contradicted by the intermittency."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "After the CHG-DEMO-2210 patch reboot, the time sync service on web-02 did not restart; its clock drifted 94 seconds behind, so it rejects freshly issued tokens as 'issued in the future', failing about one third of sign-ins.",
+    "contributing": [
+     "Patch runbook has no post-reboot time sync check.",
+     "No per-node error alerting."
+    ],
+    "remediation": [
+     {
+      "step": "Drain web-02 from the load balancer.",
+      "expected": "No member traffic on web-02."
+     },
+     {
+      "step": "Start and enable the time sync service on web-02; confirm offset < 1 s.",
+      "expected": "Clock offset under 1 s."
+     },
+     {
+      "step": "Return web-02 to the pool.",
+      "expected": "Traffic evenly split again."
+     },
+     {
+      "step": "Monitor login failure rate for 15 minutes.",
+      "expected": "Failure rate below 1%."
+     }
+    ],
+    "rollback": "Keep web-02 drained if the offset does not converge; two nodes carry normal load.",
+    "prevention": [
+     "Add time sync verification to the patch runbook.",
+     "Alert on node clock offset > 5 s."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-MBR-002",
+   "use_case": "MBR",
+   "title": "Member eligibility information not loading after successful sign-in",
+   "description": "Members can sign in to the portal, but the 'My coverage' panel shows 'Coverage information is unavailable' for everyone since about 07:00 ET. Claims and ID card pages work.",
+   "service": "Member Coverage Panel",
+   "ci": "member-coverage-bff",
+   "reported_by": "Rachel Kim (Digital Product, synthetic)",
+   "reported_min_ago": 120,
+   "priority": "2 - High",
+   "impact": "1 - High",
+   "urgency": "2 - Medium",
+   "category": "Software",
+   "group": "Member Digital Engineering",
+   "business_impact": "Members cannot see coverage; calls to the contact center about eligibility increasing.",
+   "complexity": "Straightforward; one remediation step fails and needs a retry",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 115,
+      "source": "member-coverage-bff log",
+      "text": "TLS handshake failed calling eligibility-api: certificate expired (client certificate CN=member-coverage-bff, notAfter 2026-11-11T07:00Z)."
+     },
+     {
+      "id": "L2",
+      "t": 114,
+      "source": "eligibility-api gateway",
+      "text": "mTLS rejects from client member-coverage-bff: 100% since 07:00."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Coverage panel error rate",
+      "unit": "%",
+      "before": 100,
+      "threshold": 1,
+      "after": 0.1,
+      "after2": 0.1,
+      "better": "lower"
+     }
+    ],
+    "changes": [],
+    "history": [
+     {
+      "id": "DEMO-HIST-0199",
+      "title": "Provider portal outage from expired client certificate",
+      "resolution": "Certificate renewed; auto-renewal enabled."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-0877",
+      "title": "Rotating mTLS client certificates",
+      "summary": "Issue from internal CA, store in secret store, reload BFF pods."
+     }
+    ],
+    "cmdb": {
+     "class": "Backend for frontend",
+     "depends_on": [
+      "eligibility-api",
+      "secret store"
+     ],
+     "owner_group": "Member Digital Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Expired mTLS client certificate between coverage BFF and eligibility API",
+      "why": "Handshake failures cite certificate expiry at exactly 07:00.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.9
+     },
+     {
+      "title": "Eligibility API outage",
+      "why": "Coverage data comes from it.",
+      "evidence": [],
+      "confidence": 0.07
+     },
+     {
+      "title": "Portal session issue",
+      "why": "Happens after sign-in.",
+      "evidence": [],
+      "confidence": 0.03
+     }
+    ],
+    "critic": [
+     "Directly evidenced.",
+     "Other eligibility clients are healthy; only this client is rejected.",
+     "Other pages work in the same session; contradicted."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "The member-coverage-bff mTLS client certificate expired at 07:00Z and was not on auto-renewal, so the eligibility API rejects every call and the coverage panel shows no data.",
+    "contributing": [
+     "Certificate was issued manually and not tracked for renewal.",
+     "No certificate-expiry alert for this client."
+    ],
+    "remediation": [
+     {
+      "step": "Issue a new client certificate from the internal CA for CN=member-coverage-bff.",
+      "expected": "Certificate valid for 12 months."
+     },
+     {
+      "step": "Store the certificate in the secret store under the existing secret name.",
+      "expected": "New secret version active."
+     },
+     {
+      "step": "Rolling restart of member-coverage-bff pods to load the new certificate.",
+      "expected": "Pods healthy; handshakes succeed."
+     },
+     {
+      "step": "Check coverage panel error rate.",
+      "expected": "Error rate below 1%."
+     }
+    ],
+    "rollback": "Previous secret version cannot be restored (expired); escalate to PKI team if the new certificate is rejected.",
+    "prevention": [
+     "Enroll the certificate in automated renewal.",
+     "Alert 30 days before any client certificate expires."
+    ],
+    "exec_fail": {
+     "step": 1,
+     "mode": "transient",
+     "error": "Secret store write returned HTTP 429 (throttled). No new version created."
+    },
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-MBR-003",
+   "use_case": "MBR",
+   "title": "Digital claims submission returning an unexpected application error",
+   "description": "Members submitting a reimbursement claim with attachments in the portal get 'An unexpected error occurred' on the final step. Submissions without attachments go through. Started yesterday evening.",
+   "service": "Digital Claims Submission",
+   "ci": "member-claims-submit-api",
+   "reported_by": "Omar Haddad (Member Experience, synthetic)",
+   "reported_min_ago": 260,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "2 - Medium",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Members cannot submit reimbursement claims with receipts; paper claims increasing.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 240,
+      "source": "Portal frontend errors",
+      "text": "POST /claims/submit failed; response body not JSON; generic error displayed."
+     },
+     {
+      "id": "L2",
+      "t": 235,
+      "source": "member-claims-submit-api log",
+      "text": "No requests logged for failed submissions."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Submission failure rate (with attachments)",
+      "unit": "%",
+      "before": 64,
+      "threshold": 2,
+      "after": 0.5,
+      "after2": 0.5,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-2231",
+      "t_hours": 18,
+      "title": "Web application firewall policy update",
+      "detail": "Hardened request inspection rules for public endpoints."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-0950",
+      "title": "Member claim attachments",
+      "summary": "Attachments up to 10 MB per file are supported."
+     }
+    ],
+    "cmdb": {
+     "class": "API",
+     "depends_on": [
+      "web application firewall",
+      "document store"
+     ],
+     "owner_group": "Member Digital Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 230,
+      "source": "WAF log",
+      "text": "Blocked: request body size 3.4 MB exceeds limit 1 MB (rule MaxBodySize) - HTTP 413."
+     },
+     {
+      "id": "L4",
+      "t": 0,
+      "source": "WAF policy diff CHG-DEMO-2231",
+      "text": "maxRequestBodyKb 12288 -> 1024 for /claims/*."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Requests blocked before reaching the API by the updated WAF policy",
+      "why": "API logs show no requests for failed submissions; WAF changed yesterday.",
+      "evidence": [
+       "L2",
+       "CHG-DEMO-2231"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Document store rejecting attachments",
+      "why": "Only submissions with attachments fail.",
+      "evidence": [
+       "L1"
+      ],
+      "confidence": 0.35
+     },
+     {
+      "title": "Frontend bug in the final step",
+      "why": "Error shown on final step.",
+      "evidence": [
+       "L1"
+      ],
+      "confidence": 0.15
+     }
+    ],
+    "critic": [
+     "Likely, but which rule blocks it and why only attachments? Need WAF block logs.",
+     "If the document store rejected files, the API would log the call; it logs nothing.",
+     "Submissions without attachments use the same final step and work."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "WAF policy update CHG-DEMO-2231 lowered the maximum request body for /claims/* from 12 MB to 1 MB, so submissions with receipts over 1 MB are blocked with HTTP 413 before reaching the API and the portal shows a generic error.",
+    "contributing": [
+     "The portal does not map 413 to a helpful message.",
+     "WAF change was not tested with attachment flows."
+    ],
+    "remediation": [
+     {
+      "step": "Raise maxRequestBodyKb for /claims/* back to 12288 through a WAF policy change.",
+      "expected": "Policy version published."
+     },
+     {
+      "step": "Submit a test claim with a 5 MB synthetic attachment in the test member account.",
+      "expected": "Submission accepted."
+     },
+     {
+      "step": "Monitor submission failure rate for 30 minutes.",
+      "expected": "Failure rate below 2%."
+     },
+     {
+      "step": "Raise a story to show a size-limit message on 413.",
+      "expected": "Backlog item created."
+     }
+    ],
+    "rollback": "Re-apply the previous WAF policy version.",
+    "prevention": [
+     "Include attachment upload in WAF change test plan.",
+     "Alert on WAF block spikes per route."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-MBR-004",
+   "use_case": "MBR",
+   "title": "Member portal showing outdated claims status",
+   "description": "Members see claims as 'In process' in the portal hours after they were paid. Internal systems show the right status. Started this morning.",
+   "service": "Member Portal Claims View",
+   "ci": "member-claims-view-api",
+   "reported_by": "Lena Fischer (Member Experience, synthetic)",
+   "reported_min_ago": 150,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "3 - Low",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Members call to ask about paid claims; status confusion.",
+   "complexity": "Straightforward",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 140,
+      "source": "CDN log",
+      "text": "GET /api/member/claims: cache status HIT, age 14,200 s."
+     },
+     {
+      "id": "L2",
+      "t": 138,
+      "source": "member-claims-view-api",
+      "text": "Responses sent with Cache-Control: private, no-store."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Stale claims-view responses (sampled)",
+      "unit": "%",
+      "before": 72,
+      "threshold": 1,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-2240",
+      "t_hours": 9,
+      "title": "CDN performance rules for member portal",
+      "detail": "Added caching rule for /api/member/* static-like responses."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-0962",
+      "title": "Member portal caching rules",
+      "summary": "Member-specific API responses must never be cached at the CDN."
+     }
+    ],
+    "cmdb": {
+     "class": "API",
+     "depends_on": [
+      "CDN",
+      "claims-status-api"
+     ],
+     "owner_group": "Member Digital Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "New CDN rule caching member claims API responses",
+      "why": "CDN reports cache HITs with age of ~4 hours for a no-store API.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-2240"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Claims status service cache stale",
+      "why": "Similar symptom in internal apps before.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Browser caching",
+      "why": "Members see old data.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Supported; also a privacy concern since responses are member-specific.",
+     "Internal systems are correct; contradicted.",
+     "API sends no-store; CDN age proves server-side caching."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "CDN rule CHG-DEMO-2240 overrides Cache-Control for /api/member/* and caches member claims responses for up to 6 hours, so members see the status from when the response was first cached.",
+    "contributing": [
+     "Rule pattern too broad; intended for static assets.",
+     "KB rule on member-specific responses not enforced by tooling."
+    ],
+    "remediation": [
+     {
+      "step": "Remove /api/member/* from the CDN caching rule.",
+      "expected": "Rule version published."
+     },
+     {
+      "step": "Purge CDN cache for /api/member/*.",
+      "expected": "Purge completed."
+     },
+     {
+      "step": "Check CDN cache status for claims-view calls.",
+      "expected": "Cache status BYPASS."
+     },
+     {
+      "step": "Ask Privacy Office to review whether cached responses could be served across sessions.",
+      "expected": "Review ticket opened."
+     }
+    ],
+    "rollback": "Re-enable the rule only for /static/*.",
+    "prevention": [
+     "CDN rule linting: block caching on authenticated API paths.",
+     "Synthetic check comparing portal vs internal status."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-MBR-005",
+   "use_case": "MBR",
+   "title": "Member mobile app slow during morning peak",
+   "description": "Member app screens take 5-10 seconds to load between 08:00 and 10:00 ET on weekdays. Outside peak it is fine. App store reviews mention slowness.",
+   "service": "Member Mobile App API",
+   "ci": "member-mobile-api",
+   "reported_by": "Sam Patel (Digital Product, synthetic)",
+   "reported_min_ago": 400,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "3 - Low",
+   "category": "Performance",
+   "group": "Member Digital Engineering",
+   "business_impact": "Poor member experience at peak; app rating dropping.",
+   "complexity": "Straightforward; verification needs a second pass",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 380,
+      "source": "Autoscaler events",
+      "text": "member-mobile-api: desired replicas 9, capped at maxReplicas=4 (08:05-09:55)."
+     },
+     {
+      "id": "L2",
+      "t": 375,
+      "source": "Container metrics",
+      "text": "CPU throttling 62% on all 4 replicas during peak."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "App API p95 latency at peak",
+      "unit": "ms",
+      "before": 6800,
+      "threshold": 1200,
+      "after": 1650,
+      "after2": 900,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-2199",
+      "t_hours": 200,
+      "title": "Cost optimisation: autoscaling limits",
+      "detail": "Reduced maxReplicas for several member services."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-0915",
+      "title": "Member services capacity guide",
+      "summary": "Peak needs ~8 replicas of member-mobile-api."
+     }
+    ],
+    "cmdb": {
+     "class": "API",
+     "depends_on": [
+      "Kubernetes cluster",
+      "member data services"
+     ],
+     "owner_group": "Member Digital Engineering",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Autoscaling cap too low for peak demand",
+      "why": "Autoscaler wants 9 replicas but is capped at 4; replicas are CPU-throttled.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-2199"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Slow downstream member data services",
+      "why": "App aggregates several services.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Mobile network issues",
+      "why": "Users report slowness.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Strongly supported.",
+     "No downstream latency data; but throttling explains the delay.",
+     "Server-side latency is high, so not the client network."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "Cost change CHG-DEMO-2199 capped member-mobile-api at 4 replicas while morning peak needs about 9; the replicas are CPU-throttled and p95 latency rises to ~7 seconds.",
+    "contributing": [
+     "Capacity guide not consulted for the cost change.",
+     "No alert when desired replicas exceed the cap."
+    ],
+    "remediation": [
+     {
+      "step": "Raise maxReplicas for member-mobile-api from 4 to 10.",
+      "expected": "Autoscaler can reach desired replicas."
+     },
+     {
+      "step": "Confirm scaling during the next peak window.",
+      "expected": "Replicas scale to 8-9."
+     },
+     {
+      "step": "Check p95 latency at peak.",
+      "expected": "p95 below 1,200 ms."
+     }
+    ],
+    "rollback": "Restore maxReplicas=4 if cluster capacity alarms fire.",
+    "prevention": [
+     "Alert when desired replicas exceed max for 10 minutes.",
+     "Capacity review for cost changes."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": true,
+    "followup": {
+     "step": "Set minReplicas to 6 from 07:45 to 10:15 so pods are warm before the peak.",
+     "expected": "No cold-start latency at 08:00; p95 below 1,200 ms."
+    }
+   }
+  },
+  {
+   "id": "DEMO-PRV-001",
+   "use_case": "PRV",
+   "title": "Provider directory search returning incomplete provider information",
+   "description": "Provider search on the public directory is missing locations and accepting-new-patients flags for many large practices since the weekend index rebuild. Some providers are missing entirely.",
+   "service": "Provider Directory Search",
+   "ci": "provider-search-index",
+   "reported_by": "Grace Liu (Provider Network Operations, synthetic)",
+   "reported_min_ago": 600,
+   "priority": "2 - High",
+   "impact": "1 - High",
+   "urgency": "2 - Medium",
+   "category": "Data",
+   "group": "",
+   "business_impact": "Members can't find in-network providers; directory accuracy obligations at risk.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 2800,
+      "source": "Indexer run summary",
+      "text": "Weekend rebuild completed with status 'Succeeded with warnings'; 412,000 of 468,000 documents indexed."
+     },
+     {
+      "id": "L2",
+      "t": 2790,
+      "source": "Provider data source",
+      "text": "Source record count 468,000; no data source errors."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Providers missing from index",
+      "unit": "%",
+      "before": 12,
+      "threshold": 0.1,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-4012",
+      "t_hours": 60,
+      "title": "Provider search schema update",
+      "detail": "Added nested 'locations' field with typed attributes."
+     }
+    ],
+    "history": [
+     {
+      "id": "DEMO-HIST-0510",
+      "title": "Directory search slow after index growth",
+      "resolution": "Added replicas."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1305",
+      "title": "Provider search index rebuild",
+      "summary": "Rebuild weekly; check indexer warnings before swapping aliases."
+     }
+    ],
+    "cmdb": {
+     "class": "Search index",
+     "depends_on": [
+      "provider data management",
+      "search service"
+     ],
+     "owner_group": "Provider Data Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 2785,
+      "source": "Indexer warnings",
+      "text": "56,000 warnings: 'Field locations exceeds the maximum of 50 elements in a collection'. Documents skipped."
+     },
+     {
+      "id": "L4",
+      "t": 2780,
+      "source": "Alias swap log",
+      "text": "Alias provider-search swapped to new index automatically despite warnings."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Index rebuild skipped documents after the schema change",
+      "why": "Only 412k of 468k documents indexed after the new nested locations field.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-4012"
+      ],
+      "confidence": 0.55
+     },
+     {
+      "title": "Source provider data incomplete",
+      "why": "Missing fields could come from the source.",
+      "evidence": [],
+      "confidence": 0.3
+     },
+     {
+      "title": "Search replicas out of sync",
+      "why": "Previous incident involved replicas.",
+      "evidence": [
+       "DEMO-HIST-0510"
+      ],
+      "confidence": 0.15
+     }
+    ],
+    "critic": [
+     "Count gap is clear, but which documents and why? Need indexer warnings.",
+     "Source count matches 468k; contradicted.",
+     "Replica drift would show inconsistent results, not consistently missing ones."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "Schema update CHG-DEMO-4012 added a nested locations collection limited to 50 elements; the weekend rebuild skipped the 56,000 provider documents with more than 50 locations, and the alias was swapped to the incomplete index despite the warnings.",
+    "contributing": [
+     "Alias swap does not block on warnings.",
+     "Collection limit not tested with large practices."
+    ],
+    "remediation": [
+     {
+      "step": "Swap the provider-search alias back to last week's complete index.",
+      "expected": "Search returns full results (one week old)."
+     },
+     {
+      "step": "Split large practices' locations into child documents in the indexer mapping.",
+      "expected": "No collection limit warnings in a test rebuild."
+     },
+     {
+      "step": "Rebuild the index and verify document count equals source count.",
+      "expected": "468,000 documents indexed."
+     },
+     {
+      "step": "Swap alias to the new index.",
+      "expected": "Directory current and complete."
+     }
+    ],
+    "rollback": "Keep the alias on last week's index until the rebuild is verified.",
+    "prevention": [
+     "Block alias swap when indexed count < 99.9% of source.",
+     "Test schema changes with the largest practices."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-PRV-002",
+   "use_case": "PRV",
+   "title": "Eligibility verification API intermittently failing",
+   "description": "Provider office staff checking eligibility through the provider portal get intermittent 'Unable to verify eligibility' errors, about 8% of checks since Monday.",
+   "service": "Eligibility Verification API",
+   "ci": "eligibility-verify-api",
+   "reported_by": "Tom Becker (Provider Services, synthetic)",
+   "reported_min_ago": 500,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Provider offices delay appointments or call the provider service line.",
+   "complexity": "Straightforward; remediation needs manual takeover",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 480,
+      "source": "eligibility-verify-api log",
+      "text": "Upstream rules engine returned HTTP 429 Too Many Requests; request failed without retry."
+     },
+     {
+      "id": "L2",
+      "t": 470,
+      "source": "Rules engine gateway",
+      "text": "Rate limit 200 req/s per client; eligibility-verify-api peaking at 240 req/s since Monday."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Eligibility check failure rate",
+      "unit": "%",
+      "before": 8.2,
+      "threshold": 0.5,
+      "after": 0.2,
+      "after2": 0.2,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-4020",
+      "t_hours": 90,
+      "title": "New clearinghouse partner onboarded to eligibility API",
+      "detail": "Partner real-time eligibility traffic routed to eligibility-verify-api."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1322",
+      "title": "Rules engine quotas",
+      "summary": "Quota increases go through the rules engine platform team; clients must back off on 429."
+     }
+    ],
+    "cmdb": {
+     "class": "API",
+     "depends_on": [
+      "eligibility rules engine"
+     ],
+     "owner_group": "Provider Data Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Rules engine rate limit exceeded after new partner traffic",
+      "why": "429 responses; traffic above the 200 req/s quota since the partner went live.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-4020"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Rules engine capacity problem",
+      "why": "Upstream failures.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Bad member data for some checks",
+      "why": "Some checks fail.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Well supported.",
+     "429 is a quota response, not a capacity failure.",
+     "Failures are spread across members; no data pattern."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "Traffic from the clearinghouse partner onboarded in CHG-DEMO-4020 pushed eligibility-verify-api above its 200 req/s rules engine quota; excess calls get HTTP 429 and the API fails them without retry.",
+    "contributing": [
+     "Partner onboarding didn't include a quota review.",
+     "Client has no backoff on 429."
+    ],
+    "remediation": [
+     {
+      "step": "Enable retry with exponential backoff on 429 in eligibility-verify-api (feature flag).",
+      "expected": "Transient 429s retried."
+     },
+     {
+      "step": "Throttle partner traffic to 60 req/s at the API gateway.",
+      "expected": "Total under quota."
+     },
+     {
+      "step": "Request a quota increase to 300 req/s from the rules engine platform team.",
+      "expected": "Quota change approved."
+     },
+     {
+      "step": "Monitor failure rate for 30 minutes.",
+      "expected": "Failures below 0.5%."
+     }
+    ],
+    "rollback": "Remove the partner throttle once the quota increase is live.",
+    "prevention": [
+     "Quota check in partner onboarding checklist.",
+     "Alert at 80% of upstream quota."
+    ],
+    "exec_fail": {
+     "step": 2,
+     "mode": "manual",
+     "error": "Quota changes need the rules engine platform team; no automation access. Hand to engineer."
+    },
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-PRV-003",
+   "use_case": "PRV",
+   "title": "Provider data synchronization delayed between internal systems",
+   "description": "Provider updates (new locations, terminations) made in provider data management have not reached the claims system since Tuesday night. Claims for newly added locations are pending.",
+   "service": "Provider Data Sync",
+   "ci": "provider-sync-job",
+   "reported_by": "Helen Ortiz (Provider Data Management, synthetic)",
+   "reported_min_ago": 720,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Data",
+   "group": "Provider Data Services",
+   "business_impact": "Claims for new provider locations pending; terminated providers still payable.",
+   "complexity": "Multi-agent: second evidence round and a second verification pass",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 2000,
+      "source": "provider-sync-job log",
+      "text": "Batch 88213 failed validation; retrying (attempt 412)."
+     },
+     {
+      "id": "L2",
+      "t": 1990,
+      "source": "Sync watermark",
+      "text": "Watermark unchanged since Tue 22:40."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Provider updates waiting to sync",
+      "unit": "records",
+      "before": 9400,
+      "threshold": 100,
+      "after": 2600,
+      "after2": 40,
+      "better": "lower"
+     }
+    ],
+    "changes": [],
+    "history": [
+     {
+      "id": "DEMO-HIST-0533",
+      "title": "Provider sync slow after database maintenance",
+      "resolution": "Job restarted."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1340",
+      "title": "Provider sync job operations",
+      "summary": "Batches are retried; the job never skips a batch automatically."
+     }
+    ],
+    "cmdb": {
+     "class": "Batch job",
+     "depends_on": [
+      "provider data management",
+      "claims provider tables"
+     ],
+     "owner_group": "Provider Data Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 1985,
+      "source": "Validation detail for batch 88213",
+      "text": "Record PRV-SYN-55102: NPI '12345678901' fails 10-digit check; whole batch rejected."
+     },
+     {
+      "id": "L4",
+      "t": 1980,
+      "source": "Provider data management audit",
+      "text": "Record PRV-SYN-55102 edited Tue 22:31 via bulk upload template v3."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "A bad record makes the same batch fail forever",
+      "why": "Batch 88213 retried 412 times; watermark stuck.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Database maintenance slowed the job",
+      "why": "Past incident had that cause.",
+      "evidence": [
+       "DEMO-HIST-0533"
+      ],
+      "confidence": 0.3
+     },
+     {
+      "title": "Claims provider tables locked",
+      "why": "Writes not landing.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "Pattern fits a poison record but we haven't seen which record or why it fails.",
+     "No maintenance in the window; weak.",
+     "The job fails validation before writing; locks can't be the cause."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "Record PRV-SYN-55102, uploaded Tuesday 22:31 with an 11-digit NPI, fails validation; the sync job rejects and retries the whole batch indefinitely, so the watermark has not advanced and no later updates reach the claims system.",
+    "contributing": [
+     "Bulk upload template v3 doesn't validate NPI length.",
+     "Job retries forever with no poison-record handling."
+    ],
+    "remediation": [
+     {
+      "step": "Correct the NPI on PRV-SYN-55102 in provider data management (data steward).",
+      "expected": "Record passes validation."
+     },
+     {
+      "step": "Let the sync job retry batch 88213.",
+      "expected": "Batch succeeds; watermark advances."
+     },
+     {
+      "step": "Monitor sync queue depth.",
+      "expected": "Queue draining."
+     }
+    ],
+    "rollback": "Not applicable; data correction only.",
+    "prevention": [
+     "Validate NPI in the upload template.",
+     "Quarantine failing records instead of retrying the batch."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": true,
+    "followup": {
+     "step": "Run the provider sync catch-up mode (parallel batches) until queue < 100.",
+     "expected": "Backlog cleared within 2 hours."
+    }
+   }
+  },
+  {
+   "id": "DEMO-PRV-004",
+   "use_case": "PRV",
+   "title": "Incorrect eligibility response for a valid test member record",
+   "description": "QA found the eligibility API returns 'Inactive' for synthetic test member TM-0042, whose coverage starts tomorrow, when checked after 19:00 ET today. Before 19:00 it correctly returns 'Future effective'. Production members may be affected the same way.",
+   "service": "Eligibility Rules Service",
+   "ci": "eligibility-rules-svc",
+   "reported_by": "Nina Alvarez (QA Engineering, synthetic)",
+   "reported_min_ago": 60,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "2 - Medium",
+   "category": "Software",
+   "group": "",
+   "business_impact": "Members starting coverage may be shown as inactive the evening before; possible denied services at urgent care.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 50,
+      "source": "Test execution log",
+      "text": "TM-0042 check at 18:55 ET: FUTURE_EFFECTIVE; at 19:05 ET: INACTIVE."
+     },
+     {
+      "id": "L2",
+      "t": 45,
+      "source": "eligibility-rules-svc log",
+      "text": "Evaluated coverage window for TM-0042 with asOfDate=2026-11-12."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Wrong responses in date-boundary test suite",
+      "unit": "tests",
+      "before": 14,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-4031",
+      "t_hours": 100,
+      "title": "Eligibility rules service runtime upgrade",
+      "detail": "Upgraded runtime and date library."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1355",
+      "title": "Eligibility date handling",
+      "summary": "All coverage comparisons use the member's plan timezone (America/New_York)."
+     }
+    ],
+    "cmdb": {
+     "class": "Application service",
+     "depends_on": [
+      "eligibility data store"
+     ],
+     "owner_group": "Provider Data Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 40,
+      "source": "Code diff CHG-DEMO-4031",
+      "text": "LocalDate.now() replaced with LocalDate.now(ZoneOffset.UTC) during the date library upgrade."
+     },
+     {
+      "id": "L4",
+      "t": 38,
+      "source": "Rule trace",
+      "text": "asOfDate computed in UTC (2026-11-12) at 19:05 ET; coverage effective 2026-11-12 compared with an off-by-one 'end of prior plan year' rule -> INACTIVE."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Date evaluated in UTC instead of Eastern time",
+      "why": "Wrong answer only after 19:00 ET, when UTC has rolled to the next day.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Test member data set up incorrectly",
+      "why": "Only a test member reported.",
+      "evidence": [],
+      "confidence": 0.3
+     },
+     {
+      "title": "Eligibility data store replication lag",
+      "why": "Results change over time.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "19:00 ET = 00:00 UTC is suggestive; need to see where the date is computed.",
+     "The record returns correctly before 19:00; data is fine.",
+     "Same record, no data change between calls; lag unlikely."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "The runtime upgrade CHG-DEMO-4031 changed the eligibility as-of date to be computed in UTC instead of America/New_York; after 19:00 ET the as-of date rolls to the next day and members whose coverage starts that day are evaluated against the prior plan year rule and returned as inactive.",
+    "contributing": [
+     "No date-boundary tests in the regression suite.",
+     "KB timezone rule not enforced in code review."
+    ],
+    "remediation": [
+     {
+      "step": "Fix the as-of date to use the plan timezone; deploy to test.",
+      "expected": "Date-boundary suite passes in test."
+     },
+     {
+      "step": "Deploy the fix to production through the release pipeline.",
+      "expected": "Release completed."
+     },
+     {
+      "step": "Run the date-boundary suite against production with synthetic test members.",
+      "expected": "0 wrong responses."
+     }
+    ],
+    "rollback": "Roll back to the previous service version (also correct) if the fix fails.",
+    "prevention": [
+     "Add date-boundary tests at 19:00-24:00 ET.",
+     "Lint rule: no UTC 'now' in eligibility code."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-PRV-005",
+   "use_case": "PRV",
+   "title": "Provider network information unavailable in care management application",
+   "description": "The care management application shows 'Network status unavailable' for every provider since this morning's maintenance window. Nurses can't confirm whether referrals are in network.",
+   "service": "Provider Network Service",
+   "ci": "provider-network-api",
+   "reported_by": "Carlos Mendes (Care Management, synthetic)",
+   "reported_min_ago": 230,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Integration",
+   "group": "",
+   "business_impact": "Care managers can't confirm network status for referrals; manual lookups.",
+   "complexity": "Straightforward",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 220,
+      "source": "Care management app log",
+      "text": "GET /v1/providers/{id}/network -> 410 Gone."
+     },
+     {
+      "id": "L2",
+      "t": 215,
+      "source": "provider-network-api release notes",
+      "text": "v1 endpoints decommissioned in maintenance window; v2 renames networkId to network_id."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Network lookups failing",
+      "unit": "%",
+      "before": 100,
+      "threshold": 1,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-4040",
+      "t_hours": 5,
+      "title": "Decommission provider-network-api v1",
+      "detail": "Removed v1 routes after 6-month deprecation."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1371",
+      "title": "Provider network API v2 migration",
+      "summary": "Consumers must move to v2 before v1 removal; temporary v1 compatibility route available on request."
+     }
+    ],
+    "cmdb": {
+     "class": "API",
+     "depends_on": [
+      "provider data management"
+     ],
+     "owner_group": "Provider Data Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Care management still calls the decommissioned v1 API",
+      "why": "410 Gone from v1 endpoint right after v1 removal.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-4040"
+      ],
+      "confidence": 0.9
+     },
+     {
+      "title": "Provider network service outage",
+      "why": "Lookups failing.",
+      "evidence": [],
+      "confidence": 0.07
+     },
+     {
+      "title": "Authorization failure",
+      "why": "Calls rejected.",
+      "evidence": [],
+      "confidence": 0.03
+     }
+    ],
+    "critic": [
+     "Directly evidenced.",
+     "410 is not an outage response; v2 is healthy.",
+     "Auth failures return 401/403, not 410."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "CHG-DEMO-4040 removed provider-network-api v1, but the care management application had not migrated to v2, so every network lookup returns HTTP 410 Gone.",
+    "contributing": [
+     "Consumer inventory missed the care management app.",
+     "No usage check of v1 before decommission."
+    ],
+    "remediation": [
+     {
+      "step": "Enable the temporary v1 compatibility route for the care management client only.",
+      "expected": "Lookups succeed."
+     },
+     {
+      "step": "Confirm care management shows network status.",
+      "expected": "Status visible for test providers."
+     },
+     {
+      "step": "Raise a change for care management to migrate to v2 (network_id).",
+      "expected": "Change scheduled."
+     }
+    ],
+    "rollback": "Disable the compatibility route after migration.",
+    "prevention": [
+     "Block decommission while v1 traffic > 0.",
+     "Keep a consumer inventory in CMDB."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-INT-001",
+   "use_case": "INT",
+   "title": "EDI 837 claims file processing failure",
+   "description": "This morning's 837 professional claims file from a clearinghouse trading partner was rejected by the EDI gateway. About 18,000 claims are not loaded. Other partners' files processed normally.",
+   "service": "EDI Gateway (837 inbound)",
+   "ci": "edi-gateway-837",
+   "reported_by": "Victor Chen (EDI Operations, synthetic)",
+   "reported_min_ago": 150,
+   "priority": "1 - Critical",
+   "impact": "1 - High",
+   "urgency": "1 - High",
+   "category": "Integration",
+   "group": "",
+   "business_impact": "18,000 claims not received; timely-processing clock running.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 140,
+      "source": "EDI gateway log",
+      "text": "File 837P_PARTNER-SYN-07_20261111.x12: rejected, 'ISA segment not found at position 0'."
+     },
+     {
+      "id": "L2",
+      "t": 139,
+      "source": "Partner file history",
+      "text": "Partner SYN-07 files processed successfully every day until today."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Claims from partner SYN-07 loaded",
+      "unit": "claims",
+      "before": 0,
+      "threshold": 18000,
+      "after": 18240,
+      "after2": 18240,
+      "better": "higher"
+     }
+    ],
+    "changes": [],
+    "history": [
+     {
+      "id": "DEMO-HIST-0610",
+      "title": "837 rejection: invalid segment terminator",
+      "resolution": "Partner resent with correct delimiters."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1410",
+      "title": "EDI inbound rejection triage",
+      "summary": "Check envelope (ISA/IEA), delimiters and encoding before contacting the partner."
+     }
+    ],
+    "cmdb": {
+     "class": "Integration",
+     "depends_on": [
+      "SFTP landing zone",
+      "claims intake"
+     ],
+     "owner_group": "Integration Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 135,
+      "source": "Hex dump of file header",
+      "text": "First bytes: EF BB BF 49 53 41 2A (UTF-8 byte order mark before 'ISA*')."
+     },
+     {
+      "id": "L4",
+      "t": 130,
+      "source": "Partner notice (synthetic)",
+      "text": "Partner SYN-07 moved to a new export tool on 2026-11-10."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "File format changed at the partner so the envelope can't be parsed",
+      "why": "ISA not found at position 0 for one partner only.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Invalid segment terminator, like a previous rejection",
+      "why": "Historical incident with the same partner type.",
+      "evidence": [
+       "DEMO-HIST-0610"
+      ],
+      "confidence": 0.35
+     },
+     {
+      "title": "Gateway translator map broken",
+      "why": "File rejected by the gateway.",
+      "evidence": [],
+      "confidence": 0.15
+     }
+    ],
+    "critic": [
+     "Likely, but 'format changed' is vague; inspect the raw header bytes.",
+     "A terminator problem would fail later in the file, not at position 0.",
+     "Other partners' files process normally with the same maps."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "Partner SYN-07's new export tool writes a UTF-8 byte order mark before the ISA segment, so the EDI gateway can't find ISA at position 0 and rejects the whole 837 file.",
+    "contributing": [
+     "Gateway has no BOM tolerance.",
+     "Partner tooling change not communicated in advance."
+    ],
+    "remediation": [
+     {
+      "step": "Copy the rejected file to the reprocessing folder and strip the 3-byte BOM (original kept).",
+      "expected": "File starts with ISA*."
+     },
+     {
+      "step": "Reprocess the corrected file through the gateway.",
+      "expected": "Accepted; 999 acknowledgement generated."
+     },
+     {
+      "step": "Confirm claims loaded count matches the file's claim count.",
+      "expected": "18,240 claims loaded."
+     },
+     {
+      "step": "Ask partner SYN-07 to disable BOM in their export.",
+      "expected": "Partner acknowledges."
+     }
+    ],
+    "rollback": "Original file retained untouched; reprocess can be reversed with the claims intake batch void.",
+    "prevention": [
+     "Enable BOM stripping in gateway pre-processing.",
+     "Partner change notification in the trading partner agreement."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-INT-002",
+   "use_case": "INT",
+   "title": "EDI 834 enrollment file not processed within the expected window",
+   "description": "The daily 834 enrollment file from an employer group was due for processing by 06:00 ET but has not been loaded. The employer confirms it was sent at 02:10. New hires' coverage is not active.",
+   "service": "EDI Gateway (834 enrollment)",
+   "ci": "edi-834-file-watcher",
+   "reported_by": "Monique Harris (Enrollment Operations, synthetic)",
+   "reported_min_ago": 190,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Integration",
+   "group": "Integration Services",
+   "business_impact": "New enrollees' coverage not active; risk of denied services.",
+   "complexity": "Straightforward; one step fails and needs a retry",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 180,
+      "source": "SFTP server log",
+      "text": "Upload complete 02:10: /landing/v2/834/EMPLOYER-SYN-12/834_20261111.x12."
+     },
+     {
+      "id": "L2",
+      "t": 175,
+      "source": "File watcher config",
+      "text": "Watching /landing/834/ (no events since 2026-11-09)."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "834 files waiting",
+      "unit": "files",
+      "before": 3,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-5011",
+      "t_hours": 50,
+      "title": "SFTP landing zone storage migration",
+      "detail": "Moved landing folders to new storage under /landing/v2/."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1422",
+      "title": "834 processing runbook",
+      "summary": "Files are picked up by the watcher within 5 minutes of upload."
+     }
+    ],
+    "cmdb": {
+     "class": "Integration",
+     "depends_on": [
+      "SFTP landing zone",
+      "enrollment system"
+     ],
+     "owner_group": "Integration Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "File watcher still monitoring the old landing path after storage migration",
+      "why": "Files land in /landing/v2/ but the watcher watches /landing/834/.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-5011"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Enrollment system down",
+      "why": "Files not loaded.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Employer sent an invalid file",
+      "why": "File not processed.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Well supported.",
+     "No file reached the enrollment system; can't be the cause.",
+     "File was never picked up, so validity is untested."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "Storage migration CHG-DEMO-5011 moved SFTP landing folders to /landing/v2/, but the 834 file watcher still watches /landing/834/, so no 834 file has been picked up since 2026-11-09.",
+    "contributing": [
+     "Migration plan missed the watcher configuration.",
+     "No alert when expected daily files are not processed."
+    ],
+    "remediation": [
+     {
+      "step": "Update the file watcher path to /landing/v2/834/ via config pipeline.",
+      "expected": "Watcher config version deployed."
+     },
+     {
+      "step": "Restart the file watcher service.",
+      "expected": "Watcher detects 3 waiting files."
+     },
+     {
+      "step": "Confirm the 3 waiting 834 files are processed and acknowledged.",
+      "expected": "3 files loaded; 999s sent."
+     },
+     {
+      "step": "Notify Enrollment Operations to confirm new hires are active.",
+      "expected": "Enrollment confirms coverage active."
+     }
+    ],
+    "rollback": "Revert watcher path; files remain in landing zone untouched.",
+    "prevention": [
+     "Missing-file alert by 05:00 for daily feeds.",
+     "Add file watchers to the storage migration checklist."
+    ],
+    "exec_fail": {
+     "step": 1,
+     "mode": "transient",
+     "error": "Service restart timed out waiting for health probe (60 s). Service still running old config."
+    },
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-INT-003",
+   "use_case": "INT",
+   "title": "Workday integration failing to synchronize employee updates",
+   "description": "HR reports employee changes made in Workday (department transfers, terminations) are partly missing from downstream systems. The nightly sync says 'completed' but only some changes arrive.",
+   "service": "Workday Worker Sync",
+   "ci": "workday-worker-sync",
+   "reported_by": "Ellen Brooks (HR Systems, synthetic)",
+   "reported_min_ago": 1300,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "2 - Medium",
+   "category": "Integration",
+   "group": "",
+   "business_impact": "Terminated employees may keep access; transfers not reflected in approvals.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 1250,
+      "source": "workday-worker-sync log",
+      "text": "Nightly sync completed: 1000 worker changes processed."
+     },
+     {
+      "id": "L2",
+      "t": 1248,
+      "source": "HR change report (synthetic)",
+      "text": "Workday shows 1,612 worker changes for the same period."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Worker changes missed by sync",
+      "unit": "changes",
+      "before": 612,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-5020",
+      "t_hours": 300,
+      "title": "Workday report endpoint update",
+      "detail": "Switched sync to the new worker changes report endpoint."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1438",
+      "title": "Workday worker sync",
+      "summary": "Sync reads the worker changes report and applies changes downstream."
+     }
+    ],
+    "cmdb": {
+     "class": "Integration",
+     "depends_on": [
+      "Workday (SaaS)",
+      "identity governance",
+      "HR data store"
+     ],
+     "owner_group": "Integration Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 1245,
+      "source": "Report response headers",
+      "text": "total=1612, page=1, pageSize=1000, next page link present."
+     },
+     {
+      "id": "L4",
+      "t": 1240,
+      "source": "Sync code review",
+      "text": "Client reads only the first page; 'next' link ignored since the endpoint switch."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Sync stops after a fixed number of records",
+      "why": "Exactly 1000 processed vs 1,612 changes.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Workday API credentials lack permission for some workers",
+      "why": "Some workers missing.",
+      "evidence": [],
+      "confidence": 0.3
+     },
+     {
+      "title": "Downstream systems rejecting some updates",
+      "why": "Changes missing downstream.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "The round number is a strong clue; confirm paging behaviour.",
+     "A permission gap would show errors or a non-round count.",
+     "Sync reports 1000 processed, so the gap is before downstream."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "Since endpoint switch CHG-DEMO-5020, the Workday worker changes report returns 1,000 records per page and the sync client reads only the first page, silently dropping every change after the first 1,000.",
+    "contributing": [
+     "Sync reports 'completed' without checking the total count.",
+     "Endpoint switch not tested with high-volume days."
+    ],
+    "remediation": [
+     {
+      "step": "Deploy the sync fix that follows 'next' page links.",
+      "expected": "Release deployed."
+     },
+     {
+      "step": "Run a catch-up sync for the last 14 days (read Workday, apply changes).",
+      "expected": "All 612 missed changes applied."
+     },
+     {
+      "step": "Ask Identity & Access to review access for terminations in the gap.",
+      "expected": "Access review ticket opened."
+     }
+    ],
+    "rollback": "Catch-up sync is idempotent; rerun is safe.",
+    "prevention": [
+     "Reconcile processed count with report total.",
+     "Volume test integration changes."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-INT-004",
+   "use_case": "INT",
+   "title": "Downstream application not receiving expected integration events",
+   "description": "The member communications system stopped receiving member address change events yesterday at 16:00. Address changes are made in the member system but welcome kits and ID cards go to old addresses.",
+   "service": "Member Event Distribution",
+   "ci": "member-events-topic",
+   "reported_by": "Ben Carter (Member Communications, synthetic)",
+   "reported_min_ago": 900,
+   "priority": "3 - Moderate",
+   "impact": "2 - Medium",
+   "urgency": "2 - Medium",
+   "category": "Integration",
+   "group": "Integration Services",
+   "business_impact": "Mail sent to old addresses; reprints and potential privacy exposure.",
+   "complexity": "Straightforward",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 880,
+      "source": "Event broker metrics",
+      "text": "Topic member-events incoming: normal (~4,200/h). Subscription member-comms: 0 messages since 16:02."
+     },
+     {
+      "id": "L2",
+      "t": 870,
+      "source": "Subscription rule",
+      "text": "member-comms filter: eventType IN ('MemberAddressChange','MemberEnrolled')."
+     },
+     {
+      "id": "L3",
+      "t": 868,
+      "source": "Publisher sample",
+      "text": "Published eventType='MemberAddressChanged'."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Address events delivered to member-comms (per hour)",
+      "unit": "events",
+      "before": 0,
+      "threshold": 100,
+      "after": 640,
+      "after2": 640,
+      "better": "higher"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-5033",
+      "t_hours": 18,
+      "title": "Member event naming alignment",
+      "detail": "Publisher renamed event types to past tense."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1450",
+      "title": "Member event catalog",
+      "summary": "Event type names are a contract; renames need subscriber sign-off."
+     }
+    ],
+    "cmdb": {
+     "class": "Event topic",
+     "depends_on": [
+      "member system",
+      "member communications"
+     ],
+     "owner_group": "Integration Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Event renamed by publisher no longer matches subscriber filter",
+      "why": "Publisher now sends MemberAddressChanged; filter expects MemberAddressChange.",
+      "evidence": [
+       "L1",
+       "L2",
+       "L3",
+       "CHG-DEMO-5033"
+      ],
+      "confidence": 0.9
+     },
+     {
+      "title": "Member communications consumer down",
+      "why": "Events not processed.",
+      "evidence": [],
+      "confidence": 0.07
+     },
+     {
+      "title": "Broker outage",
+      "why": "Messages missing.",
+      "evidence": [],
+      "confidence": 0.03
+     }
+    ],
+    "critic": [
+     "Directly evidenced.",
+     "Subscription receives zero messages, so the consumer isn't the bottleneck.",
+     "Topic incoming is normal."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "CHG-DEMO-5033 renamed the published event type to MemberAddressChanged, but the member-comms subscription filter still matches MemberAddressChange, so address events are delivered to no subscriber.",
+    "contributing": [
+     "Event rename skipped subscriber sign-off required by KB-DEMO-1450.",
+     "No alert on a subscription going silent."
+    ],
+    "remediation": [
+     {
+      "step": "Update the member-comms filter to accept both old and new event names.",
+      "expected": "Filter rule updated."
+     },
+     {
+      "step": "Replay address events since 16:00 yesterday from the publisher outbox.",
+      "expected": "Missed events delivered."
+     },
+     {
+      "step": "Confirm member-comms processed the replayed events.",
+      "expected": "Replayed count matches outbox count."
+     },
+     {
+      "step": "Ask Member Communications to hold mailings to affected members until addresses are refreshed.",
+      "expected": "Hold confirmed."
+     }
+    ],
+    "rollback": "Restore the previous filter rule.",
+    "prevention": [
+     "Contract tests on event names.",
+     "Alert when a subscription receives nothing for 1 hour in business hours."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-INT-005",
+   "use_case": "INT",
+   "title": "Scheduled pharmacy data exchange job failing with connection timeout",
+   "description": "The 04:00 scheduled job that sends the daily pharmacy accumulator file to the pharmacy benefit partner has failed for two days with 'connection timed out'. Partner has not received files since Monday.",
+   "service": "Pharmacy Accumulator Exchange",
+   "ci": "rx-accumulator-sftp-job",
+   "reported_by": "Ivan Petrov (Pharmacy Operations, synthetic)",
+   "reported_min_ago": 330,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Network",
+   "group": "",
+   "business_impact": "Member out-of-pocket accumulators out of date at the pharmacy; possible wrong cost-share.",
+   "complexity": "Multi-agent: second evidence round, remediation needs manual takeover",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 320,
+      "source": "Job log",
+      "text": "Connecting to sftp.partner-syn.example:22 ... connection timed out after 60 s."
+     },
+     {
+      "id": "L2",
+      "t": 318,
+      "source": "DNS lookup",
+      "text": "sftp.partner-syn.example resolves to 203.0.113.48 (was 198.51.100.17 until Monday)."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Days of accumulator files not delivered",
+      "unit": "files",
+      "before": 2,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [],
+    "history": [
+     {
+      "id": "DEMO-HIST-0702",
+      "title": "Partner SFTP failure: expired SSH host key",
+      "resolution": "Host key updated."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1466",
+      "title": "Outbound partner connectivity",
+      "summary": "Outbound partner connections are allowlisted by IP on the egress firewall."
+     }
+    ],
+    "cmdb": {
+     "class": "Batch job",
+     "depends_on": [
+      "egress firewall",
+      "partner SFTP"
+     ],
+     "owner_group": "Integration Services",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 315,
+      "source": "Egress firewall log",
+      "text": "DENY tcp 10.40.2.15 -> 203.0.113.48:22 (no matching allow rule)."
+     },
+     {
+      "id": "L4",
+      "t": 312,
+      "source": "Partner notice (synthetic)",
+      "text": "Partner announced new SFTP IP 203.0.113.48 effective Monday."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Outbound traffic to the partner's new IP is blocked",
+      "why": "Partner DNS changed to a new IP on Monday when failures began.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.5
+     },
+     {
+      "title": "Partner SSH host key changed",
+      "why": "Past incident with the same partner type.",
+      "evidence": [
+       "DEMO-HIST-0702"
+      ],
+      "confidence": 0.3
+     },
+     {
+      "title": "Partner SFTP server down",
+      "why": "Connection fails.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "Timing fits; need firewall evidence before concluding.",
+     "A host key problem fails after connecting, not with a timeout.",
+     "Other customers aren't reporting issues (unknown); not tested."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "The pharmacy partner moved its SFTP server to 203.0.113.48 on Monday; the egress firewall only allowlists the old IP 198.51.100.17, so the job's connection is silently dropped and times out.",
+    "contributing": [
+     "Partner IP change notice not routed to network team.",
+     "Job failure alerts went to an unmonitored mailbox."
+    ],
+    "remediation": [
+     {
+      "step": "Network Operations adds an egress allow rule to 203.0.113.48:22 (emergency change).",
+      "expected": "Firewall rule active."
+     },
+     {
+      "step": "Rerun the accumulator job for Tuesday and Wednesday.",
+      "expected": "Both files delivered; partner acknowledgements received."
+     },
+     {
+      "step": "Remove the old IP rule after partner confirms decommission.",
+      "expected": "Change scheduled."
+     }
+    ],
+    "rollback": "Remove the new rule if the partner IP is incorrect.",
+    "prevention": [
+     "Allowlist by partner FQDN where supported.",
+     "Route job failure alerts to the integration on-call."
+    ],
+    "exec_fail": {
+     "step": 0,
+     "mode": "manual",
+     "error": "Firewall changes require Network Operations approval; automation has no access. Hand to engineer."
+    },
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-IAM-001",
+   "use_case": "IAM",
+   "title": "Employees unable to access a critical enterprise application through SSO",
+   "description": "Since 08:00 ET, employees signing in to the care management application through SSO get 'Invalid SAML response'. No one can sign in. Direct login is disabled for this app.",
+   "service": "Care Management SSO",
+   "ci": "care-mgmt-saml-sp",
+   "reported_by": "Aisha Johnson (Clinical Operations, synthetic)",
+   "reported_min_ago": 70,
+   "priority": "1 - Critical",
+   "impact": "1 - High",
+   "urgency": "1 - High",
+   "category": "Access",
+   "group": "",
+   "business_impact": "Care managers cannot access member care plans; clinical work stopped.",
+   "complexity": "Straightforward",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 65,
+      "source": "Care management app log",
+      "text": "SAML signature validation failed: certificate thumbprint 9F3A... not trusted."
+     },
+     {
+      "id": "L2",
+      "t": 64,
+      "source": "Identity provider audit",
+      "text": "Signing certificate rolled over at 08:00 ET (new thumbprint 9F3A..., previous 2C71...)."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "SSO sign-in success",
+      "unit": "%",
+      "before": 0,
+      "threshold": 99,
+      "after": 99.8,
+      "after2": 99.8,
+      "better": "higher"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-6001",
+      "t_hours": 3,
+      "title": "Annual IdP signing certificate rollover",
+      "detail": "Scheduled certificate rollover; app owners notified 30 days earlier."
+     }
+    ],
+    "history": [
+     {
+      "id": "DEMO-HIST-0288",
+      "title": "Portal login failures after IdP certificate renewal",
+      "resolution": "Updated IdP metadata on portal."
+     }
+    ],
+    "kb": [
+     {
+      "id": "KB-DEMO-1501",
+      "title": "SAML certificate rollover for app owners",
+      "summary": "Import the new signing certificate or refresh federation metadata before rollover."
+     }
+    ],
+    "cmdb": {
+     "class": "SAML service provider",
+     "depends_on": [
+      "identity provider"
+     ],
+     "owner_group": "Identity & Access Management",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "App still trusts the old IdP signing certificate",
+      "why": "Validation fails on the new thumbprint right after the rollover.",
+      "evidence": [
+       "L1",
+       "L2",
+       "CHG-DEMO-6001"
+      ],
+      "confidence": 0.9
+     },
+     {
+      "title": "App's SAML configuration corrupted",
+      "why": "SAML errors.",
+      "evidence": [],
+      "confidence": 0.07
+     },
+     {
+      "title": "IdP outage",
+      "why": "SSO failing.",
+      "evidence": [],
+      "confidence": 0.03
+     }
+    ],
+    "critic": [
+     "Directly evidenced, matches a known pattern.",
+     "Config otherwise unchanged.",
+     "Other apps sign in fine with the IdP."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "The identity provider's signing certificate rolled over at 08:00 under CHG-DEMO-6001, but the care management application still trusts only the previous certificate, so every SAML response fails signature validation.",
+    "contributing": [
+     "App uses static certificate pinning instead of metadata refresh.",
+     "Rollover notice not acted on by the app owner."
+    ],
+    "remediation": [
+     {
+      "step": "Import the new IdP signing certificate (thumbprint 9F3A...) into the app's SAML trust.",
+      "expected": "Both certificates trusted."
+     },
+     {
+      "step": "Test SSO sign-in with a test account.",
+      "expected": "Sign-in succeeds."
+     },
+     {
+      "step": "Announce restoration to Clinical Operations.",
+      "expected": "Notice sent."
+     }
+    ],
+    "rollback": "Not needed; adding trust is additive.",
+    "prevention": [
+     "Switch the app to automatic metadata refresh.",
+     "Track rollover acknowledgement per app."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-IAM-002",
+   "use_case": "IAM",
+   "title": "Intermittent authentication failures after identity configuration update",
+   "description": "Since yesterday's identity policy update, some employees are blocked or stuck in repeated MFA prompts when signing in to Microsoft 365 and internal apps. Mostly staff at the Watertown office; remote staff are fine.",
+   "service": "Workforce Identity Policies",
+   "ci": "workforce-conditional-access",
+   "reported_by": "Ryan Murphy (Service Desk, synthetic)",
+   "reported_min_ago": 240,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "1 - High",
+   "category": "Access",
+   "group": "",
+   "business_impact": "Office staff losing productivity; service desk call spike.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 230,
+      "source": "Sign-in logs",
+      "text": "Failures: 'Access blocked by policy: require compliant network'. 82% from office egress range."
+     },
+     {
+      "id": "L2",
+      "t": 228,
+      "source": "Policy change log",
+      "text": "Policy 'Require trusted network for admin portals' scope expanded to all cloud apps."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Office sign-in failure rate",
+      "unit": "%",
+      "before": 37,
+      "threshold": 1,
+      "after": 0.3,
+      "after2": 0.3,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-6012",
+      "t_hours": 26,
+      "title": "Identity policy hardening",
+      "detail": "Expanded trusted-network policy scope; updated named locations."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1512",
+      "title": "Named locations",
+      "summary": "Each office has two internet egress ranges (primary and secondary ISP)."
+     }
+    ],
+    "cmdb": {
+     "class": "Identity policy",
+     "depends_on": [
+      "identity provider",
+      "office network egress"
+     ],
+     "owner_group": "Identity & Access Management",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 220,
+      "source": "Named location diff",
+      "text": "Trusted network 'Watertown office' now contains only primary ISP range; secondary ISP range removed."
+     },
+     {
+      "id": "L4",
+      "t": 218,
+      "source": "Network flow summary",
+      "text": "~40% of Watertown traffic egresses via the secondary ISP (load balanced)."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Expanded policy blocks traffic from an office network not marked trusted",
+      "why": "Failures mostly from the office after the policy scope expanded.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.55
+     },
+     {
+      "title": "MFA service degradation",
+      "why": "Users stuck in MFA prompts.",
+      "evidence": [],
+      "confidence": 0.25
+     },
+     {
+      "title": "Device compliance check failing",
+      "why": "Policy mentions compliance.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "Why intermittent if the whole office is affected? Need named location contents and egress split.",
+     "Remote staff unaffected; contradicts a service-wide MFA issue.",
+     "Failure reason cites network, not device."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "CHG-DEMO-6012 expanded the trusted-network policy to all apps and rewrote the Watertown named location without its secondary ISP range; the ~40% of office traffic that leaves via the secondary ISP is treated as untrusted and blocked.",
+    "contributing": [
+     "Named location edit not peer reviewed against the network inventory.",
+     "Policy expansion not piloted in report-only mode."
+    ],
+    "remediation": [
+     {
+      "step": "Switch the expanded policy to report-only mode (approved emergency change).",
+      "expected": "Blocks stop immediately."
+     },
+     {
+      "step": "Add the secondary ISP range back to the Watertown named location.",
+      "expected": "Both ranges trusted."
+     },
+     {
+      "step": "Re-enable enforcement after 1 hour of clean report-only results.",
+      "expected": "No would-be blocks from office ranges."
+     }
+    ],
+    "rollback": "Leave the policy in report-only mode until the location is fixed.",
+    "prevention": [
+     "Pilot policy changes in report-only mode for 48 h.",
+     "Sync named locations from the network inventory."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-IAM-003",
+   "use_case": "IAM",
+   "title": "Employee access provisioning delayed after onboarding request",
+   "description": "New hires who started Monday in Finance still don't have access to the finance applications. Onboarding requests were submitted last week. Other departments' new hires got access on time.",
+   "service": "Access Provisioning Workflow",
+   "ci": "access-provisioning-wf",
+   "reported_by": "Laura Chen (Finance Operations, synthetic)",
+   "reported_min_ago": 2000,
+   "priority": "3 - Moderate",
+   "impact": "3 - Low",
+   "urgency": "2 - Medium",
+   "category": "Access",
+   "group": "",
+   "business_impact": "Six new hires unable to work; onboarding experience affected.",
+   "complexity": "Straightforward",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 1950,
+      "source": "Provisioning workflow",
+      "text": "6 requests in state 'Awaiting manager approval' for 6-8 days."
+     },
+     {
+      "id": "L2",
+      "t": 1940,
+      "source": "Approval task",
+      "text": "Approver: Finance cost-center manager (synthetic user FIN-MGR-07), status: inactive since 2026-10-31."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Finance access requests stuck",
+      "unit": "requests",
+      "before": 6,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1525",
+      "title": "Access request approvals",
+      "summary": "Approvals route to the cost-center manager in the HR record; delegates are used when the manager is inactive."
+     }
+    ],
+    "cmdb": {
+     "class": "Workflow",
+     "depends_on": [
+      "HR data store",
+      "identity governance"
+     ],
+     "owner_group": "Identity & Access Management",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Approvals routed to a manager who has left",
+      "why": "All stuck requests wait on an inactive approver.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Provisioning connector failure for finance apps",
+      "why": "Only finance access affected.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Requests submitted incorrectly",
+      "why": "Only one department affected.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Supported; check why delegation didn't apply.",
+     "Requests never reached provisioning; connector not involved.",
+     "Requests are complete and valid."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "The Finance cost center's manager left on 2026-10-31 and the HR record still names them, and no delegate was set, so all six access approvals wait on an inactive approver.",
+    "contributing": [
+     "Offboarding doesn't reassign cost-center manager.",
+     "No escalation for approvals older than 2 days."
+    ],
+    "remediation": [
+     {
+      "step": "HR updates the cost-center manager for Finance in the HR record.",
+      "expected": "New manager recorded."
+     },
+     {
+      "step": "Reassign the 6 pending approval tasks to the new manager.",
+      "expected": "Tasks reassigned."
+     },
+     {
+      "step": "New manager approves; provisioning completes.",
+      "expected": "6 new hires have access."
+     }
+    ],
+    "rollback": "Not applicable.",
+    "prevention": [
+     "Reassign approvals when a manager is offboarded.",
+     "Escalate approvals older than 2 business days."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-IAM-004",
+   "use_case": "IAM",
+   "title": "Critical application access denied despite expected role assignment",
+   "description": "Several senior analysts get 'You do not have access' in the actuarial analytics application even though they're in the right security group. Newer staff in the same group can get in.",
+   "service": "Actuarial Analytics App Access",
+   "ci": "actuarial-analytics-app",
+   "reported_by": "Peter Novak (Actuarial, synthetic)",
+   "reported_min_ago": 480,
+   "priority": "3 - Moderate",
+   "impact": "3 - Low",
+   "urgency": "2 - Medium",
+   "category": "Access",
+   "group": "Identity & Access Management",
+   "business_impact": "Senior analysts blocked from quarterly reserving work.",
+   "complexity": "Multi-agent: needs a second evidence round",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 470,
+      "source": "App authorization log",
+      "text": "User has no roles: groups claim missing from token."
+     },
+     {
+      "id": "L2",
+      "t": 465,
+      "source": "Group membership check",
+      "text": "Affected users confirmed members of SG-Actuarial-Analysts."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Analysts denied access",
+      "unit": "users",
+      "before": 9,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [
+     {
+      "id": "CHG-DEMO-6030",
+      "t_hours": 120,
+      "title": "Actuarial app moved to new app registration",
+      "detail": "App re-registered; token configuration rebuilt."
+     }
+    ],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1540",
+      "title": "Group claims in tokens",
+      "summary": "Tokens include at most 150-200 groups; above that an overage claim is sent and the app must query groups."
+     }
+    ],
+    "cmdb": {
+     "class": "Application",
+     "depends_on": [
+      "identity provider"
+     ],
+     "owner_group": "Identity & Access Management",
+     "environment": "Production (synthetic)"
+    },
+    "deep": [
+     {
+      "id": "L3",
+      "t": 460,
+      "source": "Affected users' group counts",
+      "text": "All 9 affected users are in 160-240 groups; unaffected users in under 90."
+     },
+     {
+      "id": "L4",
+      "t": 455,
+      "source": "Token sample",
+      "text": "Token contains '_claim_names: groups' (overage) instead of a groups list; app does not call the directory API."
+     }
+    ]
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Groups claim not reaching the app for some users",
+      "why": "Token missing groups for affected users only.",
+      "evidence": [
+       "L1",
+       "L2"
+      ],
+      "confidence": 0.45
+     },
+     {
+      "title": "New app registration lost the role mapping",
+      "why": "App re-registered recently.",
+      "evidence": [
+       "CHG-DEMO-6030"
+      ],
+      "confidence": 0.35
+     },
+     {
+      "title": "Directory replication delay",
+      "why": "Membership not visible.",
+      "evidence": [],
+      "confidence": 0.2
+     }
+    ],
+    "critic": [
+     "Why only senior staff? Need group counts and a token sample.",
+     "If role mapping were lost, newer staff would also fail.",
+     "Membership is confirmed and old."
+    ],
+    "selected": 0,
+    "needs_round2": true,
+    "root_cause": "Senior analysts belong to more than 150 groups, so the identity provider sends a groups overage claim instead of a list; the actuarial app's new registration (CHG-DEMO-6030) doesn't handle overage, finds no groups and denies access.",
+    "contributing": [
+     "App re-registration didn't restrict token groups to assigned groups.",
+     "No test user with high group count."
+    ],
+    "remediation": [
+     {
+      "step": "Configure the app registration to emit only groups assigned to the application.",
+      "expected": "Tokens carry the app's groups only."
+     },
+     {
+      "step": "Ask affected users to sign out and back in.",
+      "expected": "New tokens issued."
+     },
+     {
+      "step": "Confirm affected users can access the app.",
+      "expected": "All 9 users have access."
+     }
+    ],
+    "rollback": "Revert token configuration to all security groups.",
+    "prevention": [
+     "Use app-assigned groups for all app registrations.",
+     "Include a high-group-count test user."
+    ],
+    "exec_fail": null,
+    "verify_fail_first": false
+   }
+  },
+  {
+   "id": "DEMO-IAM-005",
+   "use_case": "IAM",
+   "title": "Service account authentication failures affecting a scheduled integration",
+   "description": "The hourly provider credentialing integration has failed since 02:00 with 'authentication failed' for its service account. The service account is now locked out.",
+   "service": "Credentialing Integration Service Account",
+   "ci": "svc-credentialing-sync",
+   "reported_by": "Monitoring alert (synthetic)",
+   "reported_min_ago": 380,
+   "priority": "2 - High",
+   "impact": "2 - Medium",
+   "urgency": "2 - Medium",
+   "category": "Access",
+   "group": "",
+   "business_impact": "Provider credentialing updates not flowing; new providers can't be activated.",
+   "complexity": "Straightforward; remediation needs manual takeover",
+   "evidence": {
+    "logs": [
+     {
+      "id": "L1",
+      "t": 370,
+      "source": "Integration host log",
+      "text": "LDAP bind failed for svc-credentialing-sync: invalid credentials (x6), then account locked."
+     },
+     {
+      "id": "L2",
+      "t": 368,
+      "source": "Secret store audit",
+      "text": "Secret svc-credentialing-sync rotated at 01:30 by the 90-day rotation policy."
+     },
+     {
+      "id": "L3",
+      "t": 366,
+      "source": "Integration host",
+      "text": "Service started 2026-10-01; credentials loaded at startup."
+     }
+    ],
+    "metrics": [
+     {
+      "id": "M1",
+      "name": "Failed integration runs",
+      "unit": "runs",
+      "before": 6,
+      "threshold": 0,
+      "after": 0,
+      "after2": 0,
+      "better": "lower"
+     }
+    ],
+    "changes": [],
+    "history": [],
+    "kb": [
+     {
+      "id": "KB-DEMO-1560",
+      "title": "Service account rotation",
+      "summary": "Services must read credentials from the secret store at use time or restart after rotation."
+     }
+    ],
+    "cmdb": {
+     "class": "Service account",
+     "depends_on": [
+      "directory service",
+      "secret store",
+      "integration host"
+     ],
+     "owner_group": "Identity & Access Management",
+     "environment": "Production (synthetic)"
+    },
+    "deep": []
+   },
+   "script": {
+    "hypotheses": [
+     {
+      "title": "Integration still using the password from before rotation",
+      "why": "Secret rotated at 01:30; host loaded credentials at startup in October.",
+      "evidence": [
+       "L1",
+       "L2",
+       "L3"
+      ],
+      "confidence": 0.85
+     },
+     {
+      "title": "Directory service problem",
+      "why": "Bind fails.",
+      "evidence": [],
+      "confidence": 0.1
+     },
+     {
+      "title": "Account disabled by security",
+      "why": "Account locked.",
+      "evidence": [],
+      "confidence": 0.05
+     }
+    ],
+    "critic": [
+     "Well supported.",
+     "Other binds succeed.",
+     "Lockout follows 6 bad attempts; it's a consequence, not the cause."
+    ],
+    "selected": 0,
+    "needs_round2": false,
+    "root_cause": "The 90-day rotation changed the svc-credentialing-sync password at 01:30, but the integration host caches the credential from startup, so it keeps binding with the old password and locked the account after six failures.",
+    "contributing": [
+     "Integration doesn't read the secret store at use time.",
+     "Rotation policy doesn't restart dependent services."
+    ],
+    "remediation": [
+     {
+      "step": "Pause the hourly integration schedule to stop further lockouts.",
+      "expected": "Schedule paused."
+     },
+     {
+      "step": "Restart the integration service so it loads the current secret.",
+      "expected": "Service running with new credential."
+     },
+     {
+      "step": "Identity team unlocks svc-credentialing-sync.",
+      "expected": "Account unlocked."
+     },
+     {
+      "step": "Resume the schedule and run once manually.",
+      "expected": "Run succeeds."
+     }
+    ],
+    "rollback": "Keep the schedule paused if binds still fail; escalate to Identity.",
+    "prevention": [
+     "Read secret at use time.",
+     "Rotation hook restarts dependent services."
+    ],
+    "exec_fail": {
+     "step": 2,
+     "mode": "manual",
+     "error": "Account unlock requires the Identity team (privileged action outside automation scope). Hand to engineer."
+    },
+    "verify_fail_first": false
+   }
+  }
+ ],
+ "asset_policy": [
+  {
+   "id": "AP-1",
+   "rule": "Hardware fault on a device under warranty: vendor repair under warranty, no cost to the department."
+  },
+  {
+   "id": "AP-2",
+   "rule": "Replace when the device is older than 4 years, or when an out-of-warranty (or unknown-warranty) repair would cost more than 50% of the standard replacement ($1,100 Standard Laptop)."
+  },
+  {
+   "id": "AP-3",
+   "rule": "Accidental damage: vendor repair under accidental-damage cover; provide a Loaner Laptop when the repair takes more than 2 business days."
+  },
+  {
+   "id": "AP-4",
+   "rule": "Before any repair or swap, back up the user's data to OneDrive; wipe the returned device to NIST 800-88 before reuse or disposal."
+  },
+  {
+   "id": "AP-5",
+   "rule": "Technical staff (IT, engineering) get the Developer Laptop (Mac) on replacement; everyone else gets the Standard Laptop."
+  }
+ ],
+ "hr_policies": [
+  {
+   "id": "HRP-101",
+   "title": "Parental leave",
+   "text": "Employees with at least 90 days of service get 12 weeks of paid parental leave for the birth or adoption of a child, taken in one block or in blocks of at least 2 weeks within 12 months. Tell your manager at least 30 days before the leave starts and submit the leave request in the HR portal; HR confirms within 5 business days."
+  },
+  {
+   "id": "HRP-102",
+   "title": "Benefits changes after a qualifying life event",
+   "text": "Marriage, birth, adoption or loss of other coverage lets you change medical, dental and vision elections within 30 days of the event. Upload proof (for marriage, the marriage certificate) with the change request; coverage for a new spouse starts on the first of the month after the request is approved."
+  },
+  {
+   "id": "HRP-201",
+   "title": "New hire standard package",
+   "text": "Every new hire gets a laptop (Standard Laptop; Developer Laptop (Mac) for engineering roles), a Microsoft 365 account, a building badge and day-1 orientation. The hiring manager raises the New Hire request at least 3 business days before the start date so IT can prepare equipment and accounts."
+  },
+  {
+   "id": "HRP-202",
+   "title": "Application access for new hires",
+   "text": "Access follows least privilege. Finance systems (ERP, payments) need approval from the hiring manager and the system owner; access is granted on day 1 after the security awareness module is completed."
+  }
+ ],
+ "requests": [
+  {
+   "id": "DEMO-AST-001",
+   "flow": "asset",
+   "title": "MacBook keeps freezing and the battery lasts under an hour",
+   "description": "My MacBook Pro freezes several times a day and has to be restarted, and the battery goes from full to empty in under an hour, so I can't work away from my desk. It's been getting worse for two weeks.",
+   "service": "End-user devices",
+   "reported_by": "Maya Thompson (Finance, synthetic)",
+   "reported_min_ago": 50,
+   "priority": "3 - Moderate",
+   "impact": "3 - Low",
+   "urgency": "2 - Medium",
+   "asset_tag": "",
+   "asset_snapshot": {
+    "asset_tag": "P1000177",
+    "display_name": "P1000177 - Apple MacBook Pro 15\"",
+    "model": "Apple MacBook Pro 15\"",
+    "assigned_to": "Aura Admin User",
+    "department": "Finance",
+    "install_status": "In use",
+    "purchase_date": "",
+    "warranty_expiration": "",
+    "cost": "$1,799.99",
+    "ci": "Apple - MacBook Pro 15\" for Technical Staff"
+   },
+   "telemetry": [
+    {
+     "id": "T1",
+     "reading": "Battery health 61% (1,142 charge cycles; service recommended below 80%)"
+    },
+    {
+     "id": "T2",
+     "reading": "9 kernel panics in the last 7 days, all during sleep/wake"
+    },
+    {
+     "id": "T3",
+     "reading": "SSD SMART: 24 reallocated sectors, rising (was 3 a month ago)"
+    },
+    {
+     "id": "T4",
+     "reading": "Repair estimate: battery $199 + SSD replacement $580 = $779"
+    }
+   ],
+   "script": {
+    "warranty_status": "unknown",
+    "age_years": 0,
+    "recommendation": "replace",
+    "catalog_items": [
+     "Standard Laptop"
+    ],
+    "rules": [
+     "AP-2: warranty unknown and the $779 repair is 71% of the $1,100 replacement",
+     "AP-4: back up to OneDrive, wipe the old device",
+     "AP-5: Finance user gets the Standard Laptop"
+    ],
+    "cost": "$1,100 (Standard Laptop); avoids a $779 repair on a device with no warranty record",
+    "gap": "ServiceNow has no purchase or warranty date for P1000177; Asset Management should correct the record."
+   }
+  },
+  {
+   "id": "DEMO-AST-002",
+   "flow": "asset",
+   "title": "Workstation won't boot after last night's power cut",
+   "description": "Ron Kettering's ThinkStation in Poway won't start since the power cut last night: fans spin, nothing on screen, three beeps. He runs the infrastructure monitoring consoles from it.",
+   "service": "End-user devices",
+   "reported_by": "IT Service Desk for Ron Kettering (synthetic)",
+   "reported_min_ago": 140,
+   "priority": "2 - High",
+   "impact": "3 - Low",
+   "urgency": "1 - High",
+   "asset_tag": "P1000238",
+   "asset_snapshot": {
+    "asset_tag": "P1000238",
+    "display_name": "P1000238 - Lenovo ThinkStation S20",
+    "model": "Lenovo ThinkStation S20",
+    "assigned_to": "Ron Kettering",
+    "department": "IT",
+    "install_status": "In use",
+    "purchase_date": "2020-06-11",
+    "warranty_expiration": "2021-06-11",
+    "cost": "$3,665.00",
+    "ci": "*RON-IBM"
+   },
+   "telemetry": [
+    {
+     "id": "T1",
+     "reading": "No POST; 3-beep code = memory or motherboard failure"
+    },
+    {
+     "id": "T2",
+     "reading": "Last check-in to device management: 18 hours ago, before the power cut"
+    },
+    {
+     "id": "T3",
+     "reading": "Repair estimate: motherboard $640 + labour $150 = $790"
+    }
+   ],
+   "script": {
+    "warranty_status": "expired",
+    "age_years": 5.4,
+    "recommendation": "replace",
+    "catalog_items": [
+     "Developer Laptop (Mac)"
+    ],
+    "rules": [
+     "AP-2: 5.4 years old, out of warranty since 2021",
+     "AP-5: IT staff get the Developer Laptop (Mac)",
+     "AP-4: recover data from the disk before disposal"
+    ],
+    "cost": "$1,499 (Developer Laptop (Mac)); repair would be $790 on a 5-year-old device"
+   }
+  },
+  {
+   "id": "DEMO-AST-003",
+   "flow": "asset",
+   "title": "Cracked MacBook screen after a drop",
+   "description": "Eli Bettner dropped his MacBook Pro at the Prague office; the screen is cracked across the middle and the bottom third doesn't display. He has client workshops all week.",
+   "service": "End-user devices",
+   "reported_by": "Eli Bettner (IT, synthetic)",
+   "reported_min_ago": 75,
+   "priority": "3 - Moderate",
+   "impact": "3 - Low",
+   "urgency": "1 - High",
+   "asset_tag": "P1000486",
+   "asset_snapshot": {
+    "asset_tag": "P1000486",
+    "display_name": "P1000486 - Apple MacBook Pro 15\"",
+    "model": "Apple MacBook Pro 15\"",
+    "assigned_to": "Eli Bettner",
+    "department": "IT",
+    "install_status": "In use",
+    "purchase_date": "2024-04-06",
+    "warranty_expiration": "2027-05-12",
+    "cost": "$1,799.99",
+    "ci": "MacBook Pro 15\""
+   },
+   "telemetry": [
+    {
+     "id": "T1",
+     "reading": "Display panel fault reported by the device; everything else healthy"
+    },
+    {
+     "id": "T2",
+     "reading": "Vendor accidental-damage repair turnaround: 5 business days"
+    }
+   ],
+   "script": {
+    "warranty_status": "in_warranty",
+    "age_years": 2.6,
+    "recommendation": "loaner_and_repair",
+    "catalog_items": [
+     "Loaner Laptop"
+    ],
+    "rules": [
+     "AP-3: accidental damage; the vendor repair takes 5 days, so a loaner is provided",
+     "AP-4: back up before the device goes to the vendor"
+    ],
+    "cost": "Covered by accidental-damage cover"
+   }
+  },
+  {
+   "id": "DEMO-HR-001",
+   "flow": "hr",
+   "title": "Onboard a new financial analyst starting Monday",
+   "description": "Priya Raman joins Finance as a Financial Analyst on Monday 17 November. She needs a laptop, email, access to the finance ERP and a building badge. I'm her hiring manager.",
+   "service": "Onboarding",
+   "reported_by": "Maya Thompson (Finance, synthetic)",
+   "reported_min_ago": 30,
+   "priority": "3 - Moderate",
+   "impact": "3 - Low",
+   "urgency": "2 - Medium",
+   "script": {
+    "request_type": "onboarding",
+    "person": "Priya Raman (synthetic new hire)",
+    "dates": [
+     "Mon 17 Nov 2026: start date"
+    ],
+    "policies": [
+     "HRP-201",
+     "HRP-202"
+    ],
+    "eligibility": "eligible",
+    "answer": "Priya gets the standard new hire package: a Standard Laptop, a Microsoft 365 account, a building badge and day-1 orientation. ERP access needs your approval and the ERP system owner's, and is switched on once she completes security awareness training on day 1.",
+    "conditions": [
+     "IT needs 3 business days: the request is on time for a 17 Nov start",
+     "ERP access needs system-owner approval"
+    ],
+    "requests": [
+     "New Hire",
+     "Standard Laptop"
+    ],
+    "tasks": [
+     [
+      "Raise the New Hire request in ServiceNow",
+      "Hiring manager (agent on your behalf)",
+      "Today",
+      "ServiceNow"
+     ],
+     [
+      "Prepare the Standard Laptop and image",
+      "IT Hardware",
+      "Fri 14 Nov",
+      "ServiceNow"
+     ],
+     [
+      "Create the Microsoft 365 account",
+      "Identity & Access",
+      "Fri 14 Nov",
+      "Entra ID"
+     ],
+     [
+      "Request ERP access (manager + system owner)",
+      "Finance Systems",
+      "Mon 17 Nov",
+      "ERP"
+     ],
+     [
+      "Print the building badge",
+      "Facilities",
+      "Mon 17 Nov",
+      "Badge system"
+     ],
+     [
+      "Day-1 orientation and security awareness module",
+      "HR",
+      "Mon 17 Nov",
+      "LMS"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "DEMO-HR-002",
+   "flow": "hr",
+   "title": "How much parental leave can I take, and how do I apply?",
+   "description": "My partner and I are expecting a baby in March. How much paid parental leave can I take, can I split it, and how do I apply? I've been here three years.",
+   "service": "Leave",
+   "reported_by": "Daniel Brooks (Claims Operations, synthetic)",
+   "reported_min_ago": 95,
+   "priority": "4 - Low",
+   "impact": "3 - Low",
+   "urgency": "3 - Low",
+   "script": {
+    "request_type": "leave",
+    "person": "the requester",
+    "dates": [
+     "March 2027: expected birth"
+    ],
+    "policies": [
+     "HRP-101"
+    ],
+    "eligibility": "eligible",
+    "answer": "With three years of service you're eligible for 12 weeks of paid parental leave. You can take it in one block or in blocks of at least 2 weeks within 12 months of the birth. Tell your manager at least 30 days before you start and submit the leave request in the HR portal; HR confirms within 5 business days.",
+    "conditions": [
+     "Tell your manager at least 30 days before leave starts",
+     "Blocks of at least 2 weeks",
+     "Use within 12 months of the birth"
+    ],
+    "requests": [],
+    "tasks": [
+     [
+      "Tell your manager the planned leave dates",
+      "Employee",
+      "By early February 2027",
+      "-"
+     ],
+     [
+      "Submit the parental leave request",
+      "Employee",
+      "30 days before leave",
+      "HR portal"
+     ],
+     [
+      "Confirm leave and pay schedule",
+      "HR Operations",
+      "Within 5 business days",
+      "HR system"
+     ],
+     [
+      "Plan cover for the work",
+      "Manager",
+      "Before leave starts",
+      "-"
+     ]
+    ]
+   }
+  },
+  {
+   "id": "DEMO-HR-003",
+   "flow": "hr",
+   "title": "Add my spouse to my medical plan after getting married",
+   "description": "I got married on 1 November and want to add my spouse to my medical and dental cover. What do I need to do and when does cover start?",
+   "service": "Benefits",
+   "reported_by": "Grace Kim (Member Services, synthetic)",
+   "reported_min_ago": 200,
+   "priority": "4 - Low",
+   "impact": "3 - Low",
+   "urgency": "2 - Medium",
+   "script": {
+    "request_type": "benefits",
+    "person": "the requester",
+    "dates": [
+     "1 Nov 2026: marriage (qualifying life event)",
+     "1 Dec 2026: last day to request the change"
+    ],
+    "policies": [
+     "HRP-102"
+    ],
+    "eligibility": "eligible",
+    "answer": "Marriage is a qualifying life event, so you can add your spouse to medical and dental cover within 30 days, by 1 December. Upload your marriage certificate with the change request. Cover for your spouse starts on the first of the month after HR approves the change.",
+    "conditions": [
+     "Request by 1 December 2026",
+     "Marriage certificate required"
+    ],
+    "requests": [],
+    "tasks": [
+     [
+      "Submit the benefits change with the marriage certificate",
+      "Employee",
+      "By 1 Dec 2026",
+      "HR portal"
+     ],
+     [
+      "Verify documents and approve",
+      "Benefits team",
+      "Within 5 business days",
+      "HR system"
+     ],
+     [
+      "Confirm the cover start date to the employee",
+      "Benefits team",
+      "On approval",
+      "Email"
+     ]
+    ]
+   }
+  }
+ ]
+}

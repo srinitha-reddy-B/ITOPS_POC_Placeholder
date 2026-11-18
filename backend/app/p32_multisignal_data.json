@@ -1,0 +1,4033 @@
+{
+ "version": "ms-1",
+ "note": "Synthetic, deterministic demo data for the POC. Signals, events, forecasts, asset telemetry, HR workflow figures and the prediction history are illustrative; none of it is read from a monitoring tool, CMDB, HR system or employee directory.",
+ "config": {
+  "engine": "rules-v2",
+  "engine_label": "Rule-based risk engine (explainable, rules-v2, multi-signal)",
+  "weights": {
+   "deviation": 18,
+   "rate": 8,
+   "duration": 7,
+   "history": 10,
+   "similar": 5,
+   "recurrence": 6,
+   "correlated": 12,
+   "business": 10,
+   "criticality": 8,
+   "changes": 6,
+   "capacity": 5,
+   "reliability": 5
+  },
+  "employee_alert_threshold": 61,
+  "it_alert_threshold": 31,
+  "classes": [
+   [
+    30,
+    "Low"
+   ],
+   [
+    60,
+    "Moderate"
+   ],
+   [
+    80,
+    "High"
+   ],
+   [
+    100,
+    "Critical"
+   ]
+  ]
+ },
+ "factors": {
+  "rate": {
+   "label": "Rate of change",
+   "how": "How fast the most deviated signal moved over the last readings, measured against the gap between its baseline and critical threshold."
+  },
+  "correlated": {
+   "label": "Correlated signals",
+   "how": "How many signal categories (infrastructure, application, database, network, business, user experience, capacity) are abnormal at the same time (5 or more scores 100)."
+  },
+  "business": {
+   "label": "Business impact",
+   "how": "The service's business impact level (1-5), raised when its business-transaction signals are also abnormal."
+  },
+  "changes": {
+   "label": "Recent changes",
+   "how": "A change, deployment or configuration event in the last 48 hours that touches the abnormal signals (suspected contributor, never a confirmed cause). More recent scores higher."
+  },
+  "capacity": {
+   "label": "Capacity forecast",
+   "how": "How soon the forecast says the service reaches its capacity limit (now scores 100; a week or more away scores 0)."
+  },
+  "reliability": {
+   "label": "Data reliability",
+   "how": "Quality rating of the data sources behind the abnormal signals, scaled by how many independent categories agree. Unreliable or single-source evidence adds little."
+  }
+ },
+ "categories": [
+  {
+   "id": "infra",
+   "label": "Infrastructure health",
+   "icon": "server"
+  },
+  {
+   "id": "app",
+   "label": "Application performance",
+   "icon": "activity"
+  },
+  {
+   "id": "db",
+   "label": "Database performance",
+   "icon": "database"
+  },
+  {
+   "id": "network",
+   "label": "Network & connectivity",
+   "icon": "wifi"
+  },
+  {
+   "id": "business",
+   "label": "Business transactions",
+   "icon": "barchart"
+  },
+  {
+   "id": "ux",
+   "label": "User experience",
+   "icon": "users"
+  },
+  {
+   "id": "capacity",
+   "label": "Capacity & demand",
+   "icon": "gauge"
+  }
+ ],
+ "steps": [
+  "Normal",
+  "Drifting",
+  "Warning",
+  "Degrading",
+  "Critical"
+ ],
+ "scenarios": {
+  "sso": {
+   "node": "sso",
+   "start_step": 0,
+   "business_level": 5,
+   "business_text": "Every employee signs in through SSO: if sign-ins keep failing, staff across all 9 departments lose access to the Employee Center, claims and care-management tools.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "idp_cpu",
+     "name": "Identity provider CPU",
+     "unit": "%",
+     "baseline": 31,
+     "warn": 75,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      31,
+      33,
+      34,
+      35,
+      36
+     ],
+     "quality": 0.9,
+     "action": "No action: the IdP servers are healthy."
+    },
+    {
+     "cat": "infra",
+     "key": "idp_mem",
+     "name": "Identity provider memory",
+     "unit": "%",
+     "baseline": 55,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      55,
+      56,
+      56,
+      57,
+      57
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "idp_uptime",
+     "name": "IdP node uptime (30 days)",
+     "unit": "%",
+     "baseline": 99.99,
+     "warn": 99.9,
+     "crit": 99.5,
+     "better": "higher",
+     "path": [
+      99.99,
+      99.99,
+      99.99,
+      99.99,
+      99.99
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "auth_latency",
+     "ref": true,
+     "path": [
+      350,
+      480,
+      850,
+      1400,
+      1900
+     ],
+     "quality": 0.95,
+     "action": "Check token-service latency per relying party."
+    },
+    {
+     "cat": "app",
+     "key": "error_rate",
+     "ref": true,
+     "path": [
+      0.2,
+      0.6,
+      1.2,
+      2.0,
+      2.4
+     ],
+     "quality": 0.95,
+     "action": "Read the token service error log for SAML assertion failures."
+    },
+    {
+     "cat": "app",
+     "key": "availability",
+     "ref": true,
+     "path": [
+      99.95,
+      99.9,
+      99.6,
+      99.3,
+      99.2
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "login_failures",
+     "ref": true,
+     "path": [
+      10,
+      16,
+      24,
+      36,
+      45
+     ],
+     "quality": 0.95,
+     "action": "Separate bad-password failures from assertion/signature failures."
+    },
+    {
+     "cat": "network",
+     "key": "auth_conn",
+     "name": "Authentication connectivity (IdP to directory)",
+     "unit": "%",
+     "baseline": 100,
+     "warn": 99,
+     "crit": 95,
+     "better": "higher",
+     "path": [
+      100,
+      100,
+      100,
+      100,
+      100
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "dns_sso",
+     "name": "DNS resolution time (sso.p32)",
+     "unit": "ms",
+     "baseline": 18,
+     "warn": 80,
+     "crit": 200,
+     "better": "lower",
+     "path": [
+      18,
+      19,
+      18,
+      20,
+      19
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "synth_login",
+     "name": "Synthetic login checks passing (last hour)",
+     "unit": "%",
+     "baseline": 100,
+     "warn": 90,
+     "crit": 50,
+     "better": "higher",
+     "path": [
+      100,
+      100,
+      67,
+      33,
+      0
+     ],
+     "quality": 0.95,
+     "action": "Run the synthetic login journey manually and capture the SAML response."
+    },
+    {
+     "cat": "ux",
+     "key": "login_success",
+     "name": "Login success rate",
+     "unit": "%",
+     "baseline": 99.2,
+     "warn": 95,
+     "crit": 85,
+     "better": "higher",
+     "path": [
+      99.2,
+      97.8,
+      93.5,
+      84.0,
+      71.0
+     ],
+     "quality": 0.9,
+     "action": "Compare success rate by application to find the failing relying party."
+    },
+    {
+     "cat": "ux",
+     "key": "login_time",
+     "name": "Login completion time",
+     "unit": "s",
+     "baseline": 2.1,
+     "warn": 5,
+     "crit": 8,
+     "better": "lower",
+     "path": [
+      2.1,
+      2.9,
+      4.6,
+      7.4,
+      9.2
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "journey_ec",
+     "name": "Employee Center sign-in journey completion",
+     "unit": "%",
+     "baseline": 99,
+     "warn": 95,
+     "crit": 85,
+     "better": "higher",
+     "path": [
+      99,
+      98,
+      94,
+      86,
+      78
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "ec_sessions",
+     "name": "Employee Center sessions started per hour",
+     "unit": "/hour",
+     "baseline": 3200,
+     "warn": 2500,
+     "crit": 1800,
+     "better": "higher",
+     "path": [
+      3200,
+      3100,
+      2700,
+      1900,
+      1300
+     ],
+     "quality": 0.85,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-5512",
+     "type": "certificate",
+     "title": "IdP SAML signing certificate rotation",
+     "hours_ago": 1.5,
+     "detail": "New signing certificate activated on the identity provider; relying parties pull metadata every 24 hours.",
+     "correlates": [
+      "synth_login",
+      "login_success",
+      "error_rate"
+     ],
+     "suspected": true
+    },
+    {
+     "id": "CHG-DEMO-5490",
+     "type": "config",
+     "title": "Conditional-access policy update (contractors)",
+     "hours_ago": 49,
+     "detail": "Scope limited to contractor accounts.",
+     "correlates": [],
+     "suspected": false
+    },
+    {
+     "id": "MNT-DEMO-0310",
+     "type": "maintenance",
+     "title": "Directory server patching (Saturday 02:00)",
+     "hours_ago": -60,
+     "detail": "Scheduled, not yet started.",
+     "correlates": [],
+     "suspected": false
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "synth_login",
+      "login_success"
+     ],
+     "healthy": [
+      "idp_cpu",
+      "auth_conn"
+     ],
+     "text": "Identity-provider configuration problem: the servers and network are healthy, but real and synthetic sign-ins fail. A signing-certificate or claim-mapping change is the likely area to check."
+    },
+    {
+     "when": [
+      "auth_latency"
+     ],
+     "text": "Token service slowing down under load."
+    }
+   ]
+  },
+  "payment": {
+   "node": "payapi",
+   "start_step": 4,
+   "business_level": 4,
+   "business_text": "Claims payments, provider remittances and Finance payables run through the Payment API; failed or slow payments delay provider remittance.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "gw_cpu",
+     "name": "Payment gateway CPU",
+     "unit": "%",
+     "baseline": 38,
+     "warn": 75,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      38,
+      40,
+      42,
+      44,
+      47
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "gw_mem",
+     "name": "Payment gateway memory",
+     "unit": "%",
+     "baseline": 52,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      52,
+      53,
+      54,
+      55,
+      56
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "api_latency",
+     "ref": true,
+     "path": [
+      200,
+      500,
+      900,
+      1500,
+      2000
+     ],
+     "quality": 0.95,
+     "action": "Check pay-gw-04 latency for the first request after idle."
+    },
+    {
+     "cat": "app",
+     "key": "http_504",
+     "ref": true,
+     "path": [
+      2,
+      6,
+      14,
+      27,
+      38
+     ],
+     "quality": 0.95,
+     "action": "Correlate 504s with idle periods on pooled connections."
+    },
+    {
+     "cat": "app",
+     "key": "timeouts",
+     "ref": true,
+     "path": [
+      0.1,
+      0.5,
+      1.2,
+      1.9,
+      2.2
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "availability",
+     "ref": true,
+     "path": [
+      99.9,
+      99.8,
+      99.6,
+      99.4,
+      99.3
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "paydb_pool",
+     "name": "Payments DB connection pool utilisation",
+     "unit": "%",
+     "baseline": 40,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      40,
+      42,
+      44,
+      45,
+      46
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "paydb_q",
+     "name": "Payments DB query time (p95)",
+     "unit": "ms",
+     "baseline": 90,
+     "warn": 400,
+     "crit": 1000,
+     "better": "lower",
+     "path": [
+      90,
+      92,
+      95,
+      97,
+      99
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "fw_resets",
+     "name": "Firewall idle-session resets",
+     "unit": "/hour",
+     "baseline": 0,
+     "warn": 10,
+     "crit": 40,
+     "better": "lower",
+     "path": [
+      0,
+      4,
+      18,
+      41,
+      66
+     ],
+     "quality": 0.9,
+     "action": "Compare the firewall idle timeout with the gateway pool idle eviction."
+    },
+    {
+     "cat": "network",
+     "key": "upstream_lat",
+     "name": "Gateway to upstream network latency",
+     "unit": "ms",
+     "baseline": 3,
+     "warn": 20,
+     "crit": 50,
+     "better": "lower",
+     "path": [
+      3,
+      3,
+      4,
+      4,
+      5
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "pay_fail",
+     "name": "Payment transaction failures",
+     "unit": "%",
+     "baseline": 0.2,
+     "warn": 1,
+     "crit": 3,
+     "better": "lower",
+     "path": [
+      0.2,
+      0.7,
+      1.6,
+      2.8,
+      3.9
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "pay_time",
+     "name": "Payment processing time",
+     "unit": "s",
+     "baseline": 1.2,
+     "warn": 5,
+     "crit": 10,
+     "better": "lower",
+     "path": [
+      1.2,
+      2.4,
+      4.8,
+      8.9,
+      12.5
+     ],
+     "quality": 0.9,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-7204",
+     "type": "firewall",
+     "title": "Data centre firewall policy update",
+     "hours_ago": 30,
+     "detail": "Idle TCP session timeout lowered from 60 to 30 minutes.",
+     "correlates": [
+      "http_504",
+      "fw_resets",
+      "timeouts"
+     ],
+     "suspected": true
+    },
+    {
+     "id": "CHG-DEMO-7188",
+     "type": "deployment",
+     "title": "Payment API 3.8.2 hotfix",
+     "hours_ago": 70,
+     "detail": "Logging change only.",
+     "correlates": [],
+     "suspected": false
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "http_504",
+      "fw_resets"
+     ],
+     "healthy": [
+      "paydb_pool"
+     ],
+     "text": "Pooled upstream connections are being dropped by the firewall while the gateway still reuses them: the first request after an idle period times out (HTTP 504)."
+    }
+   ]
+  },
+  "portal": {
+   "node": "portal",
+   "start_step": 3,
+   "business_level": 3,
+   "business_text": "Employees raise HR and IT requests through the Employee Center; a slow portal delays requests and onboarding tasks but has workarounds.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "ec_cpu",
+     "name": "Employee Center web tier CPU",
+     "unit": "%",
+     "baseline": 40,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      40,
+      48,
+      57,
+      66,
+      71
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "ec_mem",
+     "name": "Employee Center web tier memory",
+     "unit": "%",
+     "baseline": 60,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      60,
+      64,
+      69,
+      75,
+      79
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "ecdb_cpu",
+     "name": "ec-db-02 database CPU",
+     "unit": "%",
+     "baseline": 35,
+     "warn": 75,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      35,
+      48,
+      63,
+      74,
+      81
+     ],
+     "quality": 0.9,
+     "action": "Check what is running on ec-db-02 (index rebuild, reports)."
+    },
+    {
+     "cat": "db",
+     "key": "ecdb_slow",
+     "name": "Slow queries on ec-db-02",
+     "unit": "/min",
+     "baseline": 2,
+     "warn": 10,
+     "crit": 20,
+     "better": "lower",
+     "path": [
+      2,
+      5,
+      11,
+      16,
+      19
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "page_time",
+     "ref": true,
+     "path": [
+      900,
+      1300,
+      1800,
+      2300,
+      2600
+     ],
+     "quality": 0.95,
+     "action": "Profile the slowest portal pages."
+    },
+    {
+     "cat": "app",
+     "key": "error_rate",
+     "ref": true,
+     "path": [
+      0.3,
+      0.6,
+      0.9,
+      1.2,
+      1.4
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "availability",
+     "ref": true,
+     "path": [
+      99.9,
+      99.85,
+      99.8,
+      99.75,
+      99.7
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "ec_load",
+     "name": "Employee portal loading time (real users)",
+     "unit": "s",
+     "baseline": 1.6,
+     "warn": 3,
+     "crit": 6,
+     "better": "lower",
+     "path": [
+      1.6,
+      2.2,
+      3.0,
+      3.8,
+      4.3
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "ec_journey",
+     "name": "Request submission journey completion",
+     "unit": "%",
+     "baseline": 99,
+     "warn": 95,
+     "crit": 90,
+     "better": "higher",
+     "path": [
+      99,
+      98.6,
+      97.4,
+      96.1,
+      95.5
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "onb_time",
+     "name": "HR onboarding task completion time",
+     "unit": "h",
+     "baseline": 20,
+     "warn": 30,
+     "crit": 48,
+     "better": "lower",
+     "path": [
+      20,
+      22,
+      26,
+      31,
+      34
+     ],
+     "quality": 0.85,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "ec_requests",
+     "name": "Employee Center requests submitted per hour",
+     "unit": "/hour",
+     "baseline": 410,
+     "warn": 300,
+     "crit": 200,
+     "better": "higher",
+     "path": [
+      410,
+      400,
+      380,
+      350,
+      330
+     ],
+     "quality": 0.9,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-6120",
+     "type": "config",
+     "title": "Knowledge search index rebuild started",
+     "hours_ago": 5,
+     "detail": "Full rebuild of the Employee Center search index on ec-db-02.",
+     "correlates": [
+      "ecdb_cpu",
+      "ecdb_slow",
+      "page_time"
+     ],
+     "suspected": true
+    },
+    {
+     "id": "MNT-DEMO-0322",
+     "type": "maintenance",
+     "title": "ec-db-02 OS patching (Saturday)",
+     "hours_ago": -70,
+     "detail": "Scheduled.",
+     "correlates": [],
+     "suspected": false
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "ecdb_slow",
+      "page_time"
+     ],
+     "text": "Database contention on ec-db-02 (the search index rebuild) is slowing portal pages."
+    }
+   ]
+  },
+  "vpn": {
+   "node": "vpn",
+   "start_step": 4,
+   "business_level": 4,
+   "business_text": "About half of Point32Health staff work remotely or hybrid and need the VPN for internal tools.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "cpu",
+     "ref": true,
+     "path": [
+      45,
+      55,
+      66,
+      76,
+      82
+     ],
+     "quality": 0.95,
+     "action": "Check VPN gateway session load."
+    },
+    {
+     "cat": "infra",
+     "key": "vpn_mem",
+     "name": "VPN gateway memory",
+     "unit": "%",
+     "baseline": 50,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      50,
+      55,
+      61,
+      68,
+      74
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "conn_failures",
+     "ref": true,
+     "path": [
+      15,
+      28,
+      46,
+      70,
+      95
+     ],
+     "quality": 0.95,
+     "action": "Check the ISP-A uplink and fail over to ISP-B if loss continues."
+    },
+    {
+     "cat": "network",
+     "key": "vpn_auth_errors",
+     "ref": true,
+     "path": [
+      5,
+      9,
+      14,
+      20,
+      26
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "tunnel_drops",
+     "ref": true,
+     "path": [
+      8,
+      15,
+      24,
+      35,
+      44
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "pkt_loss",
+     "name": "Packet loss on the VPN uplink",
+     "unit": "%",
+     "baseline": 0.1,
+     "warn": 1,
+     "crit": 3,
+     "better": "lower",
+     "path": [
+      0.1,
+      0.4,
+      1.1,
+      2.3,
+      3.4
+     ],
+     "quality": 0.9,
+     "action": "Open a carrier ticket with ISP-A."
+    },
+    {
+     "cat": "network",
+     "key": "rem_lat",
+     "name": "Network latency for remote users",
+     "unit": "ms",
+     "baseline": 28,
+     "warn": 60,
+     "crit": 120,
+     "better": "lower",
+     "path": [
+      28,
+      35,
+      52,
+      78,
+      96
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "bw",
+     "name": "Bandwidth utilisation (ISP-A uplink)",
+     "unit": "%",
+     "baseline": 48,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      48,
+      58,
+      71,
+      84,
+      91
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "network",
+     "key": "gw_avail",
+     "name": "VPN gateway availability",
+     "unit": "%",
+     "baseline": 100,
+     "warn": 99.8,
+     "crit": 99,
+     "better": "higher",
+     "path": [
+      100,
+      100,
+      99.9,
+      99.7,
+      99.5
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "vpn_login",
+     "name": "Remote login success (VPN)",
+     "unit": "%",
+     "baseline": 99,
+     "warn": 95,
+     "crit": 85,
+     "better": "higher",
+     "path": [
+      99,
+      97,
+      94,
+      90,
+      86
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "remote_conn",
+     "name": "Remote workers connected",
+     "unit": "",
+     "baseline": 920,
+     "warn": 850,
+     "crit": 700,
+     "better": "higher",
+     "path": [
+      920,
+      905,
+      880,
+      840,
+      790
+     ],
+     "quality": 0.85,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-8841",
+     "type": "infrastructure",
+     "title": "ISP-A uplink carrier maintenance",
+     "hours_ago": 2,
+     "detail": "Carrier notice: route changes on the ISP-A circuit.",
+     "correlates": [
+      "pkt_loss",
+      "conn_failures",
+      "tunnel_drops"
+     ],
+     "suspected": true
+    },
+    {
+     "id": "CHG-DEMO-8810",
+     "type": "deployment",
+     "title": "VPN client 7.2 rollout to 30% of laptops",
+     "hours_ago": 50,
+     "detail": "Staged rollout.",
+     "correlates": [],
+     "suspected": false
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "pkt_loss",
+      "conn_failures"
+     ],
+     "text": "Packet loss on the ISP-A uplink is breaking VPN tunnels; the gateway itself is not the cause."
+    }
+   ]
+  },
+  "recurring": {
+   "node": "workday",
+   "start_step": 4,
+   "business_level": 3,
+   "fixed": true,
+   "business_text": "When the Workday integration fails, new-hire and employee updates stop flowing to ServiceNow and onboarding tasks stall.",
+   "signals": [
+    {
+     "cat": "capacity",
+     "key": "pwd_expiry",
+     "name": "Integration service-account password expires in",
+     "unit": "days",
+     "baseline": 30,
+     "warn": 7,
+     "crit": 2,
+     "better": "higher",
+     "path": [
+      30,
+      20,
+      10,
+      6,
+      4
+     ],
+     "quality": 0.9,
+     "action": "Rotate the credential now and move it to a vault with automatic rotation."
+    },
+    {
+     "cat": "app",
+     "key": "sync_ok",
+     "name": "Workday sync success (last 24 h)",
+     "unit": "%",
+     "baseline": 100,
+     "warn": 98,
+     "crit": 90,
+     "better": "higher",
+     "path": [
+      100,
+      100,
+      100,
+      100,
+      100
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "onb_time_w",
+     "name": "HR onboarding task completion time",
+     "unit": "h",
+     "baseline": 20,
+     "warn": 30,
+     "crit": 48,
+     "better": "lower",
+     "path": [
+      20,
+      20,
+      20,
+      21,
+      21
+     ],
+     "quality": 0.9,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-4402",
+     "type": "config",
+     "title": "Manual service-account password rotation (every ~30 days)",
+     "hours_ago": 624,
+     "detail": "Last rotated 26 days ago; the password policy expires it after 30 days.",
+     "correlates": [
+      "pwd_expiry"
+     ],
+     "suspected": true
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "pwd_expiry"
+     ],
+     "text": "The integration's service-account password expires on a 30-day cycle; each expiry has caused a sync outage."
+    }
+   ]
+  },
+  "claims": {
+   "node": "claimsapi",
+   "start_step": 0,
+   "business_level": 5,
+   "business_text": "Claims Operations processes about 5,000 claims an hour; a slowdown builds a backlog that delays provider payments and member claim status.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "app_cpu",
+     "ref": true,
+     "path": [
+      45,
+      60,
+      75,
+      88,
+      94
+     ],
+     "quality": 0.95,
+     "action": "Add claims API capacity temporarily while the cause is fixed."
+    },
+    {
+     "cat": "infra",
+     "key": "app_mem",
+     "name": "Claims app server memory",
+     "unit": "%",
+     "baseline": 58,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      58,
+      63,
+      70,
+      79,
+      86
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "app_disk",
+     "name": "Claims app server disk utilisation",
+     "unit": "%",
+     "baseline": 52,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      52,
+      52,
+      53,
+      53,
+      54
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "app_io",
+     "name": "Disk I/O latency",
+     "unit": "ms",
+     "baseline": 4,
+     "warn": 15,
+     "crit": 30,
+     "better": "lower",
+     "path": [
+      4,
+      5,
+      7,
+      11,
+      16
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "app_uptime",
+     "name": "Server uptime (30 days)",
+     "unit": "%",
+     "baseline": 99.98,
+     "warn": 99.9,
+     "crit": 99.5,
+     "better": "higher",
+     "path": [
+      99.98,
+      99.98,
+      99.97,
+      99.95,
+      99.93
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "app_sat",
+     "name": "Resource saturation (run queue per core)",
+     "unit": "",
+     "baseline": 0.6,
+     "warn": 1.5,
+     "crit": 3,
+     "better": "lower",
+     "path": [
+      0.6,
+      0.9,
+      1.4,
+      2.2,
+      3.1
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "api_rt",
+     "ref": true,
+     "path": [
+      2,
+      3.4,
+      5.8,
+      8.6,
+      11
+     ],
+     "quality": 0.95,
+     "action": "Find the slowest claims API operations since release 24.11."
+    },
+    {
+     "cat": "app",
+     "key": "rps",
+     "name": "Request throughput",
+     "unit": "req/s",
+     "baseline": 140,
+     "warn": 110,
+     "crit": 90,
+     "better": "higher",
+     "path": [
+      140,
+      138,
+      131,
+      118,
+      102
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "app_err",
+     "name": "Application error rate",
+     "unit": "%",
+     "baseline": 0.3,
+     "warn": 1,
+     "crit": 3,
+     "better": "lower",
+     "path": [
+      0.3,
+      0.6,
+      1.4,
+      2.9,
+      4.6
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "http5xx",
+     "name": "HTTP 5xx responses",
+     "unit": "/min",
+     "baseline": 1,
+     "warn": 10,
+     "crit": 25,
+     "better": "lower",
+     "path": [
+      1,
+      3,
+      9,
+      21,
+      38
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "http4xx",
+     "name": "HTTP 4xx responses",
+     "unit": "/min",
+     "baseline": 6,
+     "warn": 20,
+     "crit": 40,
+     "better": "lower",
+     "path": [
+      6,
+      6,
+      7,
+      7,
+      8
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "api_to",
+     "name": "API timeout rate",
+     "unit": "%",
+     "baseline": 0.1,
+     "warn": 1,
+     "crit": 3,
+     "better": "lower",
+     "path": [
+      0.1,
+      0.4,
+      1.2,
+      2.6,
+      4.1
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "app_avail",
+     "name": "Application availability",
+     "unit": "%",
+     "baseline": 99.95,
+     "warn": 99.5,
+     "crit": 99,
+     "better": "higher",
+     "path": [
+      99.95,
+      99.9,
+      99.7,
+      99.4,
+      99.1
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "failed_req",
+     "name": "Failed requests",
+     "unit": "/min",
+     "baseline": 2,
+     "warn": 15,
+     "crit": 40,
+     "better": "lower",
+     "path": [
+      2,
+      5,
+      14,
+      31,
+      52
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "db_pool",
+     "name": "DB connection pool utilisation",
+     "unit": "%",
+     "baseline": 50,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      50,
+      62,
+      76,
+      88,
+      94
+     ],
+     "quality": 0.9,
+     "action": "Find long-running queries holding connections."
+    },
+    {
+     "cat": "db",
+     "key": "slow_q",
+     "name": "Slow queries",
+     "unit": "/min",
+     "baseline": 2,
+     "warn": 10,
+     "crit": 20,
+     "better": "lower",
+     "path": [
+      2,
+      4,
+      9,
+      17,
+      26
+     ],
+     "quality": 0.9,
+     "action": "Compare query plans before and after release 24.11."
+    },
+    {
+     "cat": "db",
+     "key": "q_time",
+     "name": "Query execution time (p95)",
+     "unit": "ms",
+     "baseline": 120,
+     "warn": 500,
+     "crit": 1500,
+     "better": "lower",
+     "path": [
+      120,
+      240,
+      610,
+      1180,
+      1900
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "db_cpu",
+     "name": "Database CPU",
+     "unit": "%",
+     "baseline": 38,
+     "warn": 75,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      38,
+      47,
+      61,
+      77,
+      86
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "deadlocks",
+     "name": "Deadlocks",
+     "unit": "/hour",
+     "baseline": 0,
+     "warn": 2,
+     "crit": 5,
+     "better": "lower",
+     "path": [
+      0,
+      0,
+      1,
+      2,
+      4
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "repl",
+     "name": "Replication lag",
+     "unit": "s",
+     "baseline": 0.4,
+     "warn": 5,
+     "crit": 15,
+     "better": "lower",
+     "path": [
+      0.4,
+      0.5,
+      0.8,
+      1.6,
+      2.4
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "txq",
+     "name": "Transaction queue length",
+     "unit": "",
+     "baseline": 4,
+     "warn": 25,
+     "crit": 60,
+     "better": "lower",
+     "path": [
+      4,
+      9,
+      22,
+      48,
+      77
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "throughput",
+     "ref": true,
+     "path": [
+      5000,
+      4700,
+      4150,
+      3400,
+      2900
+     ],
+     "quality": 0.95,
+     "action": "Warn Claims Operations leads about the backlog."
+    },
+    {
+     "cat": "business",
+     "key": "failed_tx",
+     "ref": true,
+     "path": [
+      0.4,
+      1.1,
+      2.6,
+      5.4,
+      8.5
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "elig_fail",
+     "name": "Eligibility verification failures",
+     "unit": "%",
+     "baseline": 0.5,
+     "warn": 2,
+     "crit": 5,
+     "better": "lower",
+     "path": [
+      0.5,
+      0.6,
+      0.9,
+      1.6,
+      2.3
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "claims_journey",
+     "name": "Claims submission journey completion",
+     "unit": "%",
+     "baseline": 98.5,
+     "warn": 95,
+     "crit": 90,
+     "better": "higher",
+     "path": [
+      98.5,
+      97.9,
+      95.2,
+      90.1,
+      86.4
+     ],
+     "quality": 0.9,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-3075",
+     "type": "deployment",
+     "title": "Claims release 24.11 (includes a schema migration)",
+     "hours_ago": 3.5,
+     "detail": "Deployed to the claims processing API; renames claim_line.member_id to member_ref.",
+     "correlates": [
+      "api_rt",
+      "q_time",
+      "slow_q",
+      "app_err"
+     ],
+     "suspected": true
+    },
+    {
+     "id": "CHG-DEMO-3069",
+     "type": "api",
+     "title": "APIM rate-limit policy refresh",
+     "hours_ago": 26,
+     "detail": "Limits unchanged; policy re-published.",
+     "correlates": [],
+     "suspected": false
+    },
+    {
+     "id": "CERT-DEMO-118",
+     "type": "certificate",
+     "title": "claims-api TLS certificate expires in 41 days",
+     "hours_ago": -984,
+     "detail": "Renewal scheduled.",
+     "correlates": [],
+     "suspected": false
+    },
+    {
+     "id": "MNT-DEMO-0330",
+     "type": "maintenance",
+     "title": "Claims database maintenance window (Sunday 02:00)",
+     "hours_ago": -60,
+     "detail": "Scheduled.",
+     "correlates": [],
+     "suspected": false
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "q_time",
+      "slow_q",
+      "api_rt"
+     ],
+     "text": "A database query regression after the latest release: slow queries hold connections, the pool fills, and claims API calls queue up, driving CPU and failures up."
+    },
+    {
+     "when": [
+      "app_cpu",
+      "api_rt"
+     ],
+     "text": "The claims application servers are overloaded."
+    }
+   ]
+  },
+  "db": {
+   "node": "claimsdb",
+   "start_step": 2,
+   "business_level": 4,
+   "business_text": "Claims adjudication waits on database connections; when the pool is exhausted, adjudication requests time out at the gateway.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "dbh_cpu",
+     "name": "Database host CPU",
+     "unit": "%",
+     "baseline": 35,
+     "warn": 75,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      35,
+      38,
+      41,
+      44,
+      47
+     ],
+     "quality": 0.9,
+     "action": "No action: the database host is not overloaded."
+    },
+    {
+     "cat": "infra",
+     "key": "dbh_mem",
+     "name": "Database host memory",
+     "unit": "%",
+     "baseline": 61,
+     "warn": 85,
+     "crit": 95,
+     "better": "lower",
+     "path": [
+      61,
+      61,
+      62,
+      63,
+      63
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "dbh_io",
+     "name": "Database disk I/O latency",
+     "unit": "ms",
+     "baseline": 5,
+     "warn": 15,
+     "crit": 30,
+     "better": "lower",
+     "path": [
+      5,
+      5,
+      6,
+      6,
+      7
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "pool",
+     "ref": true,
+     "path": [
+      50,
+      64,
+      78,
+      88,
+      94
+     ],
+     "quality": 0.95,
+     "action": "Raise the adjudication pool limit back to its tested value."
+    },
+    {
+     "cat": "db",
+     "key": "active",
+     "ref": true,
+     "path": [
+      20,
+      26,
+      31,
+      35,
+      38
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "wait",
+     "ref": true,
+     "path": [
+      5,
+      40,
+      900,
+      6200,
+      14000
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "db_slow2",
+     "name": "Slow queries",
+     "unit": "/min",
+     "baseline": 1,
+     "warn": 10,
+     "crit": 20,
+     "better": "lower",
+     "path": [
+      1,
+      1,
+      2,
+      2,
+      3
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "db_dead2",
+     "name": "Deadlocks",
+     "unit": "/hour",
+     "baseline": 0,
+     "warn": 2,
+     "crit": 5,
+     "better": "lower",
+     "path": [
+      0,
+      0,
+      0,
+      1,
+      1
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "db_txq2",
+     "name": "Transaction queue length",
+     "unit": "",
+     "baseline": 3,
+     "warn": 25,
+     "crit": 60,
+     "better": "lower",
+     "path": [
+      3,
+      7,
+      19,
+      46,
+      82
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "db",
+     "key": "db_repl2",
+     "name": "Replication lag",
+     "unit": "s",
+     "baseline": 0.3,
+     "warn": 5,
+     "crit": 15,
+     "better": "lower",
+     "path": [
+      0.3,
+      0.3,
+      0.4,
+      0.4,
+      0.5
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "adj_rt",
+     "name": "Adjudication API response time",
+     "unit": "s",
+     "baseline": 0.8,
+     "warn": 3,
+     "crit": 10,
+     "better": "lower",
+     "path": [
+      0.8,
+      1.1,
+      3.2,
+      12,
+      28
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "gw5xx",
+     "ref": true,
+     "path": [
+      0.3,
+      0.6,
+      2.4,
+      8.8,
+      16.4
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "adjudicated",
+     "name": "Claims adjudicated per hour",
+     "unit": "/hour",
+     "baseline": 5000,
+     "warn": 4000,
+     "crit": 3000,
+     "better": "higher",
+     "path": [
+      5000,
+      4900,
+      4300,
+      3100,
+      2200
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "adj_fail",
+     "name": "Failed adjudications",
+     "unit": "%",
+     "baseline": 0.3,
+     "warn": 2,
+     "crit": 5,
+     "better": "lower",
+     "path": [
+      0.3,
+      0.5,
+      1.8,
+      6,
+      11
+     ],
+     "quality": 0.9,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-3101",
+     "type": "config",
+     "title": "claims-adjudication-api config release 24.11.2",
+     "hours_ago": 20,
+     "detail": "Database pool maximum changed from 100 to 40 connections.",
+     "correlates": [
+      "pool",
+      "active",
+      "wait",
+      "gw5xx"
+     ],
+     "suspected": true
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "pool",
+      "wait"
+     ],
+     "healthy": [
+      "dbh_cpu",
+      "db_slow2"
+     ],
+     "text": "The connection pool is too small for peak volume: requests wait for a free connection while the database host itself is healthy and queries are fast."
+    }
+   ]
+  },
+  "capacity": {
+   "node": "member",
+   "start_step": 3,
+   "business_level": 4,
+   "business_text": "Open enrollment drives member traffic up by about half; if the member API runs out of capacity, members can't check coverage or submit claims online.",
+   "signals": [
+    {
+     "cat": "infra",
+     "key": "mm_cpu",
+     "name": "Member API pod CPU",
+     "unit": "%",
+     "baseline": 42,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      42,
+      50,
+      58,
+      66,
+      74
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "infra",
+     "key": "mm_mem",
+     "name": "Member API pod memory",
+     "unit": "%",
+     "baseline": 48,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "path": [
+      48,
+      52,
+      55,
+      59,
+      62
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "app",
+     "key": "mm_p95",
+     "name": "Member API response time (p95)",
+     "unit": "s",
+     "baseline": 0.9,
+     "warn": 3,
+     "crit": 6,
+     "better": "lower",
+     "path": [
+      0.9,
+      1.1,
+      1.4,
+      1.9,
+      2.6
+     ],
+     "quality": 0.9,
+     "action": ""
+    },
+    {
+     "cat": "business",
+     "key": "mm_tx",
+     "name": "Member portal transactions per hour",
+     "unit": "/hour",
+     "baseline": 42000,
+     "warn": 60000,
+     "crit": 68000,
+     "better": "lower",
+     "path": [
+      42000,
+      45000,
+      49000,
+      53000,
+      58000
+     ],
+     "quality": 0.85,
+     "action": ""
+    },
+    {
+     "cat": "capacity",
+     "key": "forecast_peak",
+     "ref": true,
+     "path": [
+      62,
+      78,
+      92,
+      104,
+      112
+     ],
+     "quality": 0.95,
+     "action": "Raise the autoscaling maximum before open enrollment."
+    },
+    {
+     "cat": "capacity",
+     "key": "cur_util",
+     "ref": true,
+     "path": [
+      58,
+      64,
+      70,
+      75,
+      79
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "capacity",
+     "key": "hours_to_limit",
+     "ref": true,
+     "path": [
+      720,
+      400,
+      200,
+      96,
+      64
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "capacity",
+     "key": "headroom",
+     "ref": true,
+     "path": [
+      55,
+      40,
+      22,
+      8,
+      0
+     ],
+     "quality": 0.95,
+     "action": ""
+    },
+    {
+     "cat": "ux",
+     "key": "mm_load",
+     "name": "Member portal load time",
+     "unit": "s",
+     "baseline": 1.8,
+     "warn": 4,
+     "crit": 8,
+     "better": "lower",
+     "path": [
+      1.8,
+      1.9,
+      2.1,
+      2.4,
+      2.8
+     ],
+     "quality": 0.9,
+     "action": ""
+    }
+   ],
+   "changes": [
+    {
+     "id": "CHG-DEMO-2199",
+     "type": "config",
+     "title": "Cost optimisation: member API autoscaling maximum 12 → 4 replicas",
+     "hours_ago": 120,
+     "detail": "Approved cost change; replica cap lowered.",
+     "correlates": [
+      "headroom",
+      "forecast_peak"
+     ],
+     "suspected": true
+    },
+    {
+     "id": "EVT-DEMO-OE26",
+     "type": "demand",
+     "title": "Open enrollment opens",
+     "hours_ago": -96,
+     "detail": "Expected member traffic +45-50% for two weeks.",
+     "correlates": [],
+     "suspected": false
+    }
+   ],
+   "hypotheses": [
+    {
+     "when": [
+      "forecast_peak",
+      "headroom"
+     ],
+     "text": "The autoscaling cap leaves too little headroom for the open-enrollment peak: the forecast exceeds capacity before the event starts."
+    }
+   ],
+   "forecast": "open_enrollment"
+  }
+ },
+ "extra_scenarios": [
+  {
+   "id": "claims",
+   "order": 6,
+   "title": "Claims API slowdown (multi-signal)",
+   "prediction": "Potential claims processing disruption",
+   "service": "Claims Processing Service",
+   "short": "Claims processing",
+   "family": "Claims Processing",
+   "criticality": 5,
+   "use_case": "CLM",
+   "ci": "claims-processing-api",
+   "owner_group": "Claims Platform Engineering",
+   "start": "normal",
+   "demo_only": true,
+   "spike": {
+    "minutes": 50,
+    "label": "Simulate claims slowdown"
+   },
+   "apps": [
+    "Claims Workbench"
+   ],
+   "impact_rule": "apps",
+   "impact_reason": "Claims Operations works in the Claims Workbench, which calls the claims processing API.",
+   "dependents": [
+    "Claims Workbench",
+    "Member portal claim status",
+    "Provider remittance"
+   ],
+   "metrics": [
+    {
+     "key": "api_rt",
+     "kind": "response",
+     "name": "Claims API response time",
+     "unit": "s",
+     "baseline": 2,
+     "warn": 5,
+     "crit": 9,
+     "better": "lower",
+     "abnormal": 11
+    },
+    {
+     "key": "app_cpu",
+     "kind": "infra",
+     "name": "Claims app server CPU",
+     "unit": "%",
+     "baseline": 45,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "abnormal": 94
+    },
+    {
+     "key": "throughput",
+     "kind": "business",
+     "name": "Claims processed per hour",
+     "unit": "/hour",
+     "baseline": 5000,
+     "warn": 4000,
+     "crit": 3000,
+     "better": "higher",
+     "abnormal": 2900
+    },
+    {
+     "key": "failed_tx",
+     "kind": "business",
+     "name": "Failed claims submissions",
+     "unit": "%",
+     "baseline": 0.4,
+     "warn": 2,
+     "crit": 5,
+     "better": "lower",
+     "abnormal": 8.5
+    }
+   ],
+   "actions": [
+    "Compare claims API query plans before and after release 24.11 (suspected contributing change, not confirmed).",
+    "Find the long-running queries holding database connections.",
+    "Add temporary claims API capacity while the cause is investigated.",
+    "Tell Claims Operations leads about the possible backlog."
+   ],
+   "employee_alert": {
+    "title": "Claims processing may slow down",
+    "message": "The claims system is responding more slowly than usual and some submissions are failing to save.",
+    "recommended_action": "Save your work often. If a claim fails to submit, wait a few minutes before resubmitting and don't create duplicates. IT has been alerted.",
+    "status_text": "Alert: IT is monitoring"
+   },
+   "demo_history": {
+    "similar": 4,
+    "disruptive": 2,
+    "n90": 6,
+    "max_cluster": 2,
+    "mttr_hours": 3.4,
+    "records": [
+     {
+      "id": "SYN-CLM-11",
+      "days_ago": 12,
+      "title": "Claims API response times elevated after release",
+      "priority": "2 - High",
+      "state": "Resolved",
+      "ci": "claims-processing-api",
+      "resolution": "Missing index recreated after migration."
+     },
+     {
+      "id": "SYN-CLM-12",
+      "days_ago": 33,
+      "title": "Claims API timeouts at month-end peak",
+      "priority": "2 - High",
+      "state": "Resolved",
+      "ci": "claims-processing-api",
+      "resolution": "Temporary scale-out; batch window moved."
+     },
+     {
+      "id": "SYN-CLM-13",
+      "days_ago": 47,
+      "title": "Claims API response times elevated after release",
+      "priority": "3 - Moderate",
+      "state": "Resolved",
+      "ci": "claims-processing-api",
+      "resolution": "Query hint added; plan regression fixed."
+     },
+     {
+      "id": "SYN-CLM-14",
+      "days_ago": 71,
+      "title": "Claims workbench slow to load claim lines",
+      "priority": "3 - Moderate",
+      "state": "Resolved",
+      "ci": "claims-workbench",
+      "resolution": "Cache warmed after deployment."
+     }
+    ]
+   },
+   "rca_from": "DEMO-CLM-004"
+  },
+  {
+   "id": "db",
+   "order": 7,
+   "title": "Database connection exhaustion",
+   "prediction": "Potential database connection exhaustion",
+   "service": "Claims Adjudication Database",
+   "short": "Claims database",
+   "family": "Claims Processing",
+   "criticality": 4,
+   "use_case": "CLM",
+   "ci": "claims-adj-db-01",
+   "owner_group": "Database Operations",
+   "start": "abnormal",
+   "demo_only": true,
+   "spike": {
+    "minutes": 40,
+    "label": "Simulate connection exhaustion"
+   },
+   "apps": [
+    "Claims Workbench",
+    "Claims Payment Portal"
+   ],
+   "impact_rule": "apps",
+   "impact_reason": "These teams use claims adjudication through the Claims Workbench or the Claims Payment Portal.",
+   "dependents": [
+    "Claims adjudication API",
+    "Claims Workbench",
+    "Claims Payment Portal"
+   ],
+   "metrics": [
+    {
+     "key": "pool",
+     "kind": "db",
+     "name": "Connection pool utilisation",
+     "unit": "%",
+     "baseline": 50,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "abnormal": 94
+    },
+    {
+     "key": "active",
+     "kind": "db",
+     "name": "Active connections (pool max 40)",
+     "unit": "",
+     "baseline": 20,
+     "warn": 32,
+     "crit": 36,
+     "better": "lower",
+     "abnormal": 38
+    },
+    {
+     "key": "wait",
+     "kind": "db",
+     "name": "Connection wait time (p95)",
+     "unit": "ms",
+     "baseline": 5,
+     "warn": 1000,
+     "crit": 10000,
+     "better": "lower",
+     "abnormal": 14000
+    },
+    {
+     "key": "gw5xx",
+     "kind": "api",
+     "name": "Adjudication gateway 5xx rate",
+     "unit": "%",
+     "baseline": 0.3,
+     "warn": 2,
+     "crit": 5,
+     "better": "lower",
+     "abnormal": 16.4
+    }
+   ],
+   "actions": [
+    "Restore the adjudication connection-pool limit to its tested value (the config change is a suspected contributor, not confirmed).",
+    "Confirm the database host has headroom before raising the pool.",
+    "Watch connection wait time and gateway 5xx after the change."
+   ],
+   "employee_alert": {
+    "title": "Claims adjudication may be slow",
+    "message": "Claims adjudication is waiting on the database more than usual, so some claims may take longer to process or time out.",
+    "recommended_action": "If adjudication times out, retry after a few minutes. IT has been alerted.",
+    "status_text": "Alert: IT is monitoring"
+   },
+   "demo_history": {
+    "similar": 3,
+    "disruptive": 2,
+    "n90": 4,
+    "max_cluster": 2,
+    "mttr_hours": 2.2,
+    "records": [
+     {
+      "id": "SYN-DB-21",
+      "days_ago": 18,
+      "title": "Claims adjudication gateway 504s at peak",
+      "priority": "2 - High",
+      "state": "Resolved",
+      "ci": "claims-adj-db-01",
+      "resolution": "Pool limit restored after config drift."
+     },
+     {
+      "id": "SYN-DB-22",
+      "days_ago": 44,
+      "title": "Database connection pool exhausted on claims-adj-db-01",
+      "priority": "1 - Critical",
+      "state": "Resolved",
+      "ci": "claims-adj-db-01",
+      "resolution": "Leaked connections fixed in the adjudication service."
+     },
+     {
+      "id": "SYN-DB-23",
+      "days_ago": 80,
+      "title": "Claims adjudication gateway 504s at peak",
+      "priority": "3 - Moderate",
+      "state": "Resolved",
+      "ci": "claims-adj-db-01",
+      "resolution": "Pool resized."
+     }
+    ]
+   },
+   "rca_from": "DEMO-CLM-001"
+  },
+  {
+   "id": "capacity",
+   "order": 8,
+   "title": "Upcoming capacity exhaustion",
+   "prediction": "Potential capacity exhaustion before open enrollment",
+   "service": "Member Portal & Mobile API",
+   "short": "Member API capacity",
+   "family": "Member Portal",
+   "criticality": 4,
+   "use_case": "MBR",
+   "ci": "member-mobile-api",
+   "owner_group": "Member Digital Engineering",
+   "start": "abnormal",
+   "demo_only": true,
+   "spike": {
+    "minutes": 30,
+    "label": "Simulate demand growth"
+   },
+   "apps": [
+    "Member Portal (member-facing)"
+   ],
+   "impact_rule": "apps",
+   "impact_reason": "Member Services staff support members through the member portal; members themselves are also affected.",
+   "dependents": [
+    "Member Portal",
+    "Member mobile app",
+    "Coverage and claims status for members"
+   ],
+   "metrics": [
+    {
+     "key": "forecast_peak",
+     "kind": "capacity",
+     "name": "Forecast peak utilisation (next 7 days)",
+     "unit": "%",
+     "baseline": 62,
+     "warn": 85,
+     "crit": 100,
+     "better": "lower",
+     "abnormal": 112
+    },
+    {
+     "key": "cur_util",
+     "kind": "capacity",
+     "name": "Current utilisation at daily peak",
+     "unit": "%",
+     "baseline": 58,
+     "warn": 80,
+     "crit": 90,
+     "better": "lower",
+     "abnormal": 79
+    },
+    {
+     "key": "hours_to_limit",
+     "kind": "capacity",
+     "name": "Estimated time until the capacity limit",
+     "unit": "h",
+     "baseline": 720,
+     "warn": 168,
+     "crit": 48,
+     "better": "higher",
+     "abnormal": 64
+    },
+    {
+     "key": "headroom",
+     "kind": "capacity",
+     "name": "Autoscaling headroom",
+     "unit": "%",
+     "baseline": 55,
+     "warn": 25,
+     "crit": 10,
+     "better": "higher",
+     "abnormal": 0
+    }
+   ],
+   "actions": [
+    "Raise the member API autoscaling maximum before open enrollment opens (the cost change is a suspected contributor).",
+    "Load-test the member API at 1.5x current peak.",
+    "Agree a temporary capacity budget for the enrollment window."
+   ],
+   "employee_alert": {
+    "title": "Member portal may be slow during open enrollment",
+    "message": "Member traffic is expected to rise sharply when open enrollment opens, and the member portal may slow down for members.",
+    "recommended_action": "If members report slowness, log it with the Service Desk and use the phone script for coverage questions. IT has been alerted.",
+    "status_text": "Early warning"
+   },
+   "demo_history": {
+    "similar": 2,
+    "disruptive": 1,
+    "n90": 2,
+    "max_cluster": 1,
+    "mttr_hours": 5.5,
+    "records": [
+     {
+      "id": "SYN-CAP-31",
+      "days_ago": 27,
+      "title": "Member mobile app slow during morning peak",
+      "priority": "3 - Moderate",
+      "state": "Resolved",
+      "ci": "member-mobile-api",
+      "resolution": "Replicas raised temporarily."
+     },
+     {
+      "id": "SYN-CAP-32",
+      "days_ago": 300,
+      "title": "Member portal outage on open-enrollment day",
+      "priority": "1 - Critical",
+      "state": "Closed",
+      "ci": "member-portal",
+      "resolution": "Emergency scale-out; capacity plan created."
+     }
+    ]
+   },
+   "rca_from": "DEMO-MBR-005"
+  }
+ ],
+ "demand": [
+  {
+   "id": "open_enrollment",
+   "label": "Open enrollment",
+   "service": "Member Portal & Mobile API",
+   "current": 79,
+   "threshold": 85,
+   "limit": 100,
+   "starts_in_days": 4,
+   "curve": [
+    1,
+    1.0,
+    1.01,
+    1.02,
+    1.04,
+    1.18,
+    1.32,
+    1.42,
+    1.46,
+    1.48,
+    1.47,
+    1.45,
+    1.42,
+    1.38
+   ],
+   "note": "Traffic rises about 45-50% for the first two weeks of enrollment."
+  },
+  {
+   "id": "month_end",
+   "label": "Month-end claims processing",
+   "service": "Claims Processing API",
+   "current": 61,
+   "threshold": 85,
+   "limit": 100,
+   "starts_in_days": 9,
+   "curve": [
+    1,
+    1,
+    1,
+    1,
+    1.01,
+    1.02,
+    1.03,
+    1.05,
+    1.08,
+    1.22,
+    1.35,
+    1.41,
+    1.3,
+    1.1
+   ],
+   "note": "Claims volume peaks over the last three working days of the month."
+  },
+  {
+   "id": "payroll",
+   "label": "Payroll processing",
+   "service": "Workday HR Integration",
+   "current": 44,
+   "threshold": 85,
+   "limit": 100,
+   "starts_in_days": 6,
+   "curve": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1.05,
+    1.4,
+    1.62,
+    1.3,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "note": "Sync volume roughly doubles in the two days before payroll closes."
+  },
+  {
+   "id": "portal_peak",
+   "label": "Employee portal Monday peak",
+   "service": "Employee Center portal",
+   "current": 66,
+   "threshold": 85,
+   "limit": 100,
+   "starts_in_days": 3,
+   "curve": [
+    1,
+    1,
+    1.02,
+    1.21,
+    1.18,
+    1.05,
+    1,
+    1,
+    1,
+    1,
+    1.21,
+    1.18,
+    1.05,
+    1
+   ],
+   "note": "Monday mornings bring about 20% more portal traffic."
+  },
+  {
+   "id": "api_traffic",
+   "label": "API gateway traffic growth",
+   "service": "API Gateway",
+   "current": 57,
+   "threshold": 85,
+   "limit": 100,
+   "starts_in_days": 0,
+   "curve": [
+    1,
+    1.01,
+    1.02,
+    1.03,
+    1.04,
+    1.05,
+    1.06,
+    1.07,
+    1.08,
+    1.09,
+    1.1,
+    1.11,
+    1.12,
+    1.13
+   ],
+   "note": "Steady 1% daily growth from new partner integrations."
+  }
+ ],
+ "graph": {
+  "nodes": [
+   {
+    "id": "sso",
+    "label": "SSO Authentication",
+    "x": 20,
+    "y": 30,
+    "apps": [
+     "SSO"
+    ],
+    "scenario": "sso"
+   },
+   {
+    "id": "vpn",
+    "label": "Remote Access VPN",
+    "x": 20,
+    "y": 140,
+    "apps": [
+     "Remote Access VPN"
+    ],
+    "scenario": "vpn"
+   },
+   {
+    "id": "claimsdb",
+    "label": "Claims Database",
+    "x": 20,
+    "y": 250,
+    "apps": [
+     "Claims Workbench",
+     "Claims Payment Portal"
+    ],
+    "scenario": "db"
+   },
+   {
+    "id": "payapi",
+    "label": "Payment API",
+    "x": 20,
+    "y": 360,
+    "apps": [
+     "Claims Payment Portal",
+     "Finance AP Console",
+     "Provider Remittance Service"
+    ],
+    "scenario": "payment"
+   },
+   {
+    "id": "apim",
+    "label": "API Gateway",
+    "x": 240,
+    "y": 30,
+    "apps": []
+   },
+   {
+    "id": "workday",
+    "label": "Workday Integration",
+    "x": 240,
+    "y": 140,
+    "apps": [
+     "Workday"
+    ],
+    "scenario": "recurring"
+   },
+   {
+    "id": "claimsapi",
+    "label": "Claims Processing API",
+    "x": 240,
+    "y": 250,
+    "apps": [
+     "Claims Workbench"
+    ],
+    "scenario": "claims"
+   },
+   {
+    "id": "paydb",
+    "label": "Payments Database",
+    "x": 240,
+    "y": 360,
+    "apps": [
+     "Claims Payment Portal",
+     "Finance AP Console"
+    ]
+   },
+   {
+    "id": "portal",
+    "label": "Employee Portal",
+    "x": 460,
+    "y": 30,
+    "apps": [
+     "Employee Center"
+    ],
+    "scenario": "portal"
+   },
+   {
+    "id": "claimsapp",
+    "label": "Claims Application",
+    "x": 460,
+    "y": 250,
+    "apps": [
+     "Claims Workbench"
+    ]
+   },
+   {
+    "id": "payproc",
+    "label": "Payment Processing",
+    "x": 460,
+    "y": 360,
+    "apps": [
+     "Claims Payment Portal",
+     "Provider Remittance Service"
+    ]
+   },
+   {
+    "id": "hronb",
+    "label": "HR Onboarding",
+    "x": 690,
+    "y": 30,
+    "apps": [
+     "Workday",
+     "Employee Center"
+    ]
+   },
+   {
+    "id": "member",
+    "label": "Member Portal & Mobile",
+    "x": 690,
+    "y": 250,
+    "apps": [
+     "Member Portal (member-facing)"
+    ],
+    "scenario": "capacity"
+   }
+  ],
+  "edges": [
+   [
+    "sso",
+    "apim"
+   ],
+   [
+    "sso",
+    "vpn"
+   ],
+   [
+    "vpn",
+    "portal"
+   ],
+   [
+    "apim",
+    "portal"
+   ],
+   [
+    "apim",
+    "member"
+   ],
+   [
+    "portal",
+    "claimsapp"
+   ],
+   [
+    "portal",
+    "hronb"
+   ],
+   [
+    "workday",
+    "hronb"
+   ],
+   [
+    "claimsdb",
+    "claimsapi"
+   ],
+   [
+    "claimsapi",
+    "claimsapp"
+   ],
+   [
+    "claimsapp",
+    "member"
+   ],
+   [
+    "payapi",
+    "paydb"
+   ],
+   [
+    "paydb",
+    "payproc"
+   ],
+   [
+    "payproc",
+    "claimsapp"
+   ]
+  ],
+  "note": "Synthetic service relationships for the POC; not read from a CMDB."
+ },
+ "accuracy": {
+  "records": [
+   {
+    "id": "HPR-2400",
+    "sid": "sso",
+    "days_ago": 3.9,
+    "score": 54,
+    "cls": "Moderate",
+    "outcome": "expired",
+    "advance_min": null,
+    "ack_min": null,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2401",
+    "sid": "db",
+    "days_ago": 5.2,
+    "score": 54,
+    "cls": "Moderate",
+    "outcome": "false_positive",
+    "advance_min": null,
+    "ack_min": 32,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2402",
+    "sid": "sso",
+    "days_ago": 7.4,
+    "score": 54,
+    "cls": "Moderate",
+    "outcome": "false_positive",
+    "advance_min": null,
+    "ack_min": 11,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2403",
+    "sid": "vpn",
+    "days_ago": 10.2,
+    "score": 42,
+    "cls": "Moderate",
+    "outcome": "false_positive",
+    "advance_min": null,
+    "ack_min": 12,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2404",
+    "sid": "db",
+    "days_ago": 12.7,
+    "score": 93,
+    "cls": "Critical",
+    "outcome": "incident",
+    "advance_min": 21,
+    "ack_min": 12,
+    "resolve_h": 4.4
+   },
+   {
+    "id": "HPR-2405",
+    "sid": "recurring",
+    "days_ago": 14.3,
+    "score": 40,
+    "cls": "Moderate",
+    "outcome": "false_positive",
+    "advance_min": null,
+    "ack_min": 16,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2406",
+    "sid": "payment",
+    "days_ago": 18.2,
+    "score": 88,
+    "cls": "Critical",
+    "outcome": "incident",
+    "advance_min": 35,
+    "ack_min": 9,
+    "resolve_h": 1.9
+   },
+   {
+    "id": "HPR-2407",
+    "sid": "vpn",
+    "days_ago": 19.4,
+    "score": 84,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 78,
+    "ack_min": 6,
+    "resolve_h": 2.6
+   },
+   {
+    "id": "HPR-2408",
+    "sid": "portal",
+    "days_ago": 21.9,
+    "score": 90,
+    "cls": "Critical",
+    "outcome": "incident",
+    "advance_min": 57,
+    "ack_min": 33,
+    "resolve_h": 7.7
+   },
+   {
+    "id": "HPR-2409",
+    "sid": "sso",
+    "days_ago": 24.5,
+    "score": 40,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 6,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2410",
+    "sid": "portal",
+    "days_ago": 26.0,
+    "score": 88,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 139,
+    "ack_min": 25,
+    "resolve_h": 4.7
+   },
+   {
+    "id": "HPR-2411",
+    "sid": "recurring",
+    "days_ago": 29.0,
+    "score": 56,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 38,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2412",
+    "sid": "payment",
+    "days_ago": 32.6,
+    "score": 91,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 61,
+    "ack_min": 18,
+    "resolve_h": 4.9
+   },
+   {
+    "id": "HPR-2413",
+    "sid": "sso",
+    "days_ago": 34.4,
+    "score": 59,
+    "cls": "Moderate",
+    "outcome": "mitigated",
+    "advance_min": 209,
+    "ack_min": 8,
+    "resolve_h": 9.3
+   },
+   {
+    "id": "HPR-2414",
+    "sid": "db",
+    "days_ago": 36.2,
+    "score": 47,
+    "cls": "Moderate",
+    "outcome": "expired",
+    "advance_min": null,
+    "ack_min": null,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2415",
+    "sid": "claims",
+    "days_ago": 39.2,
+    "score": 55,
+    "cls": "Moderate",
+    "outcome": "expired",
+    "advance_min": null,
+    "ack_min": null,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2416",
+    "sid": "vpn",
+    "days_ago": 40.5,
+    "score": 44,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 11,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2417",
+    "sid": "sso",
+    "days_ago": 43.7,
+    "score": 62,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 157,
+    "ack_min": 15,
+    "resolve_h": 3.6
+   },
+   {
+    "id": "HPR-2418",
+    "sid": "vpn",
+    "days_ago": 46.5,
+    "score": 74,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 215,
+    "ack_min": 11,
+    "resolve_h": 1.2
+   },
+   {
+    "id": "HPR-2419",
+    "sid": "capacity",
+    "days_ago": 48.4,
+    "score": 79,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 209,
+    "ack_min": 8,
+    "resolve_h": 6.3
+   },
+   {
+    "id": "HPR-2420",
+    "sid": "capacity",
+    "days_ago": 50.3,
+    "score": 89,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 153,
+    "ack_min": 20,
+    "resolve_h": 3.2
+   },
+   {
+    "id": "HPR-2421",
+    "sid": "db",
+    "days_ago": 54.0,
+    "score": 71,
+    "cls": "High",
+    "outcome": "incident",
+    "advance_min": 38,
+    "ack_min": 20,
+    "resolve_h": 9.2
+   },
+   {
+    "id": "HPR-2422",
+    "sid": "sso",
+    "days_ago": 56.3,
+    "score": 34,
+    "cls": "Moderate",
+    "outcome": "expired",
+    "advance_min": null,
+    "ack_min": null,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2423",
+    "sid": "payment",
+    "days_ago": 57.5,
+    "score": 60,
+    "cls": "Moderate",
+    "outcome": "mitigated",
+    "advance_min": 234,
+    "ack_min": 32,
+    "resolve_h": 7.4
+   },
+   {
+    "id": "HPR-2424",
+    "sid": "vpn",
+    "days_ago": 61.5,
+    "score": 60,
+    "cls": "Moderate",
+    "outcome": "mitigated",
+    "advance_min": 80,
+    "ack_min": 13,
+    "resolve_h": 2.6
+   },
+   {
+    "id": "HPR-2425",
+    "sid": "vpn",
+    "days_ago": 62.0,
+    "score": 74,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 136,
+    "ack_min": 27,
+    "resolve_h": 7.2
+   },
+   {
+    "id": "HPR-2426",
+    "sid": "recurring",
+    "days_ago": 65.4,
+    "score": 86,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 116,
+    "ack_min": 37,
+    "resolve_h": 3.2
+   },
+   {
+    "id": "HPR-2427",
+    "sid": "db",
+    "days_ago": 67.5,
+    "score": 85,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 75,
+    "ack_min": 30,
+    "resolve_h": 3.2
+   },
+   {
+    "id": "HPR-2428",
+    "sid": "vpn",
+    "days_ago": 70.3,
+    "score": 65,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 180,
+    "ack_min": 16,
+    "resolve_h": 2.4
+   },
+   {
+    "id": "HPR-2429",
+    "sid": "capacity",
+    "days_ago": 72.0,
+    "score": 79,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 136,
+    "ack_min": 3,
+    "resolve_h": 1.9
+   },
+   {
+    "id": "HPR-2430",
+    "sid": "recurring",
+    "days_ago": 74.5,
+    "score": 81,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 225,
+    "ack_min": 16,
+    "resolve_h": 9.4
+   },
+   {
+    "id": "HPR-2431",
+    "sid": "recurring",
+    "days_ago": 77.5,
+    "score": 70,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 156,
+    "ack_min": 27,
+    "resolve_h": 3.6
+   },
+   {
+    "id": "HPR-2432",
+    "sid": "portal",
+    "days_ago": 80.5,
+    "score": 85,
+    "cls": "Critical",
+    "outcome": "incident",
+    "advance_min": 41,
+    "ack_min": 26,
+    "resolve_h": 5.0
+   },
+   {
+    "id": "HPR-2433",
+    "sid": "sso",
+    "days_ago": 81.9,
+    "score": 61,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 209,
+    "ack_min": 6,
+    "resolve_h": 9.1
+   },
+   {
+    "id": "HPR-2434",
+    "sid": "recurring",
+    "days_ago": 84.7,
+    "score": 58,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 22,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2435",
+    "sid": "recurring",
+    "days_ago": 87.5,
+    "score": 36,
+    "cls": "Moderate",
+    "outcome": "expired",
+    "advance_min": null,
+    "ack_min": null,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2436",
+    "sid": "portal",
+    "days_ago": 89.5,
+    "score": 47,
+    "cls": "Moderate",
+    "outcome": "false_positive",
+    "advance_min": null,
+    "ack_min": 4,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2437",
+    "sid": "vpn",
+    "days_ago": 91.6,
+    "score": 35,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 27,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2438",
+    "sid": "portal",
+    "days_ago": 93.3,
+    "score": 81,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 160,
+    "ack_min": 9,
+    "resolve_h": 8.2
+   },
+   {
+    "id": "HPR-2439",
+    "sid": "claims",
+    "days_ago": 96.4,
+    "score": 90,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 35,
+    "ack_min": 16,
+    "resolve_h": 5.3
+   },
+   {
+    "id": "HPR-2440",
+    "sid": "vpn",
+    "days_ago": 99.3,
+    "score": 91,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 92,
+    "ack_min": 7,
+    "resolve_h": 2.6
+   },
+   {
+    "id": "HPR-2441",
+    "sid": "capacity",
+    "days_ago": 101.3,
+    "score": 78,
+    "cls": "High",
+    "outcome": "incident",
+    "advance_min": 32,
+    "ack_min": 36,
+    "resolve_h": 6.3
+   },
+   {
+    "id": "HPR-2442",
+    "sid": "vpn",
+    "days_ago": 104.0,
+    "score": 75,
+    "cls": "High",
+    "outcome": "incident",
+    "advance_min": 47,
+    "ack_min": 10,
+    "resolve_h": 2.9
+   },
+   {
+    "id": "HPR-2443",
+    "sid": "vpn",
+    "days_ago": 106.6,
+    "score": 36,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 23,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2444",
+    "sid": "sso",
+    "days_ago": 108.5,
+    "score": 83,
+    "cls": "Critical",
+    "outcome": "mitigated",
+    "advance_min": 114,
+    "ack_min": 7,
+    "resolve_h": 9.2
+   },
+   {
+    "id": "HPR-2445",
+    "sid": "capacity",
+    "days_ago": 111.3,
+    "score": 52,
+    "cls": "Moderate",
+    "outcome": "false_positive",
+    "advance_min": null,
+    "ack_min": 23,
+    "resolve_h": null
+   },
+   {
+    "id": "HPR-2446",
+    "sid": "portal",
+    "days_ago": 113.6,
+    "score": 76,
+    "cls": "High",
+    "outcome": "mitigated",
+    "advance_min": 93,
+    "ack_min": 36,
+    "resolve_h": 4.6
+   },
+   {
+    "id": "HPR-2447",
+    "sid": "vpn",
+    "days_ago": 115.4,
+    "score": 45,
+    "cls": "Moderate",
+    "outcome": "dismissed",
+    "advance_min": null,
+    "ack_min": 6,
+    "resolve_h": null
+   }
+  ],
+  "note": "Synthetic history of 48 predictions over about 4 months, used to illustrate outcome tracking."
+ },
+ "assets": [
+  {
+   "tag": "P1000177",
+   "model": "Apple MacBook Pro 15\"",
+   "type": "Laptop",
+   "dept": "Finance",
+   "user_role": "Senior financial analyst",
+   "purchased": "unknown",
+   "age_years": null,
+   "warranty_end": null,
+   "battery": 61,
+   "smart": [
+    3,
+    6,
+    11,
+    17,
+    24
+   ],
+   "crashes_30d": 9,
+   "repairs_12m": 1,
+   "repair_cost": 779,
+   "replace_cost": 1100,
+   "scripted": "DEMO-AST-001",
+   "real_record": true
+  },
+  {
+   "tag": "P1000238",
+   "model": "Dell Precision workstation",
+   "type": "Desktop",
+   "dept": "Actuarial & Analytics",
+   "user_role": "Actuarial analyst",
+   "purchased": "2019-03-14",
+   "age_years": 6.7,
+   "warranty_end": "2023-03-14",
+   "battery": null,
+   "smart": [
+    0,
+    0,
+    1,
+    1,
+    2
+   ],
+   "crashes_30d": 2,
+   "repairs_12m": 2,
+   "repair_cost": 640,
+   "replace_cost": 1650,
+   "scripted": "DEMO-AST-002",
+   "real_record": true
+  },
+  {
+   "tag": "P1000486",
+   "model": "Apple MacBook Air 13\"",
+   "type": "Laptop",
+   "dept": "IT & Digital",
+   "user_role": "IT support analyst",
+   "purchased": "2024-02-02",
+   "age_years": 1.8,
+   "warranty_end": "2027-02-02",
+   "battery": 94,
+   "smart": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "crashes_30d": 0,
+   "repairs_12m": 1,
+   "repair_cost": 520,
+   "replace_cost": 1100,
+   "scripted": "DEMO-AST-003",
+   "real_record": true
+  },
+  {
+   "tag": "SYN-LT-2041",
+   "model": "Lenovo ThinkPad T14",
+   "type": "Laptop",
+   "dept": "Claims Operations",
+   "user_role": "Claims examiner",
+   "purchased": "2021-11-20",
+   "age_years": 4.0,
+   "warranty_end": "2026-01-05",
+   "battery": 72,
+   "smart": [
+    0,
+    1,
+    1,
+    2,
+    2
+   ],
+   "crashes_30d": 1,
+   "repairs_12m": 0,
+   "repair_cost": 0,
+   "replace_cost": 1100
+  },
+  {
+   "tag": "SYN-LT-2077",
+   "model": "Lenovo ThinkPad T14",
+   "type": "Laptop",
+   "dept": "Member Services",
+   "user_role": "Member services representative",
+   "purchased": "2020-08-11",
+   "age_years": 5.3,
+   "warranty_end": "2023-08-11",
+   "battery": 58,
+   "smart": [
+    2,
+    5,
+    9,
+    14,
+    20
+   ],
+   "crashes_30d": 6,
+   "repairs_12m": 3,
+   "repair_cost": 410,
+   "replace_cost": 1100
+  },
+  {
+   "tag": "SYN-LT-2103",
+   "model": "Dell Latitude 5440",
+   "type": "Laptop",
+   "dept": "Care Management",
+   "user_role": "Care manager",
+   "purchased": "2023-05-09",
+   "age_years": 2.5,
+   "warranty_end": "2026-05-09",
+   "battery": 88,
+   "smart": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "crashes_30d": 0,
+   "repairs_12m": 0,
+   "repair_cost": 0,
+   "replace_cost": 1100
+  },
+  {
+   "tag": "SYN-LT-2119",
+   "model": "Dell Latitude 5440",
+   "type": "Laptop",
+   "dept": "Provider Relations",
+   "user_role": "Provider relations specialist",
+   "purchased": "2022-01-17",
+   "age_years": 3.8,
+   "warranty_end": "2025-12-20",
+   "battery": 69,
+   "smart": [
+    0,
+    0,
+    1,
+    1,
+    1
+   ],
+   "crashes_30d": 2,
+   "repairs_12m": 2,
+   "repair_cost": 260,
+   "replace_cost": 1100
+  },
+  {
+   "tag": "SYN-LT-2150",
+   "model": "Apple MacBook Pro 14\"",
+   "type": "Laptop",
+   "dept": "IT & Digital",
+   "user_role": "Software engineer",
+   "purchased": "2023-10-02",
+   "age_years": 2.1,
+   "warranty_end": "2026-10-02",
+   "battery": 86,
+   "smart": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "crashes_30d": 1,
+   "repairs_12m": 0,
+   "repair_cost": 0,
+   "replace_cost": 2400
+  },
+  {
+   "tag": "SYN-DT-3005",
+   "model": "HP EliteDesk 800",
+   "type": "Desktop",
+   "dept": "Pharmacy Operations",
+   "user_role": "Pharmacy technician",
+   "purchased": "2019-06-30",
+   "age_years": 6.4,
+   "warranty_end": "2024-06-30",
+   "battery": null,
+   "smart": [
+    1,
+    2,
+    4,
+    7,
+    11
+   ],
+   "crashes_30d": 3,
+   "repairs_12m": 1,
+   "repair_cost": 300,
+   "replace_cost": 950
+  },
+  {
+   "tag": "SYN-LT-2188",
+   "model": "Lenovo ThinkPad T14",
+   "type": "Laptop",
+   "dept": "Finance",
+   "user_role": "Accounts payable specialist",
+   "purchased": "2022-12-01",
+   "age_years": 2.9,
+   "warranty_end": "2025-12-01",
+   "battery": 79,
+   "smart": [
+    0,
+    0,
+    0,
+    1,
+    1
+   ],
+   "crashes_30d": 0,
+   "repairs_12m": 0,
+   "repair_cost": 0,
+   "replace_cost": 1100
+  },
+  {
+   "tag": "SYN-LT-2210",
+   "model": "Dell Latitude 7440",
+   "type": "Laptop",
+   "dept": "Human Resources",
+   "user_role": "HR generalist",
+   "purchased": "2024-07-15",
+   "age_years": 1.3,
+   "warranty_end": "2027-07-15",
+   "battery": 97,
+   "smart": [
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "crashes_30d": 0,
+   "repairs_12m": 0,
+   "repair_cost": 0,
+   "replace_cost": 1100
+  },
+  {
+   "tag": "SYN-LT-2234",
+   "model": "Lenovo ThinkPad X1",
+   "type": "Laptop",
+   "dept": "Claims Operations",
+   "user_role": "Claims team lead",
+   "purchased": "2021-02-10",
+   "age_years": 4.8,
+   "warranty_end": "2024-02-10",
+   "battery": 64,
+   "smart": [
+    0,
+    1,
+    3,
+    4,
+    6
+   ],
+   "crashes_30d": 4,
+   "repairs_12m": 2,
+   "repair_cost": 350,
+   "replace_cost": 1300
+  }
+ ],
+ "fleet_age": {
+  "labels": [
+   "<1 yr",
+   "1-2",
+   "2-3",
+   "3-4",
+   "4-5",
+   "5+"
+  ],
+  "laptops": [
+   118,
+   342,
+   391,
+   286,
+   172,
+   96
+  ],
+  "desktops": [
+   12,
+   30,
+   44,
+   51,
+   39,
+   61
+  ],
+  "note": "Synthetic fleet of 1,642 devices."
+ },
+ "hr": {
+  "onboarding": [
+   {
+    "id": "HRC-DEMO-4512",
+    "role": "Financial analyst",
+    "dept": "Finance",
+    "start_in_days": 3,
+    "tasks_total": 18,
+    "tasks_done": 11,
+    "overdue": 2,
+    "waiting_on": "IT: laptop delivery",
+    "owner": "IT Service Desk"
+   },
+   {
+    "id": "HRC-DEMO-4519",
+    "role": "Claims examiner",
+    "dept": "Claims Operations",
+    "start_in_days": 5,
+    "tasks_total": 16,
+    "tasks_done": 12,
+    "overdue": 0,
+    "waiting_on": "Manager: system access approval",
+    "owner": "Hiring manager"
+   },
+   {
+    "id": "HRC-DEMO-4523",
+    "role": "Care manager (RN)",
+    "dept": "Care Management",
+    "start_in_days": 4,
+    "tasks_total": 20,
+    "tasks_done": 9,
+    "overdue": 3,
+    "waiting_on": "HR: licence verification",
+    "owner": "HR Operations"
+   },
+   {
+    "id": "HRC-DEMO-4527",
+    "role": "Member services representative",
+    "dept": "Member Services",
+    "start_in_days": 10,
+    "tasks_total": 15,
+    "tasks_done": 6,
+    "overdue": 0,
+    "waiting_on": "Facilities: desk assignment",
+    "owner": "Facilities"
+   },
+   {
+    "id": "HRC-DEMO-4530",
+    "role": "Software engineer",
+    "dept": "IT & Digital",
+    "start_in_days": 7,
+    "tasks_total": 19,
+    "tasks_done": 13,
+    "overdue": 1,
+    "waiting_on": "IT: developer laptop",
+    "owner": "IT Service Desk"
+   },
+   {
+    "id": "HRC-DEMO-4534",
+    "role": "Pharmacy technician",
+    "dept": "Pharmacy Operations",
+    "start_in_days": 2,
+    "tasks_total": 14,
+    "tasks_done": 12,
+    "overdue": 0,
+    "waiting_on": "Training enrolment",
+    "owner": "Learning & Development"
+   },
+   {
+    "id": "HRC-DEMO-4538",
+    "role": "Provider relations specialist",
+    "dept": "Provider Relations",
+    "start_in_days": 12,
+    "tasks_total": 15,
+    "tasks_done": 4,
+    "overdue": 0,
+    "waiting_on": "HR: offer paperwork",
+    "owner": "HR Operations"
+   }
+  ],
+  "throughput": {
+   "IT Service Desk": 1.6,
+   "Hiring manager": 2.5,
+   "HR Operations": 2.2,
+   "Facilities": 3.0,
+   "Learning & Development": 3.5
+  },
+  "approvals": [
+   {
+    "step": "Hiring manager: system access",
+    "pending": 6,
+    "avg_wait_h": 31,
+    "sla_h": 24
+   },
+   {
+    "step": "HR partner: onboarding plan",
+    "pending": 3,
+    "avg_wait_h": 9,
+    "sla_h": 24
+   },
+   {
+    "step": "IT asset manager: laptop",
+    "pending": 4,
+    "avg_wait_h": 19,
+    "sla_h": 24
+   },
+   {
+    "step": "Benefits: dependant change",
+    "pending": 5,
+    "avg_wait_h": 52,
+    "sla_h": 48
+   },
+   {
+    "step": "Payroll: bank detail change",
+    "pending": 2,
+    "avg_wait_h": 6,
+    "sla_h": 24
+   }
+  ],
+  "requests_weekly": {
+   "weeks": [
+    "-7w",
+    "-6w",
+    "-5w",
+    "-4w",
+    "-3w",
+    "-2w",
+    "-1w",
+    "This wk"
+   ],
+   "series": {
+    "Onboarding": [
+     14,
+     11,
+     16,
+     13,
+     18,
+     15,
+     19,
+     17
+    ],
+    "Leave": [
+     22,
+     25,
+     19,
+     24,
+     27,
+     23,
+     26,
+     28
+    ],
+    "Benefits change": [
+     9,
+     8,
+     11,
+     10,
+     9,
+     12,
+     14,
+     21
+    ],
+    "Payroll question": [
+     31,
+     12,
+     10,
+     33,
+     13,
+     11,
+     35,
+     14
+    ],
+    "Policy question": [
+     17,
+     18,
+     16,
+     19,
+     18,
+     17,
+     20,
+     19
+    ]
+   }
+  },
+  "cycle_time_h": {
+   "weeks": [
+    "-7w",
+    "-6w",
+    "-5w",
+    "-4w",
+    "-3w",
+    "-2w",
+    "-1w",
+    "This wk"
+   ],
+   "series": {
+    "Onboarding": [
+     62,
+     60,
+     64,
+     58,
+     66,
+     70,
+     73,
+     77
+    ],
+    "Leave": [
+     20,
+     19,
+     21,
+     18,
+     20,
+     19,
+     18,
+     19
+    ],
+    "Benefits change": [
+     41,
+     44,
+     39,
+     46,
+     48,
+     51,
+     55,
+     58
+    ]
+   }
+  },
+  "patterns": [
+   {
+    "type": "Payroll question",
+    "pattern": "Spikes to 31-35 in each payroll week (every 3 weeks), then drops to ~12.",
+    "suggestion": "Publish a payroll FAQ in the Employee Center before each payroll run."
+   },
+   {
+    "type": "Benefits change",
+    "pattern": "Up from ~10 to 21 this week as open enrollment approaches.",
+    "suggestion": "Add a self-service benefits-change guide and extra benefits staffing for two weeks."
+   },
+   {
+    "type": "Onboarding",
+    "pattern": "Cycle time up from 62 h to 77 h over 8 weeks; most waiting is on laptops and access approvals.",
+    "suggestion": "Pre-order laptops at offer acceptance and remind managers about access approvals."
+   }
+  ],
+  "note": "Synthetic HR workflow data: process-level only. No individual employee risk scoring and no sensitive personal data."
+ },
+ "incident_intel": {
+  "node_of_use_case": {
+   "CLM": "claimsapi",
+   "MBR": "member",
+   "PRV": "claimsdb",
+   "INT": "workday",
+   "IAM": "sso"
+  },
+  "effectiveness": {
+   "CLM": {
+    "fixed_first_time": 82,
+    "reopened": 9,
+    "avg_mttr_h": 3.6
+   },
+   "MBR": {
+    "fixed_first_time": 77,
+    "reopened": 12,
+    "avg_mttr_h": 4.1
+   },
+   "PRV": {
+    "fixed_first_time": 74,
+    "reopened": 14,
+    "avg_mttr_h": 5.2
+   },
+   "INT": {
+    "fixed_first_time": 69,
+    "reopened": 18,
+    "avg_mttr_h": 6.0
+   },
+   "IAM": {
+    "fixed_first_time": 85,
+    "reopened": 7,
+    "avg_mttr_h": 2.7
+   }
+  }
+ }
+}

@@ -1,0 +1,1598 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integration services model</title>
+<!-- Predictive Intelligence: the illustrative "shared integration service degradation" model, kept from the earlier
+     Crystal Clean Service Hub page and shown inside the IT Admin Portal (Predictive Intelligence > Integration services model).
+     Entirely client-side and deterministic: illustrative data, no backend calls. -->
+<style>
+:root {
+  --navy: #0b2c4d; --blue: #0a5c9e; --sky: #e8f3fb; --green: #2e9a46; --green-bg: #e9f6ec;
+  --amber: #b26a00; --amber-bg: #fff4e0; --red: #c0352b; --red-bg: #fdecea; --violet: #5b3fb5; --violet-bg: #efeafd; --purple: #6e4ff6; --purple-bg: #efeafe;
+  --ink: #17212b; --muted: #5d6b78; --line: #e3e8ee; --bg: #f5f7fa; --card: #fff;
+  --radius: 14px; --shadow: 0 1px 2px rgba(16,32,48,.06), 0 4px 16px rgba(16,32,48,.05);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.5 "Segoe UI", system-ui, -apple-system, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+button { font: inherit; cursor: pointer; }
+a { color: var(--blue); }
+.top { position: sticky; top: 0; z-index: 5; background: #fff; border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1280px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand img { height: 40px; width: auto; display: block; }
+.brand span { color: var(--muted); border-left: 1px solid var(--line); padding-left: 12px; font-weight: 600; white-space: nowrap; }
+.spacer { flex: 1; }
+.seg { display: inline-flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.seg button { white-space: nowrap; border: 0; background: transparent; padding: 6px 14px; border-radius: 999px; color: var(--muted); font-weight: 600; font-size: 13px; }
+.seg button.on { background: var(--navy); color: #fff; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--navy); display: grid; place-items: center; flex: none; }
+.icon-btn:hover { background: var(--sky); }
+.icon-btn.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.who { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; background: #fff; }
+.av { width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+.av.it { background: var(--violet); }
+.who b { font-size: 13px; display: block; line-height: 1.1; } .who small { color: var(--muted); font-size: 11px; }
+main { max-width: 1280px; margin: 0 auto; padding: 24px 20px 48px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+h1 { font-size: 28px; margin: 0 0 4px; color: var(--navy); letter-spacing: -.3px; }
+h2 { font-size: 15px; margin: 0 0 12px; color: var(--navy); }
+h3 { font-size: 14px; margin: 0 0 8px; color: var(--navy); }
+.sub { color: var(--muted); margin: 0 0 18px; }
+.pad { padding: 20px; }
+.empty { color: var(--muted); font-size: 14px; padding: 8px 0; margin: 0; }
+.pill { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; white-space: nowrap; display: inline-block; }
+.pill.ok { background: var(--green-bg); color: var(--green); } .pill.run { background: var(--sky); color: var(--blue); }
+.pill.warn { background: var(--amber-bg); color: var(--amber); } .pill.bad { background: var(--red-bg); color: var(--red); }
+.pill.grey { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.btn { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 600; }
+.btn.primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn.go { background: var(--green); border-color: var(--green); color: #fff; }
+.btn.no { color: var(--red); }
+.hero { padding: 28px; background: linear-gradient(135deg, #0b2c4d, #0a5c9e); color: #fff; border: 0; }
+.hero h1 { color: #fff; } .hero .sub { color: #cfe3f3; }
+.ask { display: flex; gap: 8px; background: #fff; border-radius: 12px; padding: 6px; }
+.ask input { flex: 1; border: 0; outline: 0; font: inherit; font-size: 16px; padding: 10px 12px; min-width: 0; }
+.ask button { border: 0; background: var(--green); color: #fff; border-radius: 9px; padding: 0 20px; font-weight: 600; }
+.ask button:disabled { opacity: .6; cursor: default; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.chip { border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.chip:hover { background: rgba(255,255,255,.2); }
+.thread { margin-top: 14px; display: grid; gap: 8px; }
+.msg { max-width: 80%; padding: 9px 13px; border-radius: 12px; font-size: 14px; }
+.msg.me { justify-self: end; background: rgba(255,255,255,.18); color: #fff; }
+.msg.bot { background: #fff; color: var(--ink); justify-self: start; }
+.msg.typing { color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px; margin-top: 20px; align-items: start; }
+.alert { border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid; }
+.alert.high { background: var(--red-bg); border-color: #f4c7c2; }
+.alert.medium { background: var(--amber-bg); border-color: #f3dcb2; }
+.alert b { display: block; margin-bottom: 2px; }
+.alert p { margin: 0 0 10px; font-size: 14px; color: #3a4652; }
+.alert .row { display: flex; gap: 8px; }
+.req { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+.req-h { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.req-h b { font-size: 15px; } .req-h small { color: var(--muted); white-space: nowrap; }
+.steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin: 12px 0 10px; }
+.steps div { text-align: center; font-size: 12px; color: var(--muted); line-height: 1.3; }
+.steps i { display: block; height: 6px; border-radius: 3px; background: var(--line); margin-bottom: 5px; }
+.steps .on i { background: var(--green); } .steps .now i { background: var(--blue); animation: pulse 1.2s infinite; }
+.steps .warn i { background: var(--amber); }
+.steps .on, .steps .now, .steps .warn { color: var(--ink); font-weight: 600; }
+@keyframes pulse { 50% { opacity: .45; } }
+.journey { list-style: none; margin: 0; padding: 0; border-top: 1px dashed var(--line); padding-top: 8px; }
+.journey li { display: flex; gap: 10px; font-size: 14px; padding: 3px 0; color: #3a4652; }
+.journey li time { color: var(--muted); font-size: 12px; min-width: 62px; padding-top: 2px; }
+.journey li:last-child { color: var(--ink); font-weight: 600; }
+details.more summary { cursor: pointer; color: var(--blue); font-size: 13px; margin-top: 4px; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+.kpi { padding: 16px 18px; }
+.kpi small { color: var(--muted); font-size: 13px; } .kpi b { display: block; font-size: 28px; color: var(--navy); }
+.kpi.attn { border-color: #f3dcb2; background: var(--amber-bg); }
+.banner { display: flex; align-items: center; gap: 12px; justify-content: space-between; border: 1px solid #f3dcb2; background: var(--amber-bg); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; }
+.tk { display: block; cursor: pointer; width: 100%; text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+.tk.sel { border-color: var(--blue); box-shadow: 0 0 0 3px var(--sky); }
+.tk-h { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.tk-h a { font-weight: 700; text-decoration: none; } .tk-h a:hover { text-decoration: underline; }
+.tk p { margin: 4px 0 0; font-size: 14px; } .tk small { color: var(--muted); }
+.quote { background: var(--bg); border-radius: 10px; padding: 10px 14px; margin: 10px 0 16px; font-size: 14px; }
+.quote small { display: block; color: var(--muted); font-size: 12px; }
+.panel { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.panel-h { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; margin-bottom: 8px; }
+.panel-h h3 { margin: 0; } .panel-h small { color: var(--muted); }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 12px; }
+.fact { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--muted); }
+.fact b { display: block; font-size: 16px; color: var(--navy); }
+.fact.bad b { color: var(--red); } .fact.good b { color: var(--green); }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); padding: 6px 8px; }
+.tbl td { border-bottom: 1px solid var(--line); padding: 6px 8px; }
+.tbl tr.marker td { background: var(--sky); color: var(--blue); font-weight: 600; }
+.tbl-wrap { overflow-x: auto; }
+.logbox { background: #0f1b27; color: #c9d6e2; border-radius: 10px; padding: 10px 12px; font: 12px/1.5 Consolas, "Cascadia Mono", monospace; overflow: auto; white-space: pre; max-height: 230px; }
+.logbox .e { color: #ff8a80; } .logbox .w { color: #ffd180; } .logbox .i { color: #a5d6a7; }
+.chart { width: 100%; height: auto; display: block; }
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.stack { display: flex; height: 22px; border-radius: 6px; overflow: hidden; background: var(--line); }
+.stack span { height: 100%; }
+.cmp { display: grid; grid-template-columns: 60px 1fr 60px; gap: 8px; align-items: center; font-size: 13px; margin: 6px 0; }
+.pipe { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 14px; }
+.node { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 8px 6px; text-align: center; font-size: 11.5px; line-height: 1.25; min-height: 74px; }
+.node:hover { border-color: var(--blue); }
+.node .ic { width: 24px; height: 24px; border-radius: 50%; margin: 0 auto 5px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--line); color: var(--muted); }
+.node b { display: block; font-size: 12px; color: var(--ink); }
+.node small { color: var(--muted); font-size: 10.5px; }
+.node.done .ic { background: var(--green); color: #fff; }
+.node.running { border-color: var(--blue); box-shadow: 0 0 0 3px var(--sky); }
+.node.running .ic { background: var(--blue); color: #fff; animation: pulse 1s infinite; }
+.node.waiting { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-bg); }
+.node.waiting .ic { background: var(--amber); color: #fff; animation: pulse 1s infinite; }
+.node.warn .ic { background: var(--amber); color: #fff; } .node.fail .ic { background: var(--red); color: #fff; }
+.node.skipped, .node.na { opacity: .5; }
+.node.sel { outline: 2px solid var(--navy); outline-offset: 1px; }
+.stage { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 18px; }
+.stage-h { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.stage-h h3 { margin: 0; font-size: 16px; }
+.stage-h p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.eng { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
+.eng.ai { background: var(--violet-bg); color: var(--violet); } .eng.rules { background: var(--amber-bg); color: var(--amber); }
+.eng.tool { background: var(--sky); color: var(--blue); } .eng.alert { background: var(--red-bg); color: var(--red); }
+.eng.human { background: var(--green-bg); color: var(--green); } .eng.policy { background: var(--bg); color: var(--muted); }
+.approve-box { margin-top: 12px; border: 1px solid #f3dcb2; background: var(--amber-bg); border-radius: 10px; padding: 12px 14px; }
+.approve-box .row { display: flex; gap: 8px; margin-top: 8px; }
+.kv { display: grid; grid-template-columns: 190px 1fr; gap: 4px 14px; font-size: 13.5px; margin-top: 10px; }
+.kv dt { color: var(--muted); } .kv dd { margin: 0; word-break: break-word; }
+.kv ul { margin: 0; padding-left: 18px; }
+.sec { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 14px 0 0; }
+.tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.tools span { font-size: 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+.note { border-left: 3px solid var(--blue); background: #f8fafc; padding: 10px 12px; border-radius: 0 8px 8px 0; margin-bottom: 8px; font-size: 13px; white-space: pre-wrap; }
+.note.c { border-color: var(--green); }
+.note small { display: block; color: var(--muted); margin-bottom: 4px; white-space: normal; }
+details.notes summary { cursor: pointer; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.side { display: grid; gap: 20px; margin-top: 20px; grid-template-columns: 1fr 1.3fr 1fr; }
+.bar { height: 10px; background: var(--line); border-radius: 5px; overflow: hidden; margin: 8px 0 6px; }
+.bar i { display: block; height: 100%; background: var(--green); transition: width .6s; }
+.bar.hot i { background: var(--red); } .bar.warm i { background: var(--amber); }
+.sys { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.sys:last-child { border: 0; } .sys span { color: var(--muted); text-align: right; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--green); margin-right: 6px; }
+.dot.off { background: var(--amber); }
+details.demo summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+.demo-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90vw; }
+.toast.on { opacity: 1; }
+footer { text-align: center; color: var(--muted); font-size: 12px; padding: 0 0 24px; }
+@media (max-width: 1100px) { .side { grid-template-columns: 1fr; } }
+@media (max-width: 860px) {
+  .grid2 { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, 1fr); }
+  .pipe { grid-template-columns: repeat(2, 1fr); }
+  .brand span, .who small, .who span b { display: none; }
+  .top-in { padding: 10px 16px; gap: 8px; } main { padding: 16px; }
+  .brand img { height: 30px; }
+  .msg { max-width: 92%; }
+  .kv { grid-template-columns: 1fr; } .kv dt { margin-top: 6px; }
+  .steps div { font-size: 10.5px; }
+}
+.kpis6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kpis7 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.stages5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 10px; }
+.stage-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.stage-card b { font-size: 13px; color: var(--navy); }
+/* AURA predictive-intelligence shell: navy sidebar for the IT view only */
+.shell { display: flex; align-items: flex-start; }
+.shell > #main { flex: 1 1 auto; min-width: 0; }
+.sidebar { display: none; }
+.shell.itview .sidebar { display: block; width: 232px; flex: none; background: var(--navy); min-height: calc(100vh - 62px); position: sticky; top: 62px; padding: 16px 0 24px; }
+.shell.itview main#main { max-width: none; margin: 0; flex: 1; min-width: 0; padding: 24px 24px 48px; }
+.side-grp { padding: 16px 18px 6px; font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: #8fa6bd; }
+.side-link { display: block; width: 100%; text-align: left; border: 0; background: transparent; color: #cfe0ef; padding: 9px 18px; font-size: 13.5px; font-weight: 600; border-left: 3px solid transparent; }
+.side-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+.side-link.on { background: rgba(255,255,255,.1); color: #fff; border-left-color: var(--purple); }
+.kpi.click { cursor: pointer; }
+.pi2-backdrop { position: fixed; inset: 0; background: rgba(10,20,35,.4); z-index: 50; }
+.pi2-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 92vw); background: #fff; box-shadow: -8px 0 24px rgba(10,20,35,.2); overflow: auto; padding: 20px; z-index: 51; }
+.pipeline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+.pipeline .pstage { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); background: #f1f3f6; border-radius: 999px; padding: 4px 11px 4px 6px; }
+.pipeline .pstage.done { color: var(--green); background: var(--green-bg); }
+.pipeline .pstage i { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; font-size: 9.5px; font-style: normal; border: 1.5px solid currentColor; flex: none; }
+.pipeline .arrow { color: #b8c1cc; font-size: 12px; }
+.pi-tabs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 18px; }
+.pi-tab { text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 12px; color: var(--ink); box-shadow: var(--shadow); }
+.pi-tab:hover { border-color: #b9c6d4; }
+.pi-tab b { display: block; font-size: 13px; }
+.pi-tab span { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+.pi-tab span i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.pi-tab.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.pi-tab.on span { color: #cfe0ef; }
+.pi-body h1 { font-size: 20px; }
+.pi-body > .sub:first-of-type { margin-bottom: 14px; }
+.sig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.sig-card { border-top: 3px solid; cursor: pointer; padding: 14px 16px; }
+.sig-card:hover { box-shadow: 0 0 0 3px var(--sky); }
+.fac-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.fac-bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin: 10px 0 6px; }
+.fac-bar i { display: block; height: 100%; border-radius: 3px; }
+.wt { font: 11px ui-monospace, Consolas, monospace; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--muted); white-space: nowrap; }
+.eyebrow { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.notif { border-left: 4px solid; padding: 16px 18px; margin-bottom: 12px; }
+.map-canvas { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fff; }
+.map-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 12.5px; margin-top: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fafbfd; }
+.map-legend .sep { width: 1px; height: 18px; background: var(--line); }
+.map-note { margin-top: 10px; padding: 10px 14px; border-radius: 12px; background: var(--purple-bg); color: #3a2b8f; font-size: 13px; }
+.dep-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dep-table th { text-align: left; color: var(--muted); font-weight: 600; padding: 8px 10px; border-bottom: 2px solid var(--line); white-space: nowrap; }
+.dep-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--blue); font-weight: 600; text-align: left; }
+#pi2map-card:fullscreen { overflow: auto; border-radius: 0; background: #fff; }
+#pi2map-card:fullscreen #pi2map-svg { height: calc(100vh - 240px); }
+.esc-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
+.esc-step { border-top: 4px solid var(--line); padding-top: 8px; }
+.esc-step.on { border-top-color: var(--purple); }
+.chain { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.chain > div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+@media (max-width: 860px) {
+  .kpis6, .kpis7 { grid-template-columns: repeat(2, 1fr); }
+  .stages5 { grid-template-columns: 1fr; }
+  .shell.itview .sidebar { position: static; width: 100%; min-height: 0; display: flex; flex-wrap: wrap; padding: 10px; }
+  .shell.itview { flex-direction: column; }
+  .side-grp { display: none; }
+  .side-link { width: auto; border-left: 0; border-radius: 999px; padding: 6px 12px; }
+  .pi2-drawer { width: 100vw; }
+}
+/* Workforce Identity & SSO */
+.sso-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 18px; }
+.flow-step { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--muted); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 5px; transition: background .2s, color .2s; }
+.flow-step i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-style: normal; background: var(--bg); border: 1px solid var(--line); }
+.flow-step.done { color: var(--green); border-color: #bfe3c7; background: var(--green-bg); } .flow-step.done i { background: var(--green); border-color: var(--green); color: #fff; }
+.flow-step.cur { color: var(--blue); border-color: #b6d4ec; background: var(--sky); } .flow-step.cur i { background: var(--blue); border-color: var(--blue); color: #fff; animation: pulse 1.2s infinite; }
+.flow-step.fail { color: var(--red); border-color: #f4c7c2; background: var(--red-bg); } .flow-step.fail i { background: var(--red); border-color: var(--red); color: #fff; }
+.flow-arrow { color: #b8c1cc; font-size: 12px; }
+.sso-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.personas { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+.persona { padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: box-shadow .2s, transform .2s; }
+.persona:hover { box-shadow: 0 6px 22px rgba(16,32,48,.10); transform: translateY(-1px); }
+.p-top { display: flex; align-items: center; gap: 12px; }
+.p-av { width: 46px; height: 46px; border-radius: 50%; background: var(--blue); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; flex: none; }
+.p-av.off { background: #9aa6b2; }
+.p-id { flex: 1; min-width: 0; } .p-id b { display: block; font-size: 16px; color: var(--navy); } .p-id small { color: var(--muted); }
+.p-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.p-status i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.p-status.ok { background: var(--green-bg); color: var(--green); } .p-status.bad { background: var(--red-bg); color: var(--red); }
+.p-dl { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; margin: 0; font-size: 13.5px; }
+.p-dl dt { color: var(--muted); } .p-dl dd { margin: 0; }
+.p-btn { padding: 9px 14px; font-size: 14px; }
+.p-btn:disabled { opacity: .55; cursor: default; }
+.sso-wait { display: flex; gap: 14px; align-items: center; border: 1px solid #b6d4ec; background: var(--sky); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+.sso-wait > div { flex: 1; } .sso-wait p { margin: 2px 0 0; font-size: 13.5px; }
+.spinner { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #b6d4ec; border-top-color: var(--blue); animation: spin .9s linear infinite; flex: none; }
+.sso-err { color: var(--red); font-size: 13px; margin: 8px 0 0; }
+.res { padding: 18px 20px; margin-top: 16px; border-left: 5px solid; }
+.res.good { border-left-color: var(--green); } .res.good h3 { color: var(--green); }
+.res.bad { border-left-color: var(--red); } .res.bad h3 { color: var(--red); }
+.res.neutral { border-left-color: #9aa6b2; }
+.res h3 { font-size: 17px; margin-bottom: 12px; }
+.res-src { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+.sso-in .feat { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.sso-in .feat > div { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; } .sso-in .feat b { display: block; font-size: 13.5px; } .sso-in .feat small { color: var(--muted); }
+.api-check { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; } .api-check > div { flex: 1 1 260px; } .api-check small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+.kv2 { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.kv2 span { color: var(--muted); flex: none; } .kv2 b { text-align: right; font-weight: 600; } .kv2 b.ok { color: var(--green); } .kv2 b.bad { color: var(--red); }
+.tl2 { list-style: none; margin: 0; padding: 0; max-height: 330px; overflow: auto; }
+.tl2 li { display: grid; grid-template-columns: 92px 1fr auto; gap: 8px; font-size: 12.5px; padding: 6px 0 6px 12px; border-bottom: 1px solid var(--line); position: relative; }
+.tl2 li:before { content: ""; position: absolute; left: 0; top: 12px; width: 6px; height: 6px; border-radius: 50%; background: #9aa6b2; }
+.tl2 li.ok:before { background: var(--green); } .tl2 li.bad:before { background: var(--red); }
+.tl2 time { color: var(--muted); } .tl2 em { font-style: normal; font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; height: fit-content; }
+.who { position: relative; }
+.who-btn { display: flex; align-items: center; gap: 10px; border: 0; background: transparent; padding: 0; text-align: left; color: var(--ink); }
+.pmenu { position: absolute; top: calc(100% + 8px); right: 0; width: 300px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(16,32,48,.15); padding: 14px; z-index: 20; display: grid; gap: 10px; }
+@media (max-width: 1000px) { .sso-grid { grid-template-columns: 1fr; } }
+/* Operations Manager (John Taylor): simulated, frontend-only */
+.av.mgr { background: var(--navy); }
+.bellwrap { position: relative; } .bellwrap:empty { display: none; }
+.bellwrap .badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px; background: var(--red); color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; border: 2px solid #fff; }
+.nmenu { position: absolute; top: calc(100% + 8px); right: 0; width: 340px; max-width: 92vw; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(16,32,48,.15); padding: 6px; z-index: 20; }
+.nmenu-h { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.nitem { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 9px 10px; border-radius: 8px; font-size: 13px; color: var(--ink); }
+.nitem:hover { background: var(--bg); }
+.nitem b { display: block; font-size: 13px; } .nitem small { color: var(--muted); font-size: 12px; }
+.nitem.unread b:before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue); margin-right: 6px; vertical-align: 1px; }
+.side-link svg { vertical-align: -3px; margin-right: 10px; }
+/* View switcher dropdown */
+.viewsel { position: relative; }
+.vs-btn { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; color: var(--ink); }
+.vs-btn:hover { background: var(--sky); }
+.vs-btn small { color: var(--muted); font-size: 12px; } .vs-btn b { font-size: 13.5px; color: var(--navy); } .vs-btn span { color: var(--muted); font-size: 11px; }
+.vs-menu { position: absolute; top: calc(100% + 8px); right: 0; width: 260px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(16,32,48,.15); padding: 6px; z-index: 30; }
+.vs-menu[hidden] { display: none; }
+.vs-menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; border-radius: 8px; padding: 8px 10px; color: var(--ink); }
+.vs-menu button:hover { background: var(--bg); }
+.vs-menu button.on { background: var(--sky); } .vs-menu button.on b { color: var(--blue); }
+.vs-menu b { display: block; font-size: 13.5px; } .vs-menu small { color: var(--muted); font-size: 12px; }
+/* Sidebar views: logo sits over the sidebar column, page title starts at the content edge */
+.top.wide .top-in { max-width: none; padding: 10px 24px 10px 20px; gap: 14px; }
+.top.wide .brand { gap: 0; }
+.top.wide .brand img { width: 192px; height: auto; margin-right: 20px; }
+.top.wide .brand span { padding-left: 24px; color: var(--navy); font-size: 15.5px; }
+.shell.itview .sidebar { display: flex; flex-direction: column; height: calc(100vh - 62px); overflow-y: auto; }
+.side-foot { display: none; }
+.shell.itview .sidebar { padding-bottom: 0; }
+.shell.itview .side-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding: 14px 18px; background: #fff; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+.side-foot img { height: 20px; width: auto; display: block; }
+.m-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 20px; flex-wrap: wrap; margin-bottom: 16px; }
+.m-head h1 { margin: 0; } .m-head .sub { margin: 2px 0 0; }
+.m-demo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.demo-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--purple); background: var(--purple-bg); border-radius: 999px; padding: 4px 11px; white-space: nowrap; }
+.sim { display: inline-flex; gap: 4px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.sim .btn { border: 0; padding: 4px 10px; }
+.sim .btn:disabled { opacity: .4; cursor: default; }
+.m-click { cursor: pointer; transition: box-shadow .15s, border-color .15s; color: var(--ink); font: inherit; }
+.m-click:hover, .m-click:focus-visible { border-color: #b9c6d4; box-shadow: 0 0 0 3px var(--sky), var(--shadow); outline: 0; }
+.m-esc { display: flex; width: 100%; text-align: left; gap: 18px; align-items: center; padding: 18px 20px; border-left: 5px solid var(--red); margin-bottom: 16px; }
+.m-esc.calm { border-left-color: var(--green); }
+.m-esc .ic { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; flex: none; font-size: 22px; font-weight: 800; }
+.m-esc .main { flex: 1; min-width: 0; }
+.m-esc .ttl { display: block; font-size: 19px; font-weight: 700; color: var(--navy); margin: 6px 0 2px; }
+.m-esc .desc { display: block; color: var(--muted); font-size: 14px; }
+.m-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.m-facts { display: flex; gap: 22px; flex: none; }
+.m-facts span { display: block; } .m-facts small { display: block; color: var(--muted); font-size: 12px; } .m-facts b { font-size: 14.5px; }
+.m-chev { color: #9aa6b2; font-size: 26px; line-height: 1; flex: none; }
+.m-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+.m-card { display: block; width: 100%; text-align: left; padding: 14px 16px; }
+.m-card small { display: flex; justify-content: space-between; color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.m-card b { display: block; font-size: 25px; color: var(--navy); line-height: 1.25; margin-top: 4px; }
+.m-card span { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+.m-card.act { border-color: #b6d4ec; background: var(--sky); } .m-card.act b { color: var(--blue); font-size: 21px; }
+.m-card.done { border-color: #bfe3c7; background: var(--green-bg); } .m-card.done b { color: var(--green); font-size: 21px; }
+.m-sec-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.m-sec-h h2 { margin: 0; }
+.m-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.m-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; border: 2px solid #5d6b78; }
+.m-tl { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 8px; }
+.m-st { position: relative; border: 0; background: transparent; text-align: center; padding: 6px 4px 8px; border-radius: 10px; color: var(--ink); }
+.m-st:hover, .m-st:focus-visible { background: var(--bg); outline: 0; }
+.m-st:not(:first-child)::before { content: ""; position: absolute; top: 18px; right: 50%; width: 100%; border-top: 3px var(--ls, solid) var(--lc, var(--line)); z-index: 0; }
+.m-st .d { position: relative; z-index: 1; display: block; width: 26px; height: 26px; border-radius: 50%; margin: 0 auto 8px; border: 3px solid; background: #fff; }
+.m-st b { display: block; font-size: 13.5px; line-height: 1.25; }
+.m-st time { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
+.m-st em { display: inline-block; font-style: normal; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 1px 8px; margin-top: 5px; }
+.m-st.pred em { border: 1px dashed currentColor; }
+.m-st.pred b, .m-st.idle b { color: var(--muted); font-weight: 600; }
+.m-grid3 { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 16px; align-items: stretch; }
+.m-grid3 > section { display: flex; flex-direction: column; }
+.m-row { display: flex; width: 100%; text-align: left; justify-content: space-between; gap: 10px; align-items: center; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.m-row b { display: block; font-size: 13.5px; } .m-row small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.m-row .r { text-align: right; flex: none; } .m-row .r small { margin-top: 3px; font-size: 11.5px; }
+.m-foot { font-size: 11.5px; color: var(--muted); margin: auto 0 0; padding-top: 6px; }
+.m-sig { list-style: none; margin: 0 0 10px; padding: 0; }
+.m-sig li { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.m-sig li:last-child { border: 0; }
+.m-sig .up { width: 24px; height: 24px; border-radius: 50%; background: var(--amber-bg); color: var(--amber); display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none; }
+.m-sig small { display: block; color: var(--muted); font-size: 12px; }
+.m-rec { border-top: 4px solid var(--navy); }
+.m-rec ol { margin: 0 0 14px; padding-left: 20px; font-size: 14px; } .m-rec li { margin-bottom: 6px; }
+.m-big { width: 100%; padding: 11px 14px; font-size: 14.5px; border-radius: 10px; margin-top: auto; }
+.m-ok { border: 1px solid #bfe3c7; background: var(--green-bg); border-radius: 10px; padding: 10px 12px; margin-top: auto; font-size: 13.5px; }
+.m-ok b { color: var(--green); display: block; }
+.m-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(640px, 94vw); max-height: 90vh; overflow: auto; background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(10,20,35,.3); padding: 22px 24px; z-index: 51; }
+.m-modal.wide { width: min(820px, 94vw); }
+.m-x { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: #fff; font-size: 16px; color: var(--muted); }
+.m-x:hover { background: var(--bg); }
+.m-dl { display: grid; grid-template-columns: 200px 1fr; gap: 7px 14px; margin: 12px 0; font-size: 14px; }
+.m-dl dt { color: var(--muted); } .m-dl dd { margin: 0; }
+.m-dl ul { margin: 0; padding-left: 18px; }
+.pi2-drawer .m-dl { grid-template-columns: 1fr; gap: 2px; } .pi2-drawer .m-dl dt { margin-top: 10px; font-size: 12.5px; font-weight: 600; }
+.m-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+.m-actions .btn { padding: 9px 16px; font-size: 14px; }
+.m-callout { border-radius: 10px; padding: 10px 12px; font-size: 13px; background: var(--purple-bg); color: #3a2b8f; margin-top: 12px; }
+.m-h { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin: 18px 0 6px; }
+.m-list { margin: 0; padding-left: 18px; font-size: 14px; } .m-list li { margin-bottom: 4px; }
+.m-split { display: flex; height: 12px; border-radius: 6px; overflow: hidden; margin: 6px 0 10px; background: var(--line); }
+.m-inc { display: grid; grid-template-columns: 130px 1fr 90px 130px 210px; gap: 12px; align-items: center; width: 100%; text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; font-size: 13.5px; }
+.m-inc-h { display: grid; grid-template-columns: 130px 1fr 90px 130px 210px; gap: 12px; padding: 0 17px 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.m-home { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+/* IT Admin Portal (Mark Wood) */
+.crumbs { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.crumbs .sep { color: #b8c1cc; }
+.it-notif { border-left: 5px solid var(--blue); padding: 16px 20px; margin-bottom: 16px; }
+.it-notif-h { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.it-notif-dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px 18px; margin: 12px 0; }
+.it-notif-dl .wide { grid-column: span 2; } .it-notif-dl dt { font-size: 12px; color: var(--muted); } .it-notif-dl dd { margin: 2px 0 0; font-size: 14px; }
+.it-notif .row { display: flex; gap: 8px; } .it-notif .row .btn { padding: 8px 14px; font-size: 13.5px; }
+.it-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+.m-card.attn2 { border-color: #f3dcb2; background: var(--amber-bg); }
+.it-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; align-items: start; }
+.it-row { display: flex; width: 100%; text-align: left; justify-content: space-between; gap: 10px; align-items: center; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 9px 12px; margin-bottom: 8px; }
+.it-row b { font-size: 13.5px; } .it-row small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.35; }
+.it-row .r { text-align: right; flex: none; } .it-row .r small { margin-top: 3px; font-size: 11.5px; }
+.mini-pipe { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+.mp { border: 0; background: transparent; padding: 4px 2px; border-radius: 8px; text-align: center; color: var(--ink); }
+.mp:hover { background: var(--bg); }
+.mp i { display: block; height: 6px; border-radius: 3px; background: var(--line); margin-bottom: 5px; }
+.mp.done i { background: var(--green); } .mp.run i { background: var(--blue); animation: pulse 1.2s infinite; } .mp.review i { background: var(--amber); }
+.mp small { font-size: 10.5px; color: var(--muted); line-height: 1.2; display: block; }
+.it-tl { list-style: none; margin: 0; padding: 0; }
+.it-tl li { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; font-size: 13px; padding: 7px 4px 7px 14px; border-bottom: 1px solid var(--line); position: relative; border-radius: 6px; }
+.it-tl li[data-a] { cursor: pointer; } .it-tl li[data-a]:hover { background: var(--bg); }
+.it-tl li:before { content: ""; position: absolute; left: 3px; top: 13px; width: 7px; height: 7px; border-radius: 50%; background: #9aa6b2; }
+.it-tl li.ok:before { background: var(--green); } .it-tl li.bad:before { background: var(--red); } .it-tl li.warn:before { background: var(--amber); } .it-tl li.info:before { background: var(--blue); }
+.it-tl li.pend { color: #9aa6b2; } .it-tl li.pend:before { background: #fff; border: 1.5px dashed #9aa6b2; }
+.it-tl time { color: var(--muted); font-variant-numeric: tabular-nums; } .it-tl em { font-style: normal; font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; height: fit-content; white-space: nowrap; }
+.fgrp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 8px; }
+.fgrp > span:first-child { font-size: 12px; font-weight: 700; color: var(--muted); min-width: 64px; text-transform: uppercase; letter-spacing: .04em; }
+.fchip { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 12px; font-size: 12.5px; font-weight: 600; color: var(--ink); }
+.fchip:hover { border-color: #b9c6d4; } .fchip.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+.q-head, .q-row { display: grid; grid-template-columns: 120px minmax(180px, 2fr) 84px 1.3fr 1.2fr 1.3fr 1.3fr 104px; gap: 10px; align-items: center; }
+.q-head { font-size: 12px; color: var(--muted); font-weight: 600; padding: 0 15px 6px; }
+.q-row { width: 100%; text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px; font-size: 13px; }
+.sum-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; margin: 16px 0 0; }
+.sum-grid .wide { grid-column: 1 / -1; } .sum-grid dt { font-size: 12px; color: var(--muted); } .sum-grid dd { margin: 2px 0 0; font-size: 14px; }
+.ctx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pprog { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pp { text-align: center; font-size: 12px; } .pp i { display: block; width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid; margin: 0 auto 4px; background: #fff; }
+.pp.pred i { border-style: dashed; } .pp b { display: block; font-size: 12px; } .pp small { color: var(--muted); font-size: 11px; } .pp.cur b { color: var(--navy); }
+.rem-steps { margin: 8px 0 0; padding-left: 20px; font-size: 13.5px; } .rem-steps li { color: var(--muted); margin-bottom: 3px; }
+.rem-steps li.done { color: var(--green); font-weight: 600; } .rem-steps li.now { color: var(--blue); font-weight: 600; }
+details.more-d { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+details.more-d summary { cursor: pointer; color: var(--blue); font-size: 13px; font-weight: 600; }
+.obs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.rec { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+.rec.primary { border-color: #b6d4ec; box-shadow: 0 0 0 3px var(--sky); }
+.rec-h { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; } .rec-h b { font-size: 15px; color: var(--navy); }
+.rec-dl { display: grid; grid-template-columns: 170px 1fr; gap: 6px 14px; margin: 12px 0 0; font-size: 13.5px; }
+.rec-dl dt { color: var(--muted); } .rec-dl dd { margin: 0; } .rec-dl ul { margin: 0; padding-left: 18px; }
+.rec-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; } .rec-acts .btn { padding: 7px 13px; }
+.btn:disabled { opacity: .5; cursor: default; }
+svg[aria-label="Systems involved"] { max-width: 760px; margin: 0 auto; }
+.fc-row { display: grid; grid-template-columns: 130px 1fr auto; gap: 16px; align-items: center; width: 100%; text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; }
+.fc-row b { display: block; font-size: 14px; } .fc-row small { display: block; color: var(--muted); font-size: 12.5px; line-height: 1.4; }
+.fc-t b { font-size: 18px; color: var(--navy); }
+.fc-row .r { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+.home-links { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+@media (max-width: 860px) { .fc-row { grid-template-columns: 1fr; } .fc-row .r { flex-direction: row; align-items: center; } .home-links { grid-template-columns: 1fr; } }
+@media (max-width: 1200px) { .q-head { display: none; } .q-row { grid-template-columns: 1fr 1fr; } .it-kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 1000px) { .it-grid, .obs-grid, .ctx-grid { grid-template-columns: 1fr; } .sum-grid { grid-template-columns: 1fr 1fr; } .pipe[style] { grid-template-columns: repeat(4, 1fr) !important; } }
+@media (max-width: 860px) { .it-kpis { grid-template-columns: repeat(2, 1fr); } .rec-dl { grid-template-columns: 1fr; } .it-notif-dl .wide { grid-column: auto; } .mini-pipe small { display: none; } }
+@media (max-width: 1100px) { .m-grid3 { grid-template-columns: 1fr 1fr; } .m-rec { grid-column: 1 / -1; } .m-esc { flex-wrap: wrap; } .m-facts { width: 100%; } }
+@media (max-width: 860px) {
+  .m-kpis { grid-template-columns: repeat(2, 1fr); } .m-grid3, .m-home { grid-template-columns: 1fr; }
+  .m-st b { font-size: 11.5px; } .m-st time, .m-st em { font-size: 10px; } .m-st em { padding: 1px 5px; }
+  .m-dl { grid-template-columns: 1fr; } .m-dl dt { margin-top: 6px; }
+  .m-inc, .m-inc-h { grid-template-columns: 1fr 1fr; } .m-inc-h { display: none; }
+  .m-chev { display: none; }
+  .vs-btn small { display: none; }
+  .shell.itview .sidebar { height: auto; } .shell.itview .side-foot { display: none; } #sidenav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .top.wide .top-in { padding: 10px 16px; } .top.wide .brand img { width: auto; height: 30px; margin-right: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+<style>
+body { background: transparent; }
+main#main { max-width: none; padding: 4px 4px 32px; }
+#main > h1:first-child, #main > h1:first-child + .sub { display: none; }
+</style>
+</head>
+<body>
+<main id="main"></main>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const S = { view: "it", itPage: "predictive", piView: "model", ops: null, piTab: store.get("cc.pitab", "overview") };
+function toast(t) { const el = $("#toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 4000); }
+const clock = (iso) => (iso ? new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "");
+
+/* ================================ Predictive Intelligence (IT view) */
+const CX_COLOR = { normal: "#2e9a46", warning: "#b26a00", critical: "#c0352b", drift: "#9a7400" };
+const CX_BG = { normal: "#e9f6ec", warning: "#fff4e0", critical: "#fdecea", drift: "#fdf6dc" };
+function cxRiskBar(nodes) {
+  const counts = { normal: 0, warning: 0, critical: 0 };
+  nodes.forEach((n) => counts[n.status]++);
+  const H = 150, T = 14, B = 22;
+  const max = Math.max(1, ...Object.values(counts));
+  const cats = ["normal", "warning", "critical"];
+  const bw = 72, gap = 34;
+  const bars = cats.map((k, i) => {
+    const h = (H - T - B) * (counts[k] / max);
+    const x = 24 + i * (bw + gap);
+    return `<rect x="${x}" y="${H - B - h}" width="${bw}" height="${Math.max(2, h)}" fill="${CX_COLOR[k]}" rx="4"/>
+      <text x="${x + bw / 2}" y="${H - B - h - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="${CX_COLOR[k]}">${counts[k]}</text>
+      <text x="${x + bw / 2}" y="${H - 6}" text-anchor="middle" font-size="10.5" fill="#5d6b78">${esc(k[0].toUpperCase() + k.slice(1))}</text>`;
+  }).join("");
+  return `<svg viewBox="0 0 320 ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Risk distribution">${bars}</svg>`;
+}
+/* ============================================================
+   PI2: illustrative 3-layer Predictive Intelligence demo model.
+   Entirely client-side and deterministic (controlled demo,
+   illustrative data). It doesn't need any backend data.
+   ============================================================ */
+const PI2_STEP_MIN = 10;
+const PI2_SEV_RANK = { normal: 0, warning: 1, critical: 2 };
+const PI2_NODES = {
+  svc_integration: { label: "Integration Services", layer: 1, cat: "Shared IT dependency", deps: ["svc_gateway"], desc: "Moves data between branch systems and head-office platforms." },
+  svc_identity: { label: "Identity and Access", layer: 1, cat: "Shared IT dependency", deps: [], desc: "Authenticates employees and controls which apps they can open." },
+  svc_network: { label: "Network / Branch Connectivity", layer: 1, cat: "Shared IT dependency", deps: [], desc: "Wide-area links between branches and the corporate network." },
+  svc_gateway: { label: "API Gateway", layer: 1, cat: "Shared IT dependency", deps: [], desc: "Front door for application traffic into backend services." },
+  svc_db: { label: "Operational Database", layer: 1, cat: "Shared IT dependency", deps: [], desc: "Stores operational records used by the enterprise applications." },
+  svc_mq: { label: "Message Processing", layer: 1, cat: "Shared IT dependency", deps: [], desc: "Queues and delivers events between systems." },
+  app_dispatch: { label: "Route and Dispatch Management", layer: 2, cat: "Enterprise application", deps: ["svc_integration", "svc_identity", "svc_network", "svc_mq"], desc: "Plans and assigns collection routes to drivers." },
+  app_field: { label: "Field Service Application", layer: 2, cat: "Enterprise application", deps: ["svc_integration", "svc_identity", "svc_network"], desc: "The handheld app drivers use on their routes." },
+  app_portal: { label: "Customer Service Portal", layer: 2, cat: "Enterprise application", deps: ["svc_integration", "svc_identity", "svc_gateway"], desc: "Customer-facing visibility into service status." },
+  app_manifest: { label: "Waste / Manifest Documentation", layer: 2, cat: "Enterprise application", deps: ["svc_integration", "svc_identity", "svc_db", "svc_mq"], desc: "Records regulated hazardous-waste manifests." },
+  app_scheduling: { label: "Collection Scheduling", layer: 2, cat: "Enterprise application", deps: ["svc_identity", "svc_db"], desc: "Schedules customer collection visits." },
+  app_facility: { label: "Facility Operations Application", layer: 2, cat: "Enterprise application", deps: ["svc_network", "svc_db"], desc: "Manages facility-level processing operations." },
+  biz_oil: { label: "Used Oil Collection", layer: 3, cat: "Business operation", deps: ["app_dispatch", "app_field", "app_scheduling"], desc: "Collecting used oil from customer sites." },
+  biz_parts: { label: "Parts Cleaning", layer: 3, cat: "Business operation", deps: ["app_dispatch", "app_field"], desc: "Servicing parts washer equipment at customer sites." },
+  biz_drum: { label: "Waste Drum Disposal", layer: 3, cat: "Business operation", deps: ["app_manifest"], desc: "Disposal of hazardous waste drums, a regulated activity." },
+  biz_vacuum: { label: "Wastewater Vacuum Services", layer: 3, cat: "Business operation", deps: ["app_dispatch", "app_scheduling"], desc: "Vacuum truck services for wastewater." },
+  biz_antifreeze: { label: "Antifreeze Recovery", layer: 3, cat: "Business operation", deps: ["app_field", "app_scheduling"], desc: "Collecting and recovering used antifreeze." },
+  biz_rerefine: { label: "Oil Re-Refining Operations", layer: 3, cat: "Business operation", deps: ["app_manifest", "app_facility"], desc: "Facility processing of collected oil into re-refined product." },
+  biz_processing: { label: "Waste Processing", layer: 3, cat: "Business operation", deps: ["app_manifest", "app_facility"], desc: "Facility-level waste processing operations." },
+};
+const PI2_EDGES = Object.entries(PI2_NODES).flatMap(([id, n]) => n.deps.map((d) => ({ from: d, to: id })));
+const PI2_BIZ_BRANCHES = { biz_oil: 42, biz_parts: 38, biz_drum: 19, biz_vacuum: 27, biz_antifreeze: 31, biz_rerefine: 3, biz_processing: 5 };
+function pi2Ancestors(id, seen = new Set()) { (PI2_NODES[id].deps || []).forEach((d) => { if (!seen.has(d)) { seen.add(d); pi2Ancestors(d, seen); } }); return seen; }
+function pi2Hops(rootId) {
+  const dist = { [rootId]: 0 }; let frontier = [rootId], d = 0;
+  while (frontier.length) { d++; const next = []; for (const id of frontier) Object.entries(PI2_NODES).forEach(([nid, n]) => { if ((n.deps || []).includes(id) && dist[nid] == null) { dist[nid] = d; next.push(nid); } }); frontier = next; }
+  return dist;
+}
+const PI2_SCENARIOS = {
+  integration_degradation: {
+    id: "integration_degradation", title: "Shared integration service degradation", root: "svc_integration",
+    statuses: {
+      svc_integration: ["normal", "normal", "warning", "critical", "critical"],
+      app_dispatch: ["normal", "normal", "normal", "warning", "warning"], app_field: ["normal", "normal", "normal", "warning", "warning"],
+      app_portal: ["normal", "normal", "normal", "warning", "warning"], app_manifest: ["normal", "normal", "normal", "warning", "critical"],
+    },
+    signals: [
+      { key: "int_err", name: "Integration error rate", unit: "%", baseline: 0.4, warn: 3, crit: 8, path: [0.4, 1.2, 4.5, 9.2, 12.1], relatedComponent: "svc_integration" },
+      { key: "int_latency", name: "Integration service latency", unit: "ms", baseline: 120, warn: 600, crit: 1500, path: [120, 340, 820, 1680, 2200], relatedComponent: "svc_integration" },
+      { key: "mq_delay", name: "Message queue delay", unit: "s", baseline: 2, warn: 15, crit: 45, path: [2, 4, 9, 18, 52], relatedComponent: "svc_mq" },
+      { key: "manifest_sync", name: "Manifest sync failures", unit: "/hr", baseline: 1, warn: 10, crit: 30, path: [1, 1, 3, 14, 41], relatedComponent: "app_manifest" },
+    ],
+    ruledOut: [
+      { id: "svc_gateway", reason: "API Gateway latency and error rate stay at baseline, so the slowdown starts inside Integration Services, not in front of it." },
+      { id: "svc_identity", reason: "Sign-in success rate stays normal throughout, and the systems it would explain aren't abnormal for reasons unrelated to identity." },
+      { id: "svc_network", reason: "Branch connectivity latency stays at baseline the whole time, so it doesn't explain the shared slowdown." },
+    ],
+    whatIf: [
+      { id: "none", label: "No intervention", beforeRisk: 78, afterRisk: 91, affectedBefore: 4, affectedAfter: 6, recoveryTime: "Not applied — trajectory keeps worsening", remainingRisk: "All downstream systems continue degrading" },
+      { id: "restart", label: "Restart the affected integration service", beforeRisk: 78, afterRisk: 34, affectedBefore: 4, affectedAfter: 1, recoveryTime: "~12 minutes", remainingRisk: "Message queue backlog drains over ~20 more minutes" },
+      { id: "redirect", label: "Redirect traffic to an alternative integration service", beforeRisk: 78, afterRisk: 22, affectedBefore: 4, affectedAfter: 0, recoveryTime: "~4 minutes", remainingRisk: "The alternate path has less capacity margin", recommended: true, rationale: "Fastest recovery and the lowest downstream impact, with an acceptable residual risk." },
+    ],
+    businessImpact: "Collection scheduling delays, field service coordination issues, documentation processing delays, and reduced customer-service visibility.",
+  },
+};
+function pi2Status(scn, nodeId, step) { const arr = scn.statuses[nodeId]; return arr ? arr[Math.max(0, Math.min(4, step))] : "normal"; }
+function pi2AllStatuses(scn, step) { const out = {}; Object.keys(PI2_NODES).forEach((id) => (out[id] = pi2NodeStatusAt(scn, id, step))); return out; }
+function pi2Class(score) { return score <= 30 ? "Low" : score <= 60 ? "Moderate" : score <= 80 ? "High" : "Critical"; }
+function riskColor(cls) { return cls === "Low" ? CX_COLOR.normal : cls === "Moderate" ? CX_COLOR.warning : CX_COLOR.critical; }
+function pi2NextCriticalStep(scn, nodeId) { const arr = scn.statuses[nodeId]; if (!arr) return null; const i = arr.findIndex((s) => s === "critical"); return i < 0 ? null : i; }
+function pi2Eta(scn, nodeId, step) {
+  const cur = pi2Status(scn, nodeId, step); if (cur === "critical") return null;
+  const nc = pi2NextCriticalStep(scn, nodeId); if (nc == null || nc <= step) return null;
+  return (nc - step) * PI2_STEP_MIN;
+}
+function pi2Log(scn, uptoStep) {
+  const out = [];
+  for (let s = 1; s <= uptoStep; s++) Object.keys(PI2_NODES).forEach((id) => { const prev = pi2NodeStatusAt(scn, id, s - 1), cur = pi2NodeStatusAt(scn, id, s); if (prev !== cur) out.push({ step: s, node: id, label: PI2_NODES[id].label, from: prev, to: cur }); });
+  return out.reverse();
+}
+function pi2SigValue(sig, step, o) { return sig.real ? (o && o.server ? o.server.pct : sig.warn - 10) : sig.path[Math.max(0, Math.min(4, step))]; }
+function pi2SigBaseline(sig) { return sig.real ? null : sig.baseline; }
+function pi2SigStatus(sig, v) { if (v == null) return "normal"; return v >= sig.crit ? "critical" : v >= sig.warn ? "warning" : "normal"; }
+const PI2_T0 = 9 * 60 + 40;
+const pi2Clock = (s) => { const m = PI2_T0 + s * PI2_STEP_MIN; return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; };
+const PI2_DRIFT = 0.15;
+const pi2StLabel = (st) => (st === "drift" ? "early signal" : st);
+function pi2SigState(sig, step, o = S.ops) {
+  const v = pi2SigValue(sig, step, o), st = pi2SigStatus(sig, v);
+  if (st !== "normal") return st;
+  return (sig.real ? v >= sig.warn - 10 : (v - sig.baseline) / (sig.crit - sig.baseline) >= PI2_DRIFT) ? "drift" : "normal";
+}
+function pi2SigFirstStep(sig, step, o = S.ops) { for (let s = 0; s <= step; s++) if (pi2SigState(sig, s, o) !== "normal") return s; return null; }
+function pi2SigFirstDetected(sig, scn, step, o) {
+  const s = pi2SigFirstStep(sig, step, o);
+  if (s == null) return null;
+  if (sig.real) return "from the real branch-storage signal";
+  const st = pi2SigState(sig, s, o);
+  return `${pi2Clock(s)} (${pi2StLabel(st)}${st === "drift" ? ", below its alert threshold" : ""})`;
+}
+function pi2NodeStatusAt(scn, id, s) { return PI2_NODES[id].layer === 3 ? pi2RollupStatus(scn, s, id) : pi2Status(scn, id, s); }
+function pi2FirstAt(scn, id, minRank, from = 0) { for (let s = from; s <= 4; s++) if (PI2_SEV_RANK[pi2NodeStatusAt(scn, id, s)] >= minRank) return s; return null; }
+// What the hub forecasts at a step: everything downstream of an affected component that is still
+// healthy ("predicted"), and affected components still on course for critical ("escalating").
+const PI2_PRED_CACHE = {};
+function pi2Predict(scn, step) {
+  const key = `${scn.id}:${step}`;
+  if (PI2_PRED_CACHE[key]) return PI2_PRED_CACHE[key];
+  const st = pi2AllStatuses(scn, step), out = {};
+  const affected = Object.keys(PI2_NODES).filter((id) => st[id] !== "normal");
+  const reach = new Set();
+  affected.forEach((id) => pi2Descendants(id).forEach((d) => reach.add(d)));
+  reach.forEach((id) => {
+    if (st[id] !== "normal") return;
+    const a = pi2FirstAt(scn, id, 1, step + 1), c = pi2FirstAt(scn, id, 2, step + 1);
+    out[id] = { kind: "predicted", etaAffect: a != null ? (a - step) * PI2_STEP_MIN : null, etaCrit: c != null ? (c - step) * PI2_STEP_MIN : null };
+  });
+  affected.forEach((id) => {
+    if (st[id] === "critical") return;
+    const c = pi2FirstAt(scn, id, 2, step + 1);
+    if (c != null) out[id] = { kind: "escalating", etaAffect: null, etaCrit: (c - step) * PI2_STEP_MIN };
+  });
+  return (PI2_PRED_CACHE[key] = out);
+}
+const pi2IsPred = (pred, id) => !!pred[id] && pred[id].kind === "predicted";
+// The earliest step at which what is true now (degraded, or critical) had already been forecast.
+function pi2Confirmed(scn, id, s) {
+  const st = pi2NodeStatusAt(scn, id, s);
+  if (st === "normal") return null;
+  for (let p = 0; p < s; p++) {
+    const x = pi2Predict(scn, p)[id];
+    if (x && (x.kind === "predicted" || (st === "critical" && x.etaCrit != null))) return p;
+  }
+  return null;
+}
+function pi2Origin(scn, step, o = S.ops) {
+  let best = null;
+  scn.signals.forEach((sig) => { const s = pi2SigFirstStep(sig, step, o); if (s != null && (!best || s < best.step)) best = { step: s, sig, id: sig.relatedComponent }; });
+  return best;
+}
+function pi2EarlyNodes(scn, step, o = S.ops) {
+  const st = pi2AllStatuses(scn, step);
+  return new Set(scn.signals.filter((g) => pi2SigState(g, step, o) !== "normal" && st[g.relatedComponent] === "normal").map((g) => g.relatedComponent));
+}
+function pi2Milestones(scn, step, o = S.ops) {
+  const at = (test) => { for (let s = 0; s <= 4; s++) { const r = test(s); if (r) return { s, r }; } return null; };
+  const list = [
+    ["First signal", at((s) => { const g = scn.signals.find((x) => pi2SigState(x, s, o) !== "normal"); return g && `${g.name} at ${PI2_NODES[g.relatedComponent].label}${pi2SigState(g, s, o) === "drift" ? ", still under its alert threshold" : ""}`; })],
+    ["Threshold crossed", at((s) => { const g = scn.signals.find((x) => pi2SigStatus(x, pi2SigValue(x, s, o)) !== "normal"); return g && `${g.name} passed its ${pi2SigStatus(g, pi2SigValue(g, s, o))} threshold`; })],
+    ["Prediction issued", at((s) => { const n = Object.keys(pi2Predict(scn, s)).length; return n && `${n} component(s) forecast to degrade or go critical`; })],
+    ["Prediction confirmed", at((s) => { const ids = Object.keys(PI2_NODES).filter((id) => pi2NodeStatusAt(scn, id, s) !== pi2NodeStatusAt(scn, id, Math.max(0, s - 1)) && pi2Confirmed(scn, id, s) != null); return ids.length && `${ids.length} component(s) changed exactly as forecast`; })],
+    ["Business impact", at((s) => { const n = Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === 3 && pi2NodeStatusAt(scn, id, s) !== "normal").length; return n && `${n} of 7 business operations affected`; })],
+  ];
+  return list.map(([label, m]) => ({ label, step: m ? m.s : null, detail: m ? m.r : null, reached: !!m && m.s <= step }));
+}
+function pi2LeadTimes(scn) {
+  const out = [];
+  Object.keys(PI2_NODES).forEach((id) => {
+    const c = pi2FirstAt(scn, id, 2);
+    if (c == null) return;
+    for (let s = 0; s < c; s++) { const x = pi2Predict(scn, s)[id]; if (x && x.etaCrit != null) { out.push({ id, critStep: c, predStep: s, lead: (c - s) * PI2_STEP_MIN }); break; } }
+  });
+  const lr = (id) => ({ 2: 0, 1: 1, 3: 2 }[PI2_NODES[id].layer]);
+  return out.sort((a, b) => (b.lead - a.lead) || (lr(a.id) - lr(b.id)));
+}
+function pi2LeadSummary(scn, step) {
+  const lt = pi2LeadTimes(scn);
+  const done = lt.find((x) => x.critStep <= step);
+  if (done) return { done: true, text: `Warned ${done.lead} min before ${PI2_NODES[done.id].label} went critical` };
+  const open = lt.find((x) => x.predStep <= step);
+  if (open) return { done: false, text: `Early warning: ${PI2_NODES[open.id].label} forecast critical in ~${(open.critStep - step) * PI2_STEP_MIN} min` };
+  return null;
+}
+function pi2Knowledge(scn, step, o = S.ops) {
+  const rows = [], names = (ids) => ids.map((id) => PI2_NODES[id].label).join(", ");
+  for (let s = 1; s <= step; s++) {
+    const pred = pi2Predict(scn, s), st = pi2AllStatuses(scn, s);
+    const nAbn = scn.signals.filter((g) => pi2SigStatus(g, pi2SigValue(g, s, o)) !== "normal").length;
+    const conf = nAbn >= 3 ? "High" : nAbn >= 1 ? "Medium" : "Low";
+    let text;
+    if (!Object.keys(PI2_NODES).some((id) => st[id] !== "normal")) {
+      const or = pi2Origin(scn, s, o);
+      text = or ? `Early signal: ${or.sig.name} drifting at ${PI2_NODES[or.id].label}, still under its alert threshold. Not enough to forecast anything yet; watching.` : "All signals at baseline.";
+    } else {
+      const parts = [];
+      const confirmed = Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer < 3 && pi2NodeStatusAt(scn, id, s) !== pi2NodeStatusAt(scn, id, s - 1) && pi2Confirmed(scn, id, s) != null);
+      if (confirmed.length) parts.push(`Confirmed as forecast: ${names(confirmed)}.`);
+      const tech = Object.keys(pred).filter((id) => pred[id].kind === "predicted" && PI2_NODES[id].layer < 3);
+      if (tech.length) parts.push(`Forecast to degrade: ${tech.map((id) => `${PI2_NODES[id].label}${pred[id].etaAffect != null ? ` (~${pred[id].etaAffect} min)` : ""}`).join(", ")}.`);
+      const biz = Object.keys(pred).filter((id) => pred[id].kind === "predicted" && PI2_NODES[id].layer === 3);
+      if (biz.length) parts.push(`${biz.length} business operation(s) at risk.`);
+      const crit = Object.keys(pred).filter((id) => pred[id].etaCrit != null && PI2_NODES[id].layer < 3).sort((a, b) => pred[a].etaCrit - pred[b].etaCrit);
+      if (crit.length) parts.push(`Forecast critical: ${crit.map((id) => `${PI2_NODES[id].label} in ~${pred[id].etaCrit} min`).join(", ")}.`);
+      text = parts.length ? parts.join(" ") : "Everything forecast has happened; no further escalation expected.";
+    }
+    rows.push({ s, conf, text });
+  }
+  return rows;
+}
+function pi2MapCtx(scn, step) { return { pred: pi2Predict(scn, step), early: pi2EarlyNodes(scn, step), origin: pi2Origin(scn, step), statuses: pi2AllStatuses(scn, step) }; }
+function pi2EscalationStrip(scn, step, o) {
+  const ms = pi2Milestones(scn, step, o), lead = pi2LeadSummary(scn, step);
+  return `<section class="card pad" style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">How this escalation unfolds</h2>${lead ? `<span class="pill" style="background:var(--purple-bg);color:var(--purple)">${esc(lead.text)}</span>` : ""}</div>
+    <div class="esc-strip">${ms.map((m, i) => `<div class="esc-step ${m.reached ? "on" : ""}">
+      <span class="eyebrow" style="${m.reached ? "color:var(--purple)" : ""}">${i + 1} · ${esc(m.label)}</span>
+      <div style="font-size:18px;font-weight:700;color:${m.reached ? "var(--navy)" : "#b8c1cc"}">${m.reached ? pi2Clock(m.step) : "—"}</div>
+      <div style="font-size:12px;color:var(--muted)">${m.reached ? esc(m.detail) : "Not yet"}</div></div>`).join("")}</div>
+  </section>`;
+}
+function pi2NotifLead(scn, n) {
+  if (n.isRoot) {
+    const or = pi2Origin(scn, n.since);
+    return or && or.step < n.since ? `<p style="margin:4px 0 0;font-size:12.5px;color:var(--purple)">First signal at ${pi2Clock(or.step)}: ${esc(or.sig.name)} started drifting ${(n.since - or.step) * PI2_STEP_MIN} min before this alert fired.</p>` : "";
+  }
+  const p = pi2Confirmed(scn, n.id, n.since);
+  return p != null ? `<p style="margin:4px 0 0;font-size:12.5px;color:var(--purple)">Forecast at ${pi2Clock(p)}, ${(n.since - p) * PI2_STEP_MIN} min before it degraded.</p>` : "";
+}
+const PI2_KEY = "cc.pi2";
+function pi2Fresh() { return { scenario: "integration_degradation", step: 0, running: false, recovering: false, applied: {}, runs: [], autoRemediations: 0, whatifRan: false, whatifCompare: false, drawer: null }; }
+let PI2;
+try { PI2 = JSON.parse(store.get(PI2_KEY, "")) || pi2Fresh(); } catch (e) { PI2 = pi2Fresh(); }
+if (!PI2 || !PI2.scenario || !PI2_SCENARIOS[PI2.scenario]) PI2 = pi2Fresh();
+if (!PI2.applied) PI2.applied = {};
+if (!PI2.runs) PI2.runs = [];
+function pi2Save() { store.set(PI2_KEY, JSON.stringify(PI2)); }
+const STAGE_DEF = [{ key: "detect", t: "Detect" }, { key: "correlate", t: "Correlate" }, { key: "predict", t: "Predict" }, { key: "notify", t: "Notify" }, { key: "automate", t: "Automate" }];
+const PI2_STAGE_NEED = { detect: 1, correlate: 2, predict: 2, notify: 3, automate: 4 };
+function pi2StageStatus(def, step, scn) {
+  if (def.key === "automate" && PI2.applied[scn.id]) return "done";
+  if (step >= PI2_STAGE_NEED[def.key]) return "done";
+  if (step === PI2_STAGE_NEED[def.key] - 1 && step > 0) return "running";
+  return "pending";
+}
+function pi2TopFinding(scn, step) {
+  const statuses = pi2AllStatuses(scn, step), pred = pi2Predict(scn, step);
+  const affectedAll = Object.keys(PI2_NODES).filter((id) => statuses[id] !== "normal");
+  if (!affectedAll.length) return { empty: true, origin: pi2Origin(scn, step) };
+  const affectedIds = affectedAll.filter((id) => id !== scn.root);
+  const predictedIds = Object.keys(pred).filter((id) => pred[id].kind === "predicted");
+  const eta = (id) => (pred[id] && pred[id].etaCrit != null ? pred[id].etaCrit : 999);
+  const pool = affectedIds.length ? affectedIds : predictedIds.length ? predictedIds : [scn.root];
+  const best = [...pool].sort((a, b) => (PI2_SEV_RANK[statuses[b]] - PI2_SEV_RANK[statuses[a]]) || (eta(a) - eta(b)) || (PI2_NODES[a].layer - PI2_NODES[b].layer))[0];
+  const score = pi2Score(scn, step), cls = pi2Class(score);
+  const nAbn = scn.signals.filter((g) => pi2SigStatus(g, pi2SigValue(g, step, S.ops)) !== "normal").length;
+  const conf = nAbn >= 3 ? "High" : nAbn >= 1 ? "Medium" : "Low";
+  const etas = Object.keys(pred).filter((id) => pred[id].etaCrit != null).map((id) => ({ id, eta: pred[id].etaCrit })).sort((a, b) => (a.eta - b.eta) || (PI2_NODES[a.id].layer - PI2_NODES[b.id].layer));
+  return { empty: false, service: PI2_NODES[best].label, serviceId: best, root: PI2_NODES[scn.root].label, score, cls, conf, eta: etas[0] || null, affectedCount: affectedIds.length, affectedIds, predictedIds, impact: scn.businessImpact, origin: pi2Origin(scn, step) };
+}
+const PI2_FACTORS = [
+  { key: "deviation", label: "Signal deviation", w: 25, how: "How far the monitored signals sit from their baseline, measured against each signal's critical threshold (average across signals)." },
+  { key: "correlated", label: "Correlated signals", w: 15, how: "Share of this scenario's signals that are abnormal at the same time. One noisy signal adds little; several together add a lot." },
+  { key: "spread", label: "Dependency spread", w: 20, how: "Share of the components on this failure path that are already warning or critical." },
+  { key: "business", label: "Business operations exposed", w: 20, how: "Crystal Clean business operations whose applications are degraded, out of 7." },
+  { key: "rate", label: "Rate of change", w: 5, how: "How fast the most-affected signal moved since the previous step, against its baseline-to-critical gap." },
+  { key: "time", label: "Time to impact", w: 15, how: "How soon a component is predicted to go critical. Already critical scores 100; 40 minutes or more away scores 0." },
+];
+function pi2Dev(sig, step, o) { const base = sig.real ? 0 : sig.baseline; return Math.max(0, (pi2SigValue(sig, step, o) - base) / (sig.crit - base)); }
+function pi2BizAtRisk(scn, step) { return Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === 3 && pi2RollupStatus(scn, step, id) !== "normal"); }
+function pi2Factors(scn, step, o = S.ops) {
+  const sigs = scn.signals, path = Object.keys(scn.statuses);
+  const devs = sigs.map((s) => Math.min(1, pi2Dev(s, step, o)));
+  const abn = sigs.filter((s) => pi2SigStatus(s, pi2SigValue(s, step, o)) !== "normal");
+  const affected = path.filter((id) => pi2Status(scn, id, step) !== "normal");
+  const biz = pi2BizAtRisk(scn, step);
+  const movers = sigs.map((s) => ({ s, d: step === 0 ? 0 : pi2Dev(s, step, o) - pi2Dev(s, step - 1, o) })).sort((a, b) => b.d - a.d);
+  const worst = sigs.map((s, i) => ({ s, d: devs[i] })).sort((a, b) => b.d - a.d)[0];
+  const anyCrit = path.some((id) => pi2Status(scn, id, step) === "critical");
+  const etas = affected.map((id) => pi2Eta(scn, id, step)).filter((e) => e != null);
+  const level = {
+    deviation: devs.reduce((a, b) => a + b, 0) / devs.length, correlated: abn.length / sigs.length, spread: affected.length / path.length,
+    business: biz.length / 7, rate: Math.min(1, Math.max(0, movers[0].d) / 0.5), time: anyCrit ? 1 : etas.length ? Math.max(0, 1 - Math.min(...etas) / 40) : 0,
+  };
+  const ev = {
+    deviation: `Furthest from normal: ${worst.s.name} at ${pi2SigValue(worst.s, step, o)}${worst.s.unit} (critical at ${worst.s.crit}${worst.s.unit}).`,
+    correlated: `${abn.length} of ${sigs.length} signals abnormal${abn.length ? `: ${abn.map((s) => s.name).join(", ")}` : ""}.`,
+    spread: `${affected.length} of ${path.length} components on the failure path${affected.length ? `: ${affected.map((id) => PI2_NODES[id].label).join(", ")}` : ""}.`,
+    business: `${biz.length} of 7 operations${biz.length ? `: ${biz.map((id) => PI2_NODES[id].label).join(", ")}` : ""}.`,
+    rate: movers[0].d > 0 ? `Fastest mover: ${movers[0].s.name}.` : "No signal moved since the previous step.",
+    time: anyCrit ? "A component on the path is already critical." : etas.length ? `~${Math.min(...etas)} min until the first component goes critical.` : "Nothing is predicted to go critical.",
+  };
+  return PI2_FACTORS.map((f) => ({ ...f, level: Math.round(level[f.key] * 100), pts: Math.round(level[f.key] * f.w * 10) / 10, evidence: ev[f.key] }));
+}
+function pi2Score(scn, step, o = S.ops) { return Math.min(100, Math.round(pi2Factors(scn, step, o).reduce((a, f) => a + f.pts, 0))); }
+const pi2Proj = (w, cur) => Math.min(100, Math.round((cur * w.afterRisk) / w.beforeRisk));
+const pi2Sev = (cls) => (cls === "Low" ? "normal" : cls === "Moderate" ? "warning" : "critical");
+function pi2StageIO(def, scn, step, o) {
+  const abn = scn.signals.map((s) => ({ s, v: pi2SigValue(s, step, o) })).filter((x) => pi2SigState(x.s, step, o) !== "normal");
+  const find = pi2TopFinding(scn, step);
+  if (def.key === "detect") return { input: scn.signals.map((s) => s.name).join(", "), processing: "Compares each signal's current value against its baseline, warning and critical thresholds.", output: abn.length ? `${abn.length} signal(s) abnormal: ${abn.map((x) => x.s.name).join(", ")}` : "All signals normal." };
+  if (def.key === "correlate") return { input: `${abn.length} abnormal signal(s)`, processing: "Traces each abnormal system's upstream dependencies to find a system they all share.", output: find.empty ? "No shared cause found." : `Candidate root cause: ${find.root}.` };
+  if (def.key === "predict") return { input: find.empty ? "No correlated finding." : `Root cause: ${find.root}`, processing: "Walks the dependency graph forward from the root cause to estimate what's affected next and when.", output: find.empty ? "Nothing predicted." : `${find.affectedCount} dependenc${find.affectedCount === 1 ? "y" : "ies"} affected, risk ${find.score} (${find.cls}).` };
+  if (def.key === "notify") return { input: find.empty ? "No prediction." : `Risk ${find.score}`, processing: "Logs the escalation for the IT view.", output: `${pi2Log(scn, step).length} escalation(s) logged this scenario run.` };
+  return { input: "What-if Simulation strategies", processing: "Apply to Demo steps the simulated nodes back toward healthy, following the scenario's own timeline in reverse.", output: PI2.applied[scn.id] ? "Simulated recovery applied." : "Not yet applied." };
+}
+function pi2RiskTrendChart(scn, step) {
+  const vals = [0, 1, 2, 3, 4].map((s) => pi2Score(scn, s)), n = vals.length, W = 500, H = 120, L = 6, R = 6, T = 8, B = 16;
+  const x = (i) => L + (i * (W - L - R)) / (n - 1), y = (v) => T + (1 - v / 100) * (H - T - B);
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Risk trend"><polyline fill="none" stroke="${CX_COLOR.warning}" stroke-width="2" points="${vals.map((v, i) => `${x(i)},${y(v)}`).join(" ")}"/><circle cx="${x(step)}" cy="${y(vals[step])}" r="4" fill="${riskColor(pi2Class(vals[step]))}"/></svg>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px">Risk score across this scenario's 5 steps (0–4); current step highlighted.</div>`;
+}
+function pi2GraphSvg(scn, step) { return pi2CardMap(scn, step, { compact: true }) + pi2MapLegend(false); }
+function pi2AnomalyPreview(scn, step, o) {
+  return `<section class="card pad"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Anomaly signals</h2><button class="btn" data-pi-tab="anomaly">View all</button></div>
+    ${scn.signals.slice(0, 5).map((sig) => { const v = pi2SigValue(sig, step, o), st = pi2SigState(sig, step, o), base = pi2SigBaseline(sig); return `<div data-pi2-open="anomaly:${esc(sig.key)}" style="cursor:pointer;display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px">
+      <span>${esc(sig.name)} ${sig.real ? `<span class="pill" style="background:${CX_BG.normal};color:${CX_COLOR.normal}">real signal</span>` : `<span class="pill" style="background:#eef1f5;color:var(--muted)">illustrative</span>`}</span>
+      <span style="color:var(--muted)">${base != null ? `baseline ${base}${sig.unit} → ` : ""}<b style="color:${CX_COLOR[st]}">${v}${sig.unit}</b></span></div>`; }).join("")}
+  </section>`;
+}
+function pi2WhatIfPreview(scn) {
+  const cur = pi2Score(scn, PI2.step);
+  return `<section class="card pad"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">What-if preview</h2><button class="btn" data-pi-tab="whatif">Open full comparison</button></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px">${scn.whatIf.map((w) => `<div style="border:1px solid var(--line);border-radius:10px;padding:10px;${w.recommended ? "border-color:var(--purple)" : ""}"><b style="font-size:12.5px">${esc(w.label)}</b>${w.recommended ? ` <span class="pill" style="background:var(--purple-bg);color:var(--purple);font-size:10.5px">Rec.</span>` : ""}<p style="font-size:12px;margin:6px 0 0;color:var(--muted)">Risk ${cur} → <b style="color:${w.afterRisk < w.beforeRisk ? CX_COLOR.normal : CX_COLOR.critical}">${pi2Proj(w, cur)}</b></p></div>`).join("")}</div></section>`;
+}
+function pi2StagesCard(scn, step) {
+  return `<section class="card pad" style="margin-top:20px"><h2>Agent execution pipeline</h2><p class="sub" style="margin-top:-6px">One real deterministic pipeline through five stages for this scenario — not five separate agents.</p>
+    <div class="stages5">${STAGE_DEF.map((def) => `<div class="stage-card" data-pi2-open="stage:${def.key}"><b>${esc(def.t)}</b><p style="margin:4px 0 0;font-size:12px"><span class="pill" style="background:${pi2StageStatus(def, step, scn) === "done" ? CX_BG.normal : pi2StageStatus(def, step, scn) === "running" ? CX_BG.warning : "#eef1f5"};color:${pi2StageStatus(def, step, scn) === "done" ? CX_COLOR.normal : pi2StageStatus(def, step, scn) === "running" ? CX_COLOR.warning : "var(--muted)"}">${esc(pi2StageStatus(def, step, scn))}</span></p></div>`).join("")}</div></section>`;
+}
+function pi2InsightBanner(scn, step, find) {
+  if (find.empty) return `<section class="card pad" style="margin-top:20px;background:linear-gradient(135deg,#1c1536,#3c2d80);color:#fff"><b>AURA Insight</b><p style="margin:6px 0 0;font-size:13.5px">${find.origin ? `An early signal is building at ${esc(PI2_NODES[find.origin.id].label)} but nothing has crossed a threshold yet. AURA is watching for a second signal before forecasting anything downstream.` : `All monitored systems are currently normal for "${esc(scn.title)}". Start the simulation to see AURA's reasoning develop.`}</p></section>`;
+  const downstream = (find.affectedIds.length ? find.affectedIds : find.predictedIds).filter((id) => PI2_NODES[id].layer < 3).map((id) => PI2_NODES[id].label);
+  const text = `A potential ${find.root} disruption ${find.affectedIds.length ? "is affecting" : "is forecast to affect"} ${downstream.slice(0, 3).join(", ")}${downstream.length > 3 ? " and other downstream systems" : ""}. Acting on the shared ${find.root} dependency now may stop the rest of the cascade.`;
+  return `<section class="card pad" style="margin-top:20px;background:linear-gradient(135deg,#1c1536,#3c2d80);color:#fff">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><b>AURA Insight</b><p style="margin:6px 0 0;font-size:13.5px;max-width:640px">${esc(text)}</p></div>
+      <button class="btn" style="background:#fff" data-pi-tab="causal">Open causal analysis</button>
+    </div></section>`;
+}
+function pi2PredictionCard(find, scn, step) {
+  if (find.empty) {
+    const or = find.origin;
+    if (!or) return `<section class="card pad" style="margin-bottom:20px"><p class="empty" style="padding:0">All signals are at baseline. Start the simulation to watch the first signal appear.</p></section>`;
+    const v = pi2SigValue(or.sig, step, S.ops), base = pi2SigBaseline(or.sig);
+    return `<section class="card pad" style="margin-bottom:20px;border-left:4px solid ${CX_COLOR.drift}">
+      <span class="pill" style="background:${CX_BG.drift};color:${CX_COLOR.drift}">Early signal · no forecast yet</span>
+      <h2 style="margin:8px 0 2px">${esc(or.sig.name)} is drifting at ${esc(PI2_NODES[or.id].label)}</h2>
+      <p style="margin:0;font-size:13.5px">${base != null ? `Baseline ${base}${esc(or.sig.unit)} → ` : ""}<b>${v}${esc(or.sig.unit)}</b> now. The alert threshold is ${or.sig.warn}${esc(or.sig.unit)}, so a threshold-based monitor stays quiet. First seen at ${pi2Clock(or.step)}.</p>
+      <p style="margin:8px 0 0;font-size:13px;color:var(--muted)">Watching for a second signal or a threshold breach before forecasting anything downstream.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" data-pi-tab="anomaly">See the signal</button><button class="btn" data-pi2-notif="map:${esc(or.id)}">Show on dependency map</button></div>
+    </section>`;
+  }
+  const lead = pi2LeadSummary(scn, step);
+  return `<section class="card pad" style="margin-bottom:20px;border-left:4px solid ${riskColor(find.cls)}">
+    <div><span class="pill" style="background:var(--purple-bg);color:var(--purple)">Highest priority prediction</span>
+    <h2 style="margin:8px 0 2px">Potential ${esc(find.root)} disruption affecting ${esc(find.service)}</h2>
+    <p style="margin:0;font-size:13px;color:var(--muted)">Candidate root cause: <b>${esc(find.root)}</b>${find.origin ? ` · first signal ${pi2Clock(find.origin.step)}` : ""} · ${find.affectedCount} affected downstream · ${find.predictedIds.length} forecast next</p></div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;margin:12px 0">
+      <div><small style="color:var(--muted)">Risk score</small><div style="font-size:22px;font-weight:700;color:${riskColor(find.cls)}">${find.score}</div></div>
+      <div><small style="color:var(--muted)">Severity</small><div style="font-size:14px;font-weight:700">${esc(find.cls)}</div></div>
+      <div><small style="color:var(--muted)">Confidence</small><div style="font-size:14px;font-weight:700">${esc(find.conf)}</div></div>
+      <div><small style="color:var(--muted)">Predicted time to impact</small><div style="font-size:14px;font-weight:700">${find.eta ? `~${find.eta.eta} min to ${esc(PI2_NODES[find.eta.id].label)} critical` : "Not forecast to reach critical"}</div></div>
+    </div>
+    ${lead ? `<p style="font-size:13px;margin:0 0 8px;color:var(--purple);font-weight:600">${esc(lead.text)}</p>` : ""}
+    <p style="font-size:13px;margin:0 0 10px">${esc(find.impact)}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn primary" data-pi-tab="causal">Investigate</button>
+      <button class="btn" data-pi-tab="impact">View impact</button>
+      <button class="btn" data-pi-tab="whatif">Run what-if</button>
+      <button class="btn" data-pi-tab="notify">View notifications</button>
+    </div>
+    </section>`;
+}
+function pi2Dashboard(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, find = pi2TopFinding(scn, step);
+  const statuses = pi2AllStatuses(scn, step);
+  const ids = Object.keys(PI2_NODES);
+  const crit = ids.filter((id) => statuses[id] === "critical").length, warn = ids.filter((id) => statuses[id] === "warning").length;
+  const bizAtRisk = pi2BizAtRisk(scn, step);
+  const branches = bizAtRisk.reduce((a, id) => a + (PI2_BIZ_BRANCHES[id] || 0), 0);
+  const esclog = pi2Log(scn, step).length, active = Object.keys(pi2Predict(scn, step)).length;
+  const kpiCard = (label, v, key, tone) => `<div class="card kpi click" data-pi2-open="kpi:${key}"><small${tone ? ` style="color:${tone}"` : ""}>${esc(label)}</small><b${tone ? ` style="color:${tone}"` : ""}>${v}</b></div>`;
+  return `${pi2EscalationStrip(scn, step, o)}<div class="kpis7">
+    ${kpiCard("Active Predictions", active, "active")}
+    ${kpiCard("Critical Systems", crit, "critical", crit ? CX_COLOR.critical : null)}
+    ${kpiCard("Warning Systems", warn, "warning", warn ? CX_COLOR.warning : null)}
+    ${kpiCard("Business Services at Risk", bizAtRisk.length, "bizrisk", bizAtRisk.length ? CX_COLOR.warning : null)}
+    ${kpiCard("Employees / Branches Affected", branches, "empbranch")}
+    ${kpiCard("Escalations Logged", esclog, "escalations")}
+    ${kpiCard("Automated Remediations", PI2.autoRemediations || 0, "autoremediation")}
+  </div>
+  ${pi2PredictionCard(find, scn, step)}
+  <section class="card pad" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Dependency map</h2><button class="btn" data-pi-tab="map">View full dependency map</button></div>
+    <p style="font-size:12px;color:var(--muted);margin:2px 0 10px">Illustrative 3-layer POC model — shared IT dependencies, enterprise applications and Crystal Clean business operations. Not verified internal architecture.</p>
+    ${pi2GraphSvg(scn, step)}</section>
+  <div class="grid2" style="margin:0 0 20px">
+      ${pi2AnomalyPreview(scn, step, o)}
+      <section class="card pad"><div style="display:flex;justify-content:space-between;align-items:center"><h2 style="margin:0">Risk trend</h2><button class="btn" data-pi-tab="risk">View full risk analysis</button></div>${pi2RiskTrendChart(scn, step)}<p style="font-size:11.5px;color:var(--muted);margin:4px 0 0">Illustrative rule-based scores, not statistically validated probabilities.</p></section>
+  </div>
+  ${pi2WhatIfPreview(scn)}
+  ${pi2StagesCard(scn, step)}
+  ${pi2InsightBanner(scn, step, find)}`;
+}
+function pi2WhatIfCard(w, cur) {
+  return `<div class="card pad" style="${w.recommended ? "border-color:var(--purple)" : ""}"><b>${esc(w.label)}</b>${w.recommended ? ` <span class="pill" style="background:var(--purple-bg);color:var(--purple)">Recommended</span>` : ""}
+    <p style="font-size:12.5px;margin:8px 0 0">Risk: ${cur} → <b style="color:${w.afterRisk < w.beforeRisk ? CX_COLOR.normal : CX_COLOR.critical}">${pi2Proj(w, cur)}</b></p>
+    <p style="font-size:12.5px;margin:4px 0 0">Affected services: ${w.affectedBefore} → ${w.affectedAfter}</p>
+    <p style="font-size:12.5px;margin:4px 0 0">Recovery: ${esc(w.recoveryTime)}</p>
+    <p style="font-size:12.5px;margin:4px 0 0;color:var(--muted)">Remaining risk: ${esc(w.remainingRisk)}</p>
+    ${w.recommended ? `<p style="font-size:12px;margin:6px 0 0">${esc(w.rationale)}</p>` : ""}</div>`;
+}
+function pi2WhatIfTable(scn) {
+  const rec = scn.whatIf.find((w) => w.recommended), cur = pi2Score(scn, PI2.step);
+  if (PI2.whatifCompare) return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">${scn.whatIf.map((w) => pi2WhatIfCard(w, cur)).join("")}</div>`;
+  return `<div class="card pad"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="text-align:left;color:var(--muted)"><th style="padding:6px 8px 6px 0">Strategy</th><th>Risk now</th><th>Projected risk</th><th>Affected services</th><th>Recovery</th><th>Remaining risk</th></tr></thead>
+    <tbody>${scn.whatIf.map((w) => `<tr style="${w.recommended ? "background:#f5f1ff" : ""}"><td style="padding:6px 8px 6px 0">${esc(w.label)}${w.recommended ? ` <span class="pill" style="background:var(--purple-bg);color:var(--purple)">Recommended</span>` : ""}</td><td>${cur}</td><td style="color:${w.afterRisk < w.beforeRisk ? CX_COLOR.normal : CX_COLOR.critical};font-weight:700">${pi2Proj(w, cur)}</td><td>${w.affectedBefore} → ${w.affectedAfter}</td><td>${esc(w.recoveryTime)}</td><td>${esc(w.remainingRisk)}</td></tr>`).join("")}</tbody>
+  </table>${rec ? `<p style="font-size:13px;margin:10px 0 0"><b>Recommended:</b> ${esc(rec.label)} — ${esc(rec.rationale)}</p>` : ""}</div>`;
+}
+function pi2WhatIfPage() {
+  const scn = PI2_SCENARIOS[PI2.scenario];
+  return `<h1>What-if Simulation</h1><p class="sub">Compare mitigation strategies for "${esc(scn.title)}" before committing to one. Applying a strategy only changes this simulated demo state.</p>
+  <div class="card pad" style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn primary" data-pi2wi="run">Run Simulation</button>
+    <button class="btn" data-pi2wi="compare">${PI2.whatifCompare ? "Show as list" : "Compare side-by-side"}</button>
+    <button class="btn" data-pi2wi="apply" ${PI2.recovering || PI2.applied[scn.id] ? "disabled" : ""}>Apply to Demo</button>
+    <button class="btn" data-pi2wi="reset">Reset Scenario</button>
+    ${PI2.applied[scn.id] ? `<span class="pill ok">Mitigation applied — recovery simulated in this demo</span>` : ""}
+  </div>
+  ${pi2Score(scn, PI2.step) === 0 ? `<p class="empty">Current risk is 0 — start the simulation (or Run prediction) first, so there's something to mitigate.</p>` : ""}
+  ${PI2.whatifRan ? pi2WhatIfTable(scn) : `<p class="empty">Click Run Simulation to compute the comparison for the current scenario.</p>`}
+  <p style="font-size:11.5px;color:var(--muted);margin:10px 0 0">Projected risk applies each strategy's estimated effect to the current explainable risk score. Illustrative POC estimates, not a validated model.</p>`;
+}
+function pi2DrawerBody(o) {
+  const d = PI2.drawer; if (!d) return "";
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, statuses = pi2AllStatuses(scn, step);
+  if (d.kind === "kpi") {
+    const lists = {
+      active: ["Active forecasts", Object.entries(pi2Predict(scn, step)).map(([id, x]) => `${PI2_NODES[id].label}: ${x.kind === "predicted" ? `forecast to degrade${x.etaAffect != null ? ` in ~${x.etaAffect} min` : ""}` : `forecast critical in ~${x.etaCrit} min`}`)],
+      critical: ["Critical systems", Object.keys(PI2_NODES).filter((id) => statuses[id] === "critical").map((id) => `${PI2_NODES[id].label} (${PI2_NODES[id].cat})`)],
+      warning: ["Warning systems", Object.keys(PI2_NODES).filter((id) => statuses[id] === "warning").map((id) => `${PI2_NODES[id].label} (${PI2_NODES[id].cat})`)],
+      bizrisk: ["Business services at risk", Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === 3 && statuses[id] !== "normal").map((id) => `${PI2_NODES[id].label}: ${statuses[id]}`)],
+      empbranch: ["Branches affected (illustrative)", Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === 3 && statuses[id] !== "normal").map((id) => `${PI2_NODES[id].label}: ~${PI2_BIZ_BRANCHES[id] || 0} branches`)],
+      escalations: ["Escalations logged", pi2Log(scn, step).map((e) => `${e.label}: ${e.from} → ${e.to} (${pi2Clock(e.step)})`)],
+      autoremediation: ["Automated remediations applied", PI2.autoRemediations ? [`${PI2.autoRemediations} mitigation(s) applied via What-if → Apply to Demo`] : []],
+    };
+    const [title, items] = lists[d.key] || ["", []];
+    return `<p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">${esc(title)}</p>${items.length ? `<ul style="margin:0;padding-left:18px;font-size:13px">${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : `<p class="empty" style="padding:0">None right now.</p>`}`;
+  }
+  if (d.kind === "node") {
+    const n = PI2_NODES[d.key]; if (!n) return "<p class='empty'>Not found.</p>";
+    const st = n.layer === 3 ? pi2RollupStatus(scn, step, d.key) : statuses[d.key];
+    const exposed = [...pi2Descendants(d.key)].filter((id) => PI2_NODES[id].layer === 3);
+    const fp = pi2Predict(scn, step)[d.key];
+    const impact = st === "normal" && !fp ? "None right now." : n.layer === 3 ? PI2_BIZ_EFFECT[d.key] : exposed.length ? `Puts ${exposed.map((id) => PI2_NODES[id].label).join(", ")} at risk (~${exposed.reduce((a, id) => a + (PI2_BIZ_BRANCHES[id] || 0), 0)} branches).` : "No business operation depends on it directly.";
+    const deps = (n.deps || []).map((id) => `${PI2_NODES[id].label} (${statuses[id]})`);
+    const feeds = Object.entries(PI2_NODES).filter(([, x]) => (x.deps || []).includes(d.key)).map(([id]) => `${PI2_NODES[id].label} (${statuses[id]})`);
+    const relatedSig = scn.signals.filter((s) => s.relatedComponent === d.key);
+    const relatedPred = fp
+      ? [fp.kind === "predicted" ? `Forecast to degrade${fp.etaAffect != null ? ` in ~${fp.etaAffect} min` : ""}${fp.etaCrit != null ? `, critical in ~${fp.etaCrit} min` : ""}` : `Forecast critical in ~${fp.etaCrit} min`]
+      : st !== "normal" ? [`Part of "${scn.title}"`] : [];
+    return `<p style="font-size:16px;font-weight:700;margin:0 0 6px">${esc(n.label)}</p>
+      <p class="pill" style="background:${CX_BG[st]};color:${CX_COLOR[st]};display:inline-block;margin:0">${esc(st)}</p>
+      <p style="font-size:12px;color:var(--muted);margin:8px 0 2px">${esc(n.cat)} · Layer ${n.layer}</p>
+      <p style="font-size:13px;margin:0 0 10px">${esc(n.desc)}</p>
+      ${relatedSig.length ? `<p style="font-size:13px;margin:0 0 6px"><b>Current metrics:</b> ${esc(relatedSig.map((s) => `${s.name}: ${pi2SigValue(s, step, o)}${s.unit}`).join(", "))}</p>` : ""}
+      <p style="font-size:13px;margin:0 0 6px"><b>Upstream dependencies:</b> ${deps.length ? esc(deps.join(", ")) : "None — root system."}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Downstream dependents:</b> ${feeds.length ? esc(feeds.join(", ")) : "None."}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Related anomalies:</b> ${relatedSig.length ? esc(relatedSig.map((s) => s.name).join(", ")) : "None."}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Related predictions:</b> ${relatedPred.length ? esc(relatedPred.join(", ")) : "None."}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Potential business impact:</b> ${esc(impact)}</p>
+      <p style="font-size:12.5px;color:var(--muted);margin:8px 0 0">Illustrative POC component, not verified internal architecture.</p>`;
+  }
+  if (d.kind === "anomaly") {
+    const sig = scn.signals.find((s) => s.key === d.key); if (!sig) return "<p class='empty'>Not found.</p>";
+    const v = pi2SigValue(sig, step, o), st = pi2SigState(sig, step, o), base = pi2SigBaseline(sig);
+    const vals = sig.real ? (o.disk_history || []).map((p) => p.pct) : sig.path.slice(0, step + 1);
+    return `<p class="pill" style="background:${CX_BG[st]};color:${CX_COLOR[st]};display:inline-block">${esc(pi2StLabel(st))}</p>
+      <p style="font-size:13px;margin:8px 0">${base != null ? `Baseline ${base}${sig.unit} → current ` : "Current "}<b>${v}${sig.unit}</b></p>
+      <p style="font-size:13px;margin:0 0 8px"><b>First detected:</b> ${esc(pi2SigFirstDetected(sig, scn, step, o) || "Not yet abnormal")}</p>
+      <p style="font-size:13px;margin:0 0 8px"><b>Related component:</b> ${esc(PI2_NODES[sig.relatedComponent].label)}</p>
+      <p style="font-size:12.5px;color:var(--muted);margin:0 0 10px">${sig.real ? "This is the same real branch-scan-storage signal used elsewhere in the app, not a separately invented metric." : "Illustrative demonstration signal for this POC scenario."}</p>
+      <h2 style="font-size:13px">History against thresholds</h2>${pi2SigChart(vals.length ? vals : [v], sig, sig.real ? null : pi2SigFirstStep(sig, step, o))}
+      <button class="btn" style="margin-top:10px" data-pi2-notif="map:${esc(sig.relatedComponent)}">Show ${esc(PI2_NODES[sig.relatedComponent].label)} on the dependency map</button>
+      <h2 style="font-size:13px;margin-top:12px">Related events</h2><p style="font-size:13px;color:var(--muted)">${esc(scn.title)} scenario, ${pi2Clock(step)} (step ${step} of 4).</p>
+      <h2 style="font-size:13px;margin-top:10px">Supporting evidence</h2><p style="font-size:13px">This signal is one of ${scn.signals.length} monitored for this scenario; ${scn.signals.filter((s) => pi2SigStatus(s, pi2SigValue(s, step, o)) !== "normal").length} are currently abnormal.</p>`;
+  }
+  if (d.kind === "risk") {
+    const n = PI2_NODES[d.key]; if (!n) return "<p class='empty'>Not found.</p>";
+    const st = statuses[d.key];
+    const anc = pi2Ancestors(d.key);
+    const sigs = scn.signals.filter((s) => s.relatedComponent === d.key || anc.has(s.relatedComponent));
+    const down = Object.entries(PI2_NODES).filter(([, x]) => (x.deps || []).includes(d.key)).map(([id]) => PI2_NODES[id].label);
+    return `<p class="pill" style="background:${CX_BG[st]};color:${CX_COLOR[st]}">${esc(st)}</p>
+      <p style="font-size:13px;margin:8px 0"><b>Why:</b> ${d.key === scn.root ? `This is the candidate root cause for "${esc(scn.title)}".` : `Status is ${esc(st)} because it sits downstream of ${esc(PI2_NODES[scn.root].label)} in the dependency graph.`}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Contributing signals:</b> ${sigs.length ? esc(sigs.map((s) => s.name).join(", ")) : "None directly."}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Affected dependencies:</b> ${down.length ? esc(down.join(", ")) : "None downstream."}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Potential consequences:</b> ${esc(scn.businessImpact)}</p>
+      <p style="font-size:13px;margin:0"><b>Suggested investigation:</b> Check ${esc(PI2_NODES[scn.root].label)}'s own signals first, then the systems directly downstream of it.</p>`;
+  }
+  if (d.kind === "stage") {
+    const def = STAGE_DEF.find((s) => s.key === d.key); if (!def) return "<p class='empty'>Not found.</p>";
+    const stStatus = pi2StageStatus(def, step, scn), io = pi2StageIO(def, scn, step, o);
+    return `<p class="pill" style="background:${stStatus === "done" ? CX_BG.normal : stStatus === "running" ? CX_BG.warning : "#eef1f5"};color:${stStatus === "done" ? CX_COLOR.normal : stStatus === "running" ? CX_COLOR.warning : "var(--muted)"}">${esc(stStatus)}</p>
+      <p style="font-size:13px;margin:8px 0"><b>Input:</b> ${esc(io.input)}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Processing:</b> ${esc(io.processing)}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Output:</b> ${esc(io.output)}</p>
+      <p style="font-size:13px;margin:0 0 6px"><b>Timestamp:</b> ${pi2Clock(step)} (step ${step} of 4)</p>
+      <p style="font-size:12.5px;color:var(--muted);margin:0">No errors or retries — deterministic rule-based demo.</p>`;
+  }
+  return "<p class='empty'>Nothing to show.</p>";
+}
+function pi2Drawer(o) {
+  if (!PI2.drawer) return "";
+  const titleMap = { kpi: "KPI detail", node: "Component detail", anomaly: "Anomaly detail", risk: "Risk detail", stage: "Pipeline stage", causal: "Causal analysis", impact: "Impact detail" };
+  return `<div class="pi2-backdrop" data-pi2-close="1"></div>
+    <div class="pi2-drawer">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 style="margin:0">${esc(titleMap[PI2.drawer.kind] || "Detail")}</h2><button class="btn" data-pi2-close="1">Close</button></div>
+      ${pi2DrawerBody(o)}
+    </div>`;
+}
+function pi2Control(action) {
+  if (action === "start") { PI2.running = true; PI2.recovering = false; }
+  else if (action === "pause") PI2.running = false;
+  else if (action === "reset") { PI2.step = 0; PI2.peak = 0; PI2.notif = {}; PI2.running = false; PI2.recovering = false; PI2.applied[PI2.scenario] = false; PI2.whatifRan = false; PI2.drawer = null; }
+  else if (action === "run") { if (!PI2.running && PI2.step < 4) PI2.step++; PI2.peak = Math.max(PI2.peak || 0, PI2.step); PI2.runs = (PI2.runs || []).concat([{ scenario: PI2.scenario, step: PI2.step, at: new Date().toISOString(), raised: false }]).slice(-50); }
+  pi2Save(); renderIt();
+}
+function pi2WhatIfControl(action) {
+  if (action === "run") PI2.whatifRan = true;
+  else if (action === "compare") PI2.whatifCompare = !PI2.whatifCompare;
+  else if (action === "apply") { PI2.recovering = true; PI2.running = false; }
+  else if (action === "reset") { PI2.step = 0; PI2.peak = 0; PI2.notif = {}; PI2.running = false; PI2.recovering = false; PI2.applied[PI2.scenario] = false; PI2.whatifRan = false; }
+  pi2Save(); renderIt();
+}
+/* ----------------------------------------- PI2 dependency map (layered cards) */
+const PI2_ICON = {
+  svc_integration: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>',
+  svc_identity: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v6M9 11h6"/>',
+  svc_network: '<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M2 9a15 15 0 0 1 20 0M12 19.5h.01"/>',
+  svc_gateway: '<path d="M12 2l10 5-10 5L2 7l10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>',
+  svc_db: '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+  svc_mq: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/>',
+  app_dispatch: '<path d="M1 4h14v12H1zM15 9h4l3 3v4h-7"/><circle cx="5.5" cy="18.5" r="2"/><circle cx="18.5" cy="18.5" r="2"/>',
+  app_field: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+  app_portal: '<path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="14" width="4" height="6" rx="1"/><rect x="17" y="14" width="4" height="6" rx="1"/>',
+  app_manifest: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h8M8 9h2"/>',
+  app_scheduling: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
+  app_facility: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  biz_oil: '<path d="M12 2.7l5.7 5.7a8 8 0 1 1-11.4 0z"/>',
+  biz_parts: '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+  biz_drum: '<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M6 8h12M6 16h12"/>',
+  biz_vacuum: '<path d="M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+  biz_antifreeze: '<path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1"/>',
+  biz_rerefine: '<path d="M7 19H4.8a2 2 0 0 1-1.7-3l1.6-2.8M11 19h8.2a2 2 0 0 0 1.7-3l-1.7-2.8M14 16l-3 3 3 3M8.3 13.6L7 8.5 2 10M9.3 5.6l1-1.7a2 2 0 0 1 3.4 0l4.1 7.1M13 5.6l5.6 1.5-1.4 5.1"/>',
+  biz_processing: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10zM2 21c0-3 1.9-5.4 5.1-6"/>',
+};
+const PI2_BANDS = {
+  1: { y: 10, title: "Shared IT Dependencies", icon: '<rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/>' },
+  2: { y: 230, title: "Enterprise Applications", icon: '<rect x="4" y="4" width="16" height="11" rx="1"/><path d="M2 19h20"/>' },
+  3: { y: 450, title: "Business Operations", icon: '<path d="M2 20V9l6 4V9l6 4V4h4v16zM2 20h20"/>' },
+};
+const PI2_MAP_W = 1520, PI2_CARD_H = 108, PI2MAP_MIN = 0.4, PI2MAP_MAX = 3;
+const PI2_LAYOUT = (() => {
+  const out = {};
+  [1, 2, 3].forEach((L) => {
+    const ids = Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === L);
+    const slot = 1320 / ids.length, w = L === 3 ? 170 : 190;
+    ids.forEach((id, i) => (out[id] = { x: 190 + i * slot + (slot - w) / 2, y: PI2_BANDS[L].y + 24, w, h: PI2_CARD_H }));
+  });
+  return out;
+})();
+// Edge paths fan out along the card edges so lines into or out of the same card don't overlap.
+const PI2_EDGE_GEO = (() => {
+  const outs = {}, ins = {};
+  PI2_EDGES.forEach((e) => { (outs[e.from] = outs[e.from] || []).push(e); (ins[e.to] = ins[e.to] || []).push(e); });
+  const off = (list, key, e) => { const s = [...list].sort((a, b) => PI2_LAYOUT[a[key]].x - PI2_LAYOUT[b[key]].x), n = s.length; return (s.indexOf(e) - (n - 1) / 2) * Math.min(14, 120 / n); };
+  return PI2_EDGES.map((e) => {
+    const a = PI2_LAYOUT[e.from], b = PI2_LAYOUT[e.to];
+    const x1 = a.x + a.w / 2 + off(outs[e.from], "to", e), x2 = b.x + b.w / 2 + off(ins[e.to], "from", e);
+    if (PI2_NODES[e.from].layer === PI2_NODES[e.to].layer) return { ...e, d: `M${x1},${a.y} C${x1},${a.y - 30} ${x2},${b.y - 30} ${x2},${b.y}` };
+    const y1 = a.y + a.h, y2 = b.y, m = (y1 + y2) / 2;
+    return { ...e, d: `M${x1},${y1} C${x1},${m} ${x2},${m} ${x2},${y2}` };
+  });
+})();
+const pi2MapViewBox = (view) => (view === "business" ? { x: 0, y: 220, w: PI2_MAP_W, h: 400 } : { x: 0, y: 0, w: PI2_MAP_W, h: 620 });
+function pi2Wrap(t, max) {
+  const lines = [""];
+  t.split(" ").forEach((w) => { const cur = lines[lines.length - 1]; if (cur && (cur + " " + w).length > max) lines.push(w); else lines[lines.length - 1] = (cur + " " + w).trim(); });
+  return lines;
+}
+function pi2MapDefaultState() { return { zoom: 1, panX: 0, panY: 0, search: "", filter: new Set(["normal", "warning", "critical"]), trace: false, view: "technical", mode: "overview", selected: null }; }
+function pi2MapState() { if (!S.pi2Map) S.pi2Map = pi2MapDefaultState(); return S.pi2Map; }
+function pi2MapZoomBy(f) {
+  const M = pi2MapState(), vb = pi2MapViewBox(M.view), px = vb.x + vb.w / 2, py = vb.y + vb.h / 2;
+  const z = Math.max(PI2MAP_MIN, Math.min(PI2MAP_MAX, M.zoom * f)), q = z / M.zoom;
+  M.panX = px - (px - M.panX) * q; M.panY = py - (py - M.panY) * q; M.zoom = z;
+}
+function pi2MapReset() { const M = pi2MapState(); M.zoom = 1; M.panX = 0; M.panY = 0; }
+function pi2MapToggleFilter(st) { const M = pi2MapState(); if (M.filter.has(st)) { if (M.filter.size > 1) M.filter.delete(st); } else M.filter.add(st); }
+function pi2Descendants(id, seen = new Set()) { Object.entries(PI2_NODES).forEach(([nid, n]) => { if ((n.deps || []).includes(id) && !seen.has(nid)) { seen.add(nid); pi2Descendants(nid, seen); } }); return seen; }
+function pi2RollupStatus(scn, step, id) {
+  const own = pi2Status(scn, id, step);
+  const depsWorst = (PI2_NODES[id].deps || []).reduce((worst, d) => { const s = pi2Status(scn, d, step); return PI2_SEV_RANK[s] > PI2_SEV_RANK[worst] ? s : worst; }, "normal");
+  return PI2_SEV_RANK[depsWorst] > PI2_SEV_RANK[own] ? depsWorst : own;
+}
+function pi2MapJumpTo(id) {
+  const M = pi2MapState(), L = PI2_LAYOUT[id], vb = pi2MapViewBox(M.view);
+  if (!L) return;
+  M.panX = vb.x + vb.w / 2 - (L.x + L.w / 2) * M.zoom; M.panY = vb.y + vb.h / 2 - (L.y + L.h / 2) * M.zoom;
+}
+const PI2_MAP_COL = { purple: "#6e4ff6", grey: "#b3bdc9", ink: "#17212b", muted: "#5d6b78", blue: "#0a5c9e" };
+// One renderer for both the compact Overview map and the full interactive map.
+function pi2CardMap(scn, step, opts) {
+  const M = opts.compact ? pi2MapDefaultState() : pi2MapState();
+  const ctx = pi2MapCtx(scn, step), st = ctx.statuses, find = pi2TopFinding(scn, step);
+  const layers = M.view === "business" ? [2, 3] : [1, 2, 3], vb = pi2MapViewBox(M.view);
+  const sel = opts.compact ? null : M.selected, impact = !opts.compact && M.mode === "impact";
+  const origin = impact ? sel || scn.root : null, blast = origin ? pi2Descendants(origin) : null;
+  const selDown = sel && !impact ? pi2Descendants(sel) : new Set();
+  const trace = !opts.compact && !impact && M.trace ? new Set([scn.root, ...(find.affectedIds || [])]) : null;
+  const q = opts.compact ? "" : M.search.trim().toLowerCase();
+  const match = q ? new Set(Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].label.toLowerCase().includes(q))) : null;
+  const shown = new Set(Object.keys(PI2_NODES).filter((id) => layers.includes(PI2_NODES[id].layer) && M.filter.has(st[id])));
+  const rootOn = st[scn.root] !== "normal";
+  const dimNode = (id) => (origin ? id !== origin && !blast.has(id) : trace ? !trace.has(id) : sel ? id !== sel && !selDown.has(id) && !(PI2_NODES[sel].deps || []).includes(id) : false) || (match ? !match.has(id) : false);
+  const marker = (k, c) => `<marker id="pi2m-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${c}"/></marker>`;
+  const defs = `<defs>${marker("grey", "#9aa6b2")}${marker("purple", PI2_MAP_COL.purple)}${marker("warning", CX_COLOR.warning)}${marker("critical", CX_COLOR.critical)}</defs>`;
+  const bands = layers.map((L) => { const b = PI2_BANDS[L], t = pi2Wrap(b.title, 14); return `<g>
+    <rect x="10" y="${b.y}" width="${PI2_MAP_W - 20}" height="160" rx="18" fill="#f7f9fc" stroke="#e6ebf2"/>
+    <rect x="22" y="${b.y + 14}" width="152" height="132" rx="12" fill="#eef2f8"/>
+    <g transform="translate(38,${b.y + 26}) scale(1.15)" fill="none" stroke="${PI2_MAP_COL.ink}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${b.icon}</g>
+    <text x="38" y="${b.y + 82}" font-size="16" font-weight="700" fill="${PI2_MAP_COL.ink}">Layer ${L}</text>
+    ${t.map((ln, i) => `<text x="38" y="${b.y + 102 + i * 18}" font-size="14.5" font-weight="700" fill="${PI2_MAP_COL.ink}">${esc(ln)}</text>`).join("")}</g>`; }).join("");
+  const edges = PI2_EDGE_GEO.filter((e) => shown.has(e.from) && shown.has(e.to)).map((e) => {
+    const hot = st[e.from] !== "normal" && st[e.to] !== "normal";
+    const fc = !hot && pi2IsPred(ctx.pred, e.to) && (st[e.from] !== "normal" || pi2IsPred(ctx.pred, e.from));
+    let col = PI2_MAP_COL.grey, w = 1.5, dash = "", mk = "grey", op = 1, dot = hot;
+    if (origin) { if ((e.from === origin || blast.has(e.from)) && blast.has(e.to)) { col = CX_COLOR.critical; w = 2.4; mk = "critical"; } else { op = 0.15; dot = false; } }
+    else if (trace) { if (trace.has(e.from) && trace.has(e.to)) { col = PI2_MAP_COL.purple; w = 2.6; mk = "purple"; } else { op = 0.15; dot = false; } }
+    else if (sel) {
+      if (e.from === sel || e.to === sel) { col = PI2_MAP_COL.purple; w = 2.6; mk = "purple"; }
+      else if (selDown.has(e.from) && selDown.has(e.to)) { col = PI2_MAP_COL.purple; w = 1.8; dash = "6 5"; mk = "purple"; }
+      else { op = 0.15; dot = false; }
+    } else if (hot) { col = CX_COLOR[st[e.to]]; w = 2.4; mk = st[e.to]; }
+    else if (fc) { col = CX_COLOR.warning; w = 1.8; dash = "6 5"; mk = "warning"; }
+    if (match && !(match.has(e.from) || match.has(e.to))) { op = Math.min(op, 0.15); dot = false; }
+    return `<g opacity="${op}"><path d="${e.d}" fill="none" stroke="${col}" stroke-width="${w}"${dash ? ` stroke-dasharray="${dash}"` : ""} marker-end="url(#pi2m-${mk})"/>${dot ? `<circle r="4" fill="${CX_COLOR[st[e.to]]}"><animateMotion dur="1.8s" repeatCount="indefinite" path="${e.d}"/></circle>` : ""}</g>`;
+  }).join("");
+  const nodes = [...shown].map((id) => {
+    const n = PI2_NODES[id], L = PI2_LAYOUT[id], s = st[id], p = ctx.pred[id];
+    const predicted = pi2IsPred(ctx.pred, id), early = ctx.early.has(id), isSel = sel === id;
+    const confirmed = pi2Confirmed(scn, id, step) != null, critSoon = !!p && p.etaCrit != null;
+    const isOrigin = ctx.origin && ctx.origin.id === id;
+    const fill = isSel ? "#f3efff" : predicted ? "#ffffff" : s === "critical" ? "#fdecea" : s === "warning" ? "#fff4e0" : n.layer === 3 ? "#eef5fc" : "#eef8f0";
+    const stroke = isSel ? PI2_MAP_COL.purple : predicted ? CX_COLOR.warning : s === "critical" ? "#e9877c" : s === "warning" ? "#ecb866" : n.layer === 3 ? "#bcd6ef" : "#b7dfc0";
+    const iconCol = isSel ? PI2_MAP_COL.purple : s !== "normal" ? CX_COLOR[s] : n.layer === 3 ? PI2_MAP_COL.blue : CX_COLOR.normal;
+    const tag = predicted ? (p.etaAffect != null ? `Forecast · ~${p.etaAffect} min` : "At risk") : critSoon ? `Critical in ~${p.etaCrit} min` : confirmed ? "✓ as forecast" : early ? "Early signal" : "";
+    const tagCol = predicted || critSoon ? CX_COLOR.warning : confirmed ? CX_COLOR.normal : CX_COLOR.drift;
+    const lines = pi2Wrap(n.label, n.layer === 3 ? 17 : 20).slice(0, 2), cx = L.x + L.w / 2;
+    const ly = lines.length === 1 ? [L.y + 68] : [L.y + 61, L.y + 78];
+    const attr = opts.compact ? `data-pi2-open="node:${id}"` : `data-pi2map-node="${id}"`;
+    return `<g ${attr} style="cursor:pointer" opacity="${dimNode(id) ? 0.22 : 1}">
+      ${s === "critical" ? `<rect x="${L.x - 5}" y="${L.y - 5}" width="${L.w + 10}" height="${L.h + 10}" rx="16" fill="none" stroke="${CX_COLOR.critical}" stroke-width="2"><animate attributeName="opacity" values=".7;.1;.7" dur="1.6s" repeatCount="indefinite"/></rect>` : ""}
+      ${isOrigin || (id === scn.root && rootOn) ? `<rect x="${L.x - 4}" y="${L.y - 4}" width="${L.w + 8}" height="${L.h + 8}" rx="15" fill="none" stroke="${isOrigin ? PI2_MAP_COL.purple : CX_COLOR[s]}" stroke-width="1.5" stroke-dasharray="4 3"/>` : ""}
+      ${match && match.has(id) ? `<rect x="${L.x - 7}" y="${L.y - 7}" width="${L.w + 14}" height="${L.h + 14}" rx="17" fill="none" stroke="${PI2_MAP_COL.blue}" stroke-width="2.5"/>` : ""}
+      <rect x="${L.x}" y="${L.y}" width="${L.w}" height="${L.h}" rx="12" fill="${fill}" stroke="${stroke}" stroke-width="${isSel ? 2.5 : 1.6}"${predicted ? ' stroke-dasharray="6 4"' : ""}/>
+      ${early ? `<rect x="${L.x + 2}" y="${L.y + 2}" width="${L.w - 4}" height="${L.h - 4}" rx="10" fill="none" stroke="${CX_COLOR.drift}" stroke-width="2.4" stroke-dasharray="2 4"><animate attributeName="opacity" values="1;.25;1" dur="1.4s" repeatCount="indefinite"/></rect>` : ""}
+      <g transform="translate(${cx - 13},${L.y + 12}) scale(1.1)" fill="none" stroke="${iconCol}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none">${PI2_ICON[id]}</g>
+      <circle cx="${L.x + L.w - 16}" cy="${L.y + 16}" r="6" fill="${CX_COLOR[s]}"/>
+      ${lines.map((ln, i) => `<text x="${cx}" y="${ly[i]}" text-anchor="middle" font-size="${n.layer === 3 ? 13.5 : 14.5}" font-weight="600" fill="${PI2_MAP_COL.ink}" style="pointer-events:none">${esc(ln)}</text>`).join("")}
+      ${tag ? `<text x="${cx}" y="${L.y + L.h - 10}" text-anchor="middle" font-size="11.5" font-weight="700" fill="${tagCol}" style="pointer-events:none">${esc(tag)}</text>` : ""}
+      ${isOrigin ? `<g style="pointer-events:none"><rect x="${L.x + 8}" y="${L.y + 8}" width="76" height="16" rx="8" fill="${PI2_MAP_COL.purple}"/><text x="${L.x + 46}" y="${L.y + 19.5}" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">ORIGIN ${pi2Clock(ctx.origin.step)}</text></g>` : ""}
+    </g>`;
+  }).join("");
+  const inner = `${bands}${edges}${nodes}`;
+  const svgAttrs = `xmlns="http://www.w3.org/2000/svg" viewBox="${vb.x} ${vb.y} ${vb.w} ${vb.h}" font-family="Segoe UI, system-ui, Arial, sans-serif" role="img" aria-label="Service dependency map"`;
+  if (opts.compact) return `<svg ${svgAttrs} style="width:100%;height:auto;display:block">${defs}${inner}</svg>`;
+  return `<svg id="pi2map-svg" ${svgAttrs} style="width:100%;height:auto;display:block;touch-action:none;user-select:none;cursor:grab">${defs}<g id="pi2map-viewport" transform="translate(${M.panX},${M.panY}) scale(${M.zoom})">${inner}</g></svg>`;
+}
+function pi2MapLegend(full) {
+  const dot = (c) => `<i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:5px;vertical-align:-1px"></i>`;
+  const line = (dash) => `<svg width="34" height="10" style="vertical-align:middle;margin-right:5px"><path d="M1 5h26" stroke="${PI2_MAP_COL.purple}" stroke-width="2"${dash ? ' stroke-dasharray="5 4"' : ""}/><path d="M26 1l7 4-7 4z" fill="${PI2_MAP_COL.purple}"/></svg>`;
+  return `<div class="map-legend"><span><b>Health:</b></span><span>${dot(CX_COLOR.normal)}Healthy</span><span>${dot(CX_COLOR.warning)}Warning</span><span>${dot(CX_COLOR.critical)}Critical</span>
+    <span class="sep"></span><span>${line(false)}Direct dependency</span><span>${line(true)}Indirect dependency</span>
+    <span class="sep"></span><span><i style="display:inline-block;width:16px;height:11px;border:1.5px dashed ${CX_COLOR.warning};border-radius:3px;margin-right:5px;vertical-align:-1px"></i>Forecast next</span>
+    <span><i style="display:inline-block;width:16px;height:11px;border:2px dotted ${CX_COLOR.drift};border-radius:3px;margin-right:5px;vertical-align:-1px"></i>Early signal</span>
+    <span><b style="background:${PI2_MAP_COL.purple};color:#fff;border-radius:8px;padding:0 6px;font-size:10px">ORIGIN</b> first signal</span>
+    ${full ? `<span style="color:var(--muted)">Scroll or pinch to zoom · drag to pan · click a component for detail</span>` : ""}</div>`;
+}
+function pi2MapDetailsTable(scn, step) {
+  const st = pi2AllStatuses(scn, step), names = (ids) => (ids.length ? ids.map((d) => esc(PI2_NODES[d].label)).join(", ") : `<span style="color:var(--muted)">None</span>`);
+  const layerName = { 1: "Shared IT dependency", 2: "Enterprise application", 3: "Business operation" };
+  return `<div style="overflow-x:auto"><table class="dep-table"><thead><tr><th>Component</th><th>Layer</th><th>Status</th><th>Depends on</th><th>Used by</th><th>Business operations reached</th></tr></thead><tbody>
+    ${Object.keys(PI2_NODES).map((id) => { const n = PI2_NODES[id], s = st[id], used = Object.keys(PI2_NODES).filter((k) => (PI2_NODES[k].deps || []).includes(id)), reach = [...pi2Descendants(id)].filter((k) => PI2_NODES[k].layer === 3);
+      return `<tr><td><button class="linkbtn" data-pi2-notif="map:${id}">${esc(n.label)}</button></td><td>${n.layer} · ${layerName[n.layer]}</td><td><span class="pill" style="background:${CX_BG[s]};color:${CX_COLOR[s]}">${s}</span></td><td>${names(n.deps || [])}</td><td>${names(used)}</td><td>${n.layer === 3 ? "—" : reach.length ? `${reach.length} (~${reach.reduce((a, k) => a + (PI2_BIZ_BRANCHES[k] || 0), 0)} branches)` : "0"}</td></tr>`; }).join("")}
+  </tbody></table></div>`;
+}
+function pi2MapCardInner(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, M = pi2MapState(), sel = M.selected;
+  const st = pi2AllStatuses(scn, step);
+  const modes = [["overview", "Overview"], ["impact", "Impact Analysis"], ["details", "Dependency Details"]];
+  const ico = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const head = `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+    <div><h1 style="margin:0">Service Dependency Map</h1><p class="sub" style="margin:2px 0 0">IT services, enterprise applications and business operations, with their dependency relationships. Illustrative POC model, not verified internal architecture.</p></div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="seg">${modes.map(([k, l]) => `<button class="${M.mode === k ? "on" : ""}" data-pi2map="mode-${k}">${l}</button>`).join("")}</div>
+      <button class="icon-btn" data-pi2map="fullscreen" title="Full screen" aria-label="Full screen">${ico('<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>')}</button>
+      <button class="icon-btn" data-pi2map="download" title="Download map (SVG)" aria-label="Download map">${ico('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>')}</button>
+    </div></div>`;
+  if (M.mode === "details") return `${head}${pi2MapDetailsTable(scn, step)}`;
+  const chip = (label, key) => `<button class="btn ${M.filter.has(key) ? "primary" : ""}" data-pi2map-filter="${key}">${label}</button>`;
+  const toolbar = `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+    <input id="pi2map-search" placeholder="Search components…" value="${esc(M.search)}" style="height:34px;border:1px solid var(--line);border-radius:8px;padding:0 10px;font:inherit;min-width:170px">
+    ${chip("Healthy", "normal")}${chip("Warning", "warning")}${chip("Critical", "critical")}
+    <span style="width:1px;height:22px;background:var(--line)"></span>
+    <div class="seg"><button class="${M.view === "technical" ? "on" : ""}" data-pi2map="view-technical">Technical view</button><button class="${M.view === "business" ? "on" : ""}" data-pi2map="view-business">Business view</button></div>
+    <span style="width:1px;height:22px;background:var(--line)"></span>
+    <button class="btn" data-pi2map="zoomout" aria-label="Zoom out">−</button><span id="pi2map-zoom" style="font-size:12.5px;color:var(--muted);min-width:42px;text-align:center">${Math.round(M.zoom * 100)}%</span><button class="btn" data-pi2map="zoomin" aria-label="Zoom in">+</button>
+    <button class="btn" data-pi2map="reset">Reset view</button>
+    ${M.mode === "overview" ? `<button class="btn ${M.trace ? "primary" : ""}" data-pi2map="trace">Trace root cause</button>` : ""}
+    ${sel ? `<span style="font-size:12.5px;color:var(--muted)">Selected: <b>${esc(PI2_NODES[sel].label)}</b></span><button class="btn" data-pi2map="clear">Clear</button>` : ""}
+  </div>`;
+  let summary = "";
+  if (M.mode === "impact") {
+    const origin = sel || scn.root, reach = [...pi2Descendants(origin)];
+    const byL = (L) => reach.filter((id) => PI2_NODES[id].layer === L);
+    const list = (ids) => ids.map((id) => `${esc(PI2_NODES[id].label)} <span style="color:${CX_COLOR[st[id]]}">(${st[id]})</span>`).join(", ");
+    summary = `<div class="card pad" style="margin-top:12px;background:#fdf8f7;border-color:#f3d3cf">
+      <b>If ${esc(PI2_NODES[origin].label)} is disrupted, it reaches ${reach.length} component(s)</b>${sel ? "" : " <small style=\"color:var(--muted)\">(the candidate root cause; click any component to see its own blast radius)</small>"}
+      ${byL(1).length ? `<p style="font-size:13px;margin:6px 0 0"><b>Shared IT:</b> ${list(byL(1))}</p>` : ""}
+      ${byL(2).length ? `<p style="font-size:13px;margin:6px 0 0"><b>Applications:</b> ${list(byL(2))}</p>` : ""}
+      ${byL(3).length ? `<p style="font-size:13px;margin:6px 0 0"><b>Business operations:</b> ${list(byL(3))} · ~${byL(3).reduce((a, id) => a + (PI2_BIZ_BRANCHES[id] || 0), 0)} branches</p>` : ""}
+    </div>`;
+  }
+  return `${head}${toolbar}<div class="map-canvas">${pi2CardMap(scn, step, { compact: false })}</div>${pi2MapLegend(true)}
+    <div class="map-note">Identity &amp; Access (SSO) is a shared IT dependency: Route &amp; Dispatch, Field Service, the Customer Service Portal, Manifest Documentation and Collection Scheduling all sign in through it.</div>${summary}`;
+}
+function pi2FullMap(o) { return `<div class="card pad" id="pi2map-card">${pi2MapCardInner(o)}</div>`; }
+// Zoom follows the cursor (wheel or trackpad pinch); drag pans; two fingers pinch-zoom on touch.
+function pi2MapBind() {
+  const svg = document.getElementById("pi2map-svg"), vp = document.getElementById("pi2map-viewport");
+  if (!svg || !vp) return;
+  const M = pi2MapState();
+  const apply = () => { vp.setAttribute("transform", `translate(${M.panX},${M.panY}) scale(${M.zoom})`); const z = document.getElementById("pi2map-zoom"); if (z) z.textContent = `${Math.round(M.zoom * 100)}%`; };
+  const toSvg = (cx, cy) => { const m = svg.getScreenCTM(); if (!m) return { x: 0, y: 0 }; const pt = svg.createSVGPoint(); pt.x = cx; pt.y = cy; return pt.matrixTransform(m.inverse()); };
+  const zoomAt = (p, f) => { const z = Math.max(PI2MAP_MIN, Math.min(PI2MAP_MAX, M.zoom * f)), q = z / M.zoom; M.panX = p.x - (p.x - M.panX) * q; M.panY = p.y - (p.y - M.panY) * q; M.zoom = z; };
+  svg.addEventListener("wheel", (ev) => { ev.preventDefault(); zoomAt(toSvg(ev.clientX, ev.clientY), Math.exp(-ev.deltaY * (ev.ctrlKey ? 0.012 : 0.0012))); apply(); }, { passive: false });
+  const pts = new Map();
+  let prev = null;
+  const snap = () => {
+    const a = [...pts.values()];
+    if (a.length === 1) return { mid: toSvg(a[0].x, a[0].y), dist: 0 };
+    return { mid: toSvg((a[0].x + a[1].x) / 2, (a[0].y + a[1].y) / 2), dist: Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) };
+  };
+  svg.addEventListener("pointerdown", (ev) => {
+    if (ev.button > 0) return;
+    pts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY, sx: ev.clientX, sy: ev.clientY });
+    PI2MAP_DRAG = PI2MAP_DRAG || { moved: 0 };
+    prev = snap();
+  });
+  svg.addEventListener("pointermove", (ev) => {
+    const p = pts.get(ev.pointerId);
+    if (!p) return;
+    p.x = ev.clientX; p.y = ev.clientY;
+    PI2MAP_DRAG.moved = Math.max(PI2MAP_DRAG.moved, Math.hypot(p.x - p.sx, p.y - p.sy));
+    if (PI2MAP_DRAG.moved > 5 && !svg.hasPointerCapture(ev.pointerId)) { svg.setPointerCapture(ev.pointerId); svg.style.cursor = "grabbing"; }
+    const cur = snap();
+    M.panX += cur.mid.x - prev.mid.x; M.panY += cur.mid.y - prev.mid.y;
+    if (pts.size >= 2 && prev.dist && cur.dist) zoomAt(cur.mid, cur.dist / prev.dist);
+    apply();
+    prev = snap();
+  });
+  const end = (ev) => {
+    if (!pts.delete(ev.pointerId)) return;
+    if (pts.size) { prev = snap(); return; }
+    PI2MAP_JUST_DRAGGED = !!PI2MAP_DRAG && PI2MAP_DRAG.moved > 5;
+    PI2MAP_DRAG = null;
+    svg.style.cursor = "grab";
+    setTimeout(() => (PI2MAP_JUST_DRAGGED = false), 0);
+  };
+  svg.addEventListener("pointerup", end);
+  svg.addEventListener("pointercancel", end);
+  const sEl = document.getElementById("pi2map-search");
+  if (sEl) sEl.oninput = () => {
+    M.search = sEl.value;
+    const q = M.search.trim().toLowerCase();
+    if (q) { const first = Object.keys(PI2_NODES).find((id) => PI2_NODES[id].label.toLowerCase().includes(q)); if (first) pi2MapJumpTo(first); }
+    renderIt();
+  };
+}
+function pi2MapDownload() {
+  const svg = document.getElementById("pi2map-svg");
+  if (!svg) return;
+  const clone = svg.cloneNode(true);
+  clone.querySelector("#pi2map-viewport").removeAttribute("transform");
+  clone.removeAttribute("style");
+  const url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)], { type: "image/svg+xml" }));
+  const a = document.createElement("a");
+  a.href = url; a.download = "crystal-clean-dependency-map.svg";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+let PI2MAP_DRAG = null;
+let PI2MAP_JUST_DRAGGED = false;
+
+/* ----------------------------------- Predictive Intelligence workspace */
+const PI_TABS = [
+  ["overview", "Overview"], ["anomaly", "Anomaly detection"], ["risk", "Risk engine"], ["map", "Dependency map"],
+  ["causal", "Causal analysis"], ["whatif", "What-if simulation"], ["impact", "Business impact"], ["notify", "Notifications"],
+];
+const PI2_BIZ_EFFECT = {
+  biz_oil: "Used-oil pickups can't be scheduled or dispatched on time.",
+  biz_parts: "Parts-washer service visits slip because routes and field updates lag.",
+  biz_drum: "Hazardous-waste drum disposal can't file its regulated manifests.",
+  biz_vacuum: "Vacuum-truck jobs can't be assigned or re-sequenced.",
+  biz_antifreeze: "Antifreeze pickups lose field coordination and scheduling.",
+  biz_rerefine: "Re-refinery intake loses manifest records and facility reporting.",
+  biz_processing: "Facility waste processing can't log documentation or operations data.",
+};
+function pi2Notifs(scn, step) {
+  const statuses = pi2AllStatuses(scn, step), score = pi2Score(scn, step), peak = Math.max(PI2.peak || 0, step);
+  const first = (id) => { const i = (scn.statuses[id] || []).findIndex((x) => x !== "normal"); return i < 0 ? null : i; };
+  return Object.keys(scn.statuses).filter((id) => PI2_NODES[id].layer < 3 && first(id) != null && first(id) <= peak).map((id) => {
+    const st = statuses[id], isRoot = id === scn.root, key = `${scn.id}:${id}`;
+    const risk = st === "normal" ? 0 : isRoot ? score : Math.round(score * (st === "critical" ? 0.9 : 0.65));
+    const ops = [...pi2Descendants(id)].filter((b) => PI2_NODES[b].layer === 3);
+    const notified = ops.length > 0 && scn.statuses[id].slice(0, peak + 1).includes("critical");
+    const rec = (PI2.notif || {})[key] || {}, resolved = st === "normal";
+    const stages = [["Prediction detected", true], ["Alert generated", true], ["Branches notified", notified], ["Acknowledged", !!rec.ack], ["Investigation initiated", !!rec.inv], ["Resolved", resolved]];
+    return { id, key, isRoot, st, risk, cls: pi2Class(risk), ops, branches: ops.reduce((a, b) => a + (PI2_BIZ_BRANCHES[b] || 0), 0), notified, rec, resolved, since: first(id), stages };
+  }).sort((a, b) => (a.resolved - b.resolved) || (b.isRoot - a.isRoot) || (PI2_SEV_RANK[b.st] - PI2_SEV_RANK[a.st]) || (b.risk - a.risk));
+}
+function piWorkspace(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, statuses = pi2AllStatuses(scn, step), find = pi2TopFinding(scn, step);
+  const tab = PI_TABS.some(([k]) => k === S.piTab) ? S.piTab : "overview";
+  const score = pi2Score(scn, step, o), cls = pi2Class(score);
+  const abn = scn.signals.filter((s) => pi2SigStatus(s, pi2SigValue(s, step, o)) !== "normal").length, early = scn.signals.filter((s) => pi2SigState(s, step, o) === "drift").length;
+  const nPred = Object.keys(pi2Predict(scn, step)).length;
+  const affected = Object.keys(PI2_NODES).filter((id) => statuses[id] !== "normal").length;
+  const biz = pi2BizAtRisk(scn, step);
+  const open = pi2Notifs(scn, step).filter((n) => !n.resolved), unack = open.filter((n) => !n.rec.ack).length;
+  const rec = scn.whatIf.find((w) => w.recommended);
+  const st = {
+    overview: find.empty ? [find.origin ? "drift" : "normal", find.origin ? `Early signal at ${PI2_NODES[find.origin.id].label}` : "All systems normal"] : [pi2Sev(cls), `${find.affectedCount} affected · ${nPred} forecast`],
+    anomaly: [abn >= 2 ? "critical" : abn ? "warning" : early ? "drift" : "normal", abn || !early ? `${abn} of ${scn.signals.length} past threshold${early ? ` · ${early} early` : ""}` : `${early} early signal(s), under threshold`],
+    risk: [pi2Sev(cls), `Score ${score}/100 · ${cls}`],
+    map: [affected ? pi2Sev(cls) : early ? "drift" : "normal", affected ? `${affected} affected · ${nPred} forecast` : early ? "Origin flagged, nothing degraded" : `${Object.keys(PI2_NODES).length} components healthy`],
+    causal: [find.empty ? "normal" : "warning", find.empty ? "No shared cause yet" : `Root: ${PI2_NODES[scn.root].label}`],
+    whatif: [PI2.applied[scn.id] || !score ? "normal" : "warning", PI2.applied[scn.id] ? "Mitigation applied" : score ? `Best option → risk ${pi2Proj(rec, score)}` : `${scn.whatIf.length} strategies ready`],
+    impact: [biz.length >= 4 ? "critical" : biz.length ? "warning" : "normal", biz.length ? `${biz.length} of 7 operations exposed` : "No operations exposed"],
+    notify: [unack ? "critical" : open.length ? "warning" : "normal", open.length ? `${open.length} active · ${unack} unacknowledged` : "No active alerts"],
+  };
+  const body = { overview: pi2Dashboard, anomaly: pi2AnomalyTab, risk: pi2RiskTab, map: pi2FullMap, causal: pi2CausalTab, whatif: pi2WhatIfPage, impact: pi2ImpactTab, notify: pi2NotifyTab }[tab](o);
+  const phases = ["Normal", "Drifting", "Warning", "Degrading", "Critical"];
+  return `<h1>Predictive Intelligence</h1>
+  <p class="sub">Spot early warning signals, predict cascading failures, understand what's driving them and test mitigations before acting.</p>
+  <div class="card pad" style="margin-bottom:14px">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="pill" style="background:var(--purple-bg);color:var(--purple)">Controlled demo · illustrative data</span>
+        <b style="font-size:14px;color:var(--navy)">${esc(scn.title)}</b>
+        <span style="font-size:13px;color:var(--muted)">${PI2.running ? "Simulation running…" : PI2.recovering ? "Simulated recovery in progress…" : `${pi2Clock(step)} · step ${step} of 4`}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn ${PI2.running ? "" : "primary"}" data-pi2="start" ${PI2.running || step >= 4 ? "disabled" : ""}>Start simulation</button>
+        <button class="btn" data-pi2="pause" ${PI2.running ? "" : "disabled"}>Pause</button>
+        <button class="btn" data-pi2="run" ${PI2.running || step >= 4 ? "disabled" : ""}>Run prediction</button>
+        <button class="btn" data-pi2="reset">Reset</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px">${phases.map((l, i) => `<div><i style="display:block;height:6px;border-radius:3px;background:${i <= step ? CX_COLOR[i === 0 ? "normal" : i <= 2 ? "warning" : "critical"] : "var(--line)"}"></i><small style="color:var(--muted);font-size:11px">${l}</small></div>`).join("")}</div>
+  </div>
+  <div class="pi-tabs" role="tablist">${PI_TABS.map(([k, l]) => `<button class="pi-tab ${tab === k ? "on" : ""}" data-pi-tab="${k}" role="tab" aria-selected="${tab === k}"><b>${esc(l)}</b><span><i style="background:${CX_COLOR[st[k][0]]}"></i>${esc(st[k][1])}</span></button>`).join("")}</div>
+  <div class="pi-body">${body}</div>`;
+}
+function pi2SigChart(vals, sig, firstIdx) {
+  const W = 260, H = 76, hi = Math.max(sig.crit * 1.15, ...vals, 1);
+  const x = (i) => (vals.length <= 1 ? W / 2 : 4 + (i * (W - 8)) / (vals.length - 1)), y = (v) => H - 4 - (Math.min(v, hi) / hi) * (H - 10);
+  const base = pi2SigBaseline(sig);
+  const fx = firstIdx != null && vals.length > 1 ? x(firstIdx) : null;
+  const mark = fx != null ? `<line x1="${fx}" x2="${fx}" y1="4" y2="${H - 4}" stroke="#6e4ff6" stroke-dasharray="3 3"/><text x="${fx > W - 70 ? fx - 4 : fx + 4}" y="14" font-size="9" font-weight="700" fill="#6e4ff6" text-anchor="${fx > W - 70 ? "end" : "start"}">first signal</text>` : "";
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Signal history against its thresholds">
+    <rect x="0" y="${y(hi)}" width="${W}" height="${Math.max(0, y(sig.crit) - y(hi))}" fill="${CX_BG.critical}"/><rect x="0" y="${y(sig.crit)}" width="${W}" height="${Math.max(0, y(sig.warn) - y(sig.crit))}" fill="${CX_BG.warning}"/>
+    ${base != null ? `<line x1="0" x2="${W}" y1="${y(base)}" y2="${y(base)}" stroke="#9aa6b2" stroke-dasharray="2 3"/>` : ""}${mark}
+    ${vals.length > 1 ? `<polyline fill="none" stroke="#0a5c9e" stroke-width="2" points="${vals.map((v, i) => `${x(i)},${y(v)}`).join(" ")}"/>` : ""}<circle cx="${x(vals.length - 1)}" cy="${y(vals[vals.length - 1])}" r="3.5" fill="#0a5c9e"/></svg>`;
+}
+function pi2AnomalyTab(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step;
+  const rows = scn.signals.map((sig) => ({ sig, v: pi2SigValue(sig, step, o), st: pi2SigState(sig, step, o), first: pi2SigFirstStep(sig, step, o) }));
+  const abn = rows.filter((r) => r.st === "warning" || r.st === "critical"), early = rows.filter((r) => r.st === "drift");
+  const order = rows.filter((r) => r.first != null).sort((a, b) => a.first - b.first);
+  const cards = rows.map(({ sig, v, st, first }) => {
+    const base = pi2SigBaseline(sig);
+    let vals = sig.real ? (o.disk_history || []).map((p) => p.pct).slice(-12) : sig.path.slice(0, step + 1);
+    if (!vals.length) vals = [v];
+    const prev = vals.length > 1 ? vals[vals.length - 2] : v;
+    return `<div class="card sig-card" style="border-top-color:${CX_COLOR[st]}" data-pi2-open="anomaly:${esc(sig.key)}">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><b style="font-size:13.5px">${esc(sig.name)}</b><span class="pill" style="background:${CX_BG[st]};color:${CX_COLOR[st]}">${esc(pi2StLabel(st))}</span></div>
+      <div style="font-size:26px;font-weight:700;color:${st === "normal" ? "var(--navy)" : CX_COLOR[st]};margin-top:4px">${v}<span style="font-size:15px">${esc(sig.unit)}</span></div>
+      <small style="color:var(--muted)">${base != null ? `Baseline ${base}${esc(sig.unit)} · ` : ""}Warn ${sig.warn}${esc(sig.unit)} · Crit ${sig.crit}${esc(sig.unit)}</small>
+      ${st === "drift" ? `<div style="font-size:12px;color:${CX_COLOR.drift};font-weight:600;margin-top:4px">Moving away from baseline, still under the ${sig.warn}${esc(sig.unit)} alert threshold</div>` : ""}
+      <div style="margin:8px 0 6px">${pi2SigChart(vals, sig, sig.real ? null : first)}</div>
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)"><span>${v > prev ? "↑ Rising" : v < prev ? "↓ Falling" : "→ Stable"}</span><span>${Math.round(Math.min(1, pi2Dev(sig, step, o)) * 100)}% of the way to critical</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(PI2_NODES[sig.relatedComponent].label)} · ${first != null ? `first seen ${sig.real ? "this session" : pi2Clock(first)}` : "nothing unusual yet"} · ${sig.real ? `<b style="color:${CX_COLOR.normal}">real signal</b>` : "illustrative"}</div>
+    </div>`;
+  }).join("");
+  const orderHtml = order.length ? `<section class="card pad" style="margin-bottom:16px"><h2 style="margin-bottom:4px">Order the signals appeared</h2><p class="sub" style="margin:0 0 10px">The signals turned unusual in the same order the failure spreads through the dependency map.</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:stretch;gap:8px">${order.map((r, i) => { const s0 = pi2SigState(r.sig, r.first, o); return `${i ? '<span style="align-self:center;color:#b8c1cc">→</span>' : ""}<div data-pi2-open="anomaly:${esc(r.sig.key)}" style="cursor:pointer;border:1px solid var(--line);border-left:3px solid ${CX_COLOR[s0]};border-radius:10px;padding:8px 10px;min-width:150px;flex:1"><b style="font-size:12.5px">${r.sig.real ? "now" : pi2Clock(r.first)}</b> <span class="pill" style="background:${CX_BG[s0]};color:${CX_COLOR[s0]};font-size:10.5px">${esc(pi2StLabel(s0))}</span><div style="font-size:12.5px;margin-top:3px">${esc(r.sig.name)}</div><small style="color:var(--muted)">${esc(PI2_NODES[r.sig.relatedComponent].label)}</small></div>`; }).join("")}</div></section>` : "";
+  return `<h1>Anomaly detection</h1><p class="sub">Every signal is checked against its own baseline and thresholds at each step. An <b>early signal</b> is one moving away from its baseline while still under its alert threshold, which a threshold-only monitor would miss. In the charts: amber band = warning zone, red band = critical zone, dotted line = baseline.</p>
+  <div class="kpis">
+    <div class="card kpi"><small>Signals monitored</small><b>${rows.length}</b></div>
+    <div class="card kpi"><small>Early signals (under threshold)</small><b style="${early.length ? `color:${CX_COLOR.drift}` : ""}">${early.length}</b></div>
+    <div class="card kpi"><small>Past a threshold</small><b style="${abn.length ? `color:${CX_COLOR.warning}` : ""}">${abn.length}</b></div>
+    <div class="card kpi"><small>Components with signals</small><b>${new Set(order.map((r) => r.sig.relatedComponent)).size}</b></div>
+  </div>
+  ${orderHtml}
+  <div class="sig-grid">${cards}</div>`;
+}
+function pi2RiskTab(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, statuses = pi2AllStatuses(scn, step);
+  const factors = pi2Factors(scn, step, o), score = pi2Score(scn, step, o), cls = pi2Class(score);
+  const drivers = [...factors].sort((a, b) => b.pts - a.pts).filter((f) => f.pts > 0).slice(0, 3);
+  const lvl = (l) => (l >= 70 ? CX_COLOR.critical : l >= 35 ? CX_COLOR.warning : CX_COLOR.normal);
+  const top = Object.keys(PI2_NODES).filter((id) => statuses[id] !== "normal").sort((a, b) => PI2_SEV_RANK[statuses[b]] - PI2_SEV_RANK[statuses[a]]).slice(0, 6);
+  return `<h1>Risk engine</h1><p class="sub">An explainable, rule-based score built from six weighted factors, each computed from this scenario's own signals and dependency graph. Low 0–30 · Moderate 31–60 · High 61–80 · Critical 81–100. Not machine learning.</p>
+  <div class="grid2" style="margin:0 0 20px">
+    <section class="card pad" style="text-align:center"><small style="color:var(--muted)">Current risk score</small>
+      <div style="font-size:52px;font-weight:800;color:${riskColor(cls)};line-height:1.1">${score}</div>
+      <span class="pill" style="background:${CX_BG[pi2Sev(cls)]};color:${riskColor(cls)}">${esc(cls)}</span>
+      <div style="text-align:left;margin-top:14px">${drivers.length ? `<small style="color:var(--muted)">Biggest drivers</small>${drivers.map((f) => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)"><span>${esc(f.label)}</span><b>${f.pts} pts</b></div>`).join("")}` : `<p class="empty" style="padding:0">No factor is contributing yet.</p>`}</div>
+    </section>
+    <section class="card pad"><h2>Risk score across the scenario</h2>${pi2RiskTrendChart(scn, step)}</section>
+  </div>
+  <div class="fac-grid">${factors.map((f) => `<div class="card pad">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><b style="font-size:14px">${esc(f.label)}</b><span class="wt">weight ${f.w}</span></div>
+    <div class="fac-bar"><i style="width:${f.level}%;background:${lvl(f.level)}"></i></div>
+    <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>Level <b>${f.level}</b>/100</span><span>Adds <b style="color:${lvl(f.level)}">${f.pts}</b> pts</span></div>
+    <p style="font-size:12.5px;margin:8px 0 4px">${esc(f.evidence)}</p>
+    <p style="font-size:12px;color:var(--muted);margin:0">${esc(f.how)}</p></div>`).join("")}</div>
+  <div class="grid2">
+    <section class="card pad"><h2>Risk distribution (all 19 components)</h2>${cxRiskBar(Object.keys(PI2_NODES).map((id) => ({ status: statuses[id] })))}</section>
+    <section class="card pad"><h2>Top risk contributors</h2>
+      ${top.length ? top.map((id) => `<div data-pi2-open="risk:${esc(id)}" style="cursor:pointer;display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px"><span>${esc(PI2_NODES[id].label)} <small style="color:var(--muted)">· ${esc(PI2_NODES[id].cat)}</small></span><span class="pill" style="background:${CX_BG[statuses[id]]};color:${CX_COLOR[statuses[id]]}">${esc(statuses[id])}</span></div>`).join("") : `<p class="empty" style="padding:0">Nothing at risk right now.</p>`}
+    </section>
+  </div>`;
+}
+function pi2CausalTab(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, find = pi2TopFinding(scn, step);
+  const knew = pi2Knowledge(scn, step, o);
+  const confStyle = (c) => (c === "High" ? `background:${CX_BG.critical};color:${CX_COLOR.critical}` : c === "Medium" ? `background:${CX_BG.warning};color:${CX_COLOR.warning}` : "background:#eef1f5;color:var(--muted)");
+  const knewHtml = `<section class="card pad" style="margin-bottom:20px"><h2>What we knew, when</h2><p class="sub" style="margin:-6px 0 8px">The forecast as it stood at each point, and how confident it was.</p>
+    ${knew.length ? knew.map((k) => `<div style="display:grid;grid-template-columns:48px 76px minmax(0,1fr);gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;align-items:baseline"><b>${pi2Clock(k.s)}</b><span><span class="pill" style="${confStyle(k.conf)}">${esc(k.conf)}</span></span><span>${esc(k.text)}</span></div>`).join("") : `<p class="empty" style="padding:0">Start the simulation to watch the forecast develop.</p>`}</section>`;
+  const head = `<h1>Causal analysis</h1><p class="sub">How the hub gets from the first signal to a candidate root cause, and what it ruled out. Rule-based correlation over the dependency graph, not a confirmed diagnosis.</p>`;
+  if (find.empty) {
+    const or = find.origin;
+    return `${head}<div class="card pad" style="margin-bottom:20px;border-left:4px solid ${or ? CX_COLOR.drift : "var(--line)"}"><p style="margin:0;font-size:13.5px">${or ? `Only an early signal so far: <b>${esc(or.sig.name)}</b> at ${esc(PI2_NODES[or.id].label)}, first seen ${pi2Clock(or.step)}. That's not enough to infer a cause; the hub waits for a second signal or a threshold breach.` : "Nothing unusual yet, so there's nothing to explain. Start the simulation above."}</p></div>${knewHtml}`;
+  }
+  const obs = scn.signals.map((g) => ({ g, v: pi2SigValue(g, step, o), st: pi2SigState(g, step, o) })).filter((x) => x.st !== "normal");
+  const abn = obs.filter((x) => x.st !== "drift");
+  const ev = {}, add = (s, h) => (ev[s] = ev[s] || []).push(h);
+  scn.signals.forEach((g) => { let prev = pi2SigState(g, 0, o); for (let s = 1; s <= step; s++) { const cur = pi2SigState(g, s, o); if (cur !== prev) add(s, `<span style="color:var(--muted)">Signal ·</span> ${esc(g.name)}: <span style="color:${CX_COLOR[prev]}">${pi2StLabel(prev)}</span> → <b style="color:${CX_COLOR[cur]}">${pi2StLabel(cur)}</b>`); prev = cur; } });
+  for (let s = 1; s <= step; s++) {
+    const grp = {};
+    Object.keys(PI2_NODES).forEach((id) => { const a = pi2NodeStatusAt(scn, id, s - 1), b = pi2NodeStatusAt(scn, id, s); if (a !== b) (grp[`${a}>${b}`] = grp[`${a}>${b}`] || []).push(PI2_NODES[id].label); });
+    Object.entries(grp).forEach(([k, labels]) => { const [a, b] = k.split(">"); add(s, `<span style="color:var(--muted)">System ·</span> <b>${esc(labels.join(", "))}</b>: <span style="color:${CX_COLOR[a]}">${a}</span> → <b style="color:${CX_COLOR[b]}">${b}</b>`); });
+  }
+  const drivers = pi2Factors(scn, step, o).sort((a, b) => b.pts - a.pts).filter((f) => f.pts > 0).slice(0, 3);
+  const or = find.origin, lead = pi2LeadSummary(scn, step);
+  const root = PI2_NODES[scn.root].label, rootKey = `${scn.id}:${scn.root}`, inv = ((PI2.notif || {})[rootKey] || {}).inv;
+  return `${head}
+  <section class="card pad" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">Reasoning chain</h2>${lead ? `<span class="pill" style="background:var(--purple-bg);color:var(--purple)">${esc(lead.text)}</span>` : ""}</div>
+    <div class="chain" style="margin-top:12px">
+      ${or ? `<div style="border-color:#c9bdfb"><span class="eyebrow" style="color:#6e4ff6">0 · First signal</span><p style="font-size:13px;margin:6px 0 0"><b>${esc(or.sig.name)}</b> at ${esc(PI2_NODES[or.id].label)}, ${pi2Clock(or.step)}${pi2SigState(or.sig, or.step, o) === "drift" ? ", still under its alert threshold" : ""}.</p></div>` : ""}
+      <div><span class="eyebrow">1 · Observed</span><p style="font-size:13px;margin:6px 0 0">${obs.map((x) => `${esc(x.g.name)}: <b style="color:${CX_COLOR[x.st]}">${x.v}${esc(x.g.unit)}</b>${x.st === "drift" ? " <small>(early)</small>" : ""}`).join("<br>")}</p></div>
+      <div><span class="eyebrow">2 · Correlated</span><p style="font-size:13px;margin:6px 0 0">${abn.length} signal(s) past a threshold across ${new Set(abn.map((x) => x.g.relatedComponent)).size} component(s); ${find.affectedCount} downstream component(s) degraded and ${find.predictedIds.length} more forecast, all on the same dependency path.</p></div>
+      <div style="border-color:${CX_COLOR.warning};background:var(--amber-bg)"><span class="eyebrow" style="color:${CX_COLOR.warning}">3 · Inferred cause</span><p style="font-size:13px;margin:6px 0 0"><b>${esc(root)}</b>. The first signal appeared there, every affected system traces back to it, and nothing else they share is abnormal.</p></div>
+      <div><span class="eyebrow">4 · Confirmed</span><p style="font-size:13px;margin:6px 0 0">Not confirmed. An engineer needs to verify it. Confidence: <b>${esc(find.conf)}</b>.</p></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">${inv ? `<span class="pill ok">Investigation initiated</span>` : `<button class="btn primary" data-pi2-notif="inv:${esc(rootKey)}">Start investigation</button>`}<button class="btn" data-pi2-notif="map:${esc(scn.root)}">Trace on dependency map</button></div>
+  </section>
+  ${knewHtml}
+  <div class="grid2" style="margin:0 0 20px">
+    <section class="card pad"><h2>Cascade timeline</h2>${Object.keys(ev).sort((a, b) => a - b).map((s) => `<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)"><b style="flex:none;width:44px;font-size:12.5px;color:var(--muted)">${pi2Clock(+s)}</b><div style="font-size:13px;line-height:1.6">${ev[s].join("<br>")}</div></div>`).join("")}</section>
+    <section class="card pad"><h2>What's driving the risk</h2>
+      ${drivers.map((f) => `<div style="padding:6px 0;border-bottom:1px solid var(--line);font-size:13px"><div style="display:flex;justify-content:space-between"><b>${esc(f.label)}</b><span>${f.pts} pts</span></div><small style="color:var(--muted)">${esc(f.evidence)}</small></div>`).join("")}
+      <button class="btn" style="margin-top:10px" data-pi-tab="risk">See all factors</button>
+      <h2 style="margin-top:18px">Ruled out</h2>
+      <ul style="margin:0;padding-left:18px;font-size:13px">${scn.ruledOut.map((r) => `<li style="margin-bottom:4px"><b>${esc(PI2_NODES[r.id].label)}</b>: ${esc(r.reason)}</li>`).join("")}</ul>
+    </section>
+  </div>`;
+}
+function pi2ImpactTab(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, statuses = pi2AllStatuses(scn, step);
+  const ops = Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === 3).map((id) => ({ id, st: pi2RollupStatus(scn, step, id) })).sort((a, b) => PI2_SEV_RANK[b.st] - PI2_SEV_RANK[a.st]);
+  const atRisk = ops.filter((x) => x.st !== "normal"), branches = atRisk.reduce((a, x) => a + (PI2_BIZ_BRANCHES[x.id] || 0), 0);
+  const apps = Object.keys(PI2_NODES).filter((id) => PI2_NODES[id].layer === 2);
+  return `<h1>Business impact</h1><p class="sub">What the degradation means for Crystal Clean's field and facility operations. The application-to-operation relationships and branch counts are illustrative POC assumptions, not verified internal architecture.</p>
+  <div class="kpis">
+    <div class="card kpi"><small>Operations exposed</small><b style="${atRisk.length ? `color:${CX_COLOR.warning}` : ""}">${atRisk.length} / 7</b></div>
+    <div class="card kpi"><small>Branches potentially affected</small><b>~${branches}</b></div>
+    <div class="card kpi"><small>Applications degraded</small><b>${apps.filter((id) => statuses[id] !== "normal").length} / ${apps.length}</b></div>
+    <div class="card kpi"><small>Risk score</small><b style="color:${riskColor(pi2Class(pi2Score(scn, step, o)))}">${pi2Score(scn, step, o)}</b></div>
+  </div>
+  ${atRisk.length ? `<section class="card pad" style="margin-bottom:20px;border-left:4px solid ${CX_COLOR.warning}"><h2 style="margin-bottom:4px">Potential business impact</h2><p style="margin:0;font-size:14px">${esc(scn.businessImpact)}</p></section>` : ""}
+  <section class="card pad"><h2>Crystal Clean business operations</h2>
+    ${ops.map((x) => { const n = PI2_NODES[x.id]; return `<div data-pi2-open="node:${esc(x.id)}" style="cursor:pointer;display:grid;grid-template-columns:minmax(0,1.1fr) auto minmax(0,2fr) auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px">
+      <b>${esc(n.label)}</b><span class="pill" style="background:${CX_BG[x.st]};color:${CX_COLOR[x.st]}">${esc(x.st)}</span>
+      <span>${x.st === "normal" ? `<span style="color:var(--muted)">Operating normally.</span>` : esc(PI2_BIZ_EFFECT[x.id])}<br><small style="color:var(--muted)">Relies on ${n.deps.map((d) => `${esc(PI2_NODES[d].label)} (<span style="color:${CX_COLOR[statuses[d]]}">${esc(statuses[d])}</span>)`).join(", ")}</small></span>
+      <span style="white-space:nowrap;color:var(--muted)">~${PI2_BIZ_BRANCHES[x.id]} branches</span></div>`; }).join("")}
+  </section>`;
+}
+function pi2NotifyTab(o) {
+  const scn = PI2_SCENARIOS[PI2.scenario], step = PI2.step, list = pi2Notifs(scn, step), root = PI2_NODES[scn.root].label;
+  return `<h1>Notification centre</h1><p class="sub">${list.length} alert(s) for "${esc(scn.title)}". Shown inside the POC only: no email, Teams, SMS or push delivery. Branches are notified only once a component goes critical.</p>
+  ${list.length ? list.map((n) => {
+    const node = PI2_NODES[n.id], sev = n.resolved ? "normal" : n.st;
+    const chip = n.resolved ? "Resolved" : n.st === "critical" ? "Critical" : "Early warning";
+    const prio = n.cls === "Critical" ? 1 : n.cls === "High" ? 2 : n.cls === "Moderate" ? 3 : 4;
+    const title = n.isRoot ? `Likely root cause: ${node.label} disruption` : `${node.label} ${n.resolved ? "recovered" : n.st === "critical" ? "failing" : "degrading"} downstream of ${root}`;
+    return `<div class="card notif" style="border-left-color:${CX_COLOR[sev]}">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+        <span class="eyebrow">IT alert · ${esc(node.cat)} · ${n.resolved ? "resolved" : `${prio} - ${esc(n.cls)}`}</span>
+        <span style="display:flex;gap:8px;align-items:center"><span class="pill" style="background:${CX_BG[sev]};color:${CX_COLOR[sev]}">${chip}</span><small style="color:var(--muted)">${pi2Clock(n.since)}</small></span>
+      </div>
+      <h2 style="margin:6px 0 4px;font-size:16px;color:var(--ink)">${esc(title)}${n.resolved ? "" : ` (risk ${n.risk}/100)`}</h2>
+      <p style="margin:0;font-size:13px;color:var(--muted)">${n.notified ? `Branches notified: <b style="color:var(--ink)">~${n.branches}</b> across ${n.ops.length} operation(s): ${esc(n.ops.map((b) => PI2_NODES[b].label).join(", "))}` : "Branches not notified (below the branch threshold: not critical)"}</p>${pi2NotifLead(scn, n)}
+      <div class="pipeline">${n.stages.map(([l, d], i) => `${i ? '<span class="arrow">→</span>' : ""}<span class="pstage ${d ? "done" : ""}">${d ? "<i>✓</i>" : ""}${esc(l)}</span>`).join("")}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${n.rec.ack || n.resolved ? "" : `<button class="btn primary" data-pi2-notif="ack:${esc(n.key)}">Acknowledge</button>`}
+        ${n.rec.inv || n.resolved ? "" : `<button class="btn" data-pi2-notif="inv:${esc(n.key)}">Start investigation</button>`}
+        <button class="btn" data-pi2-notif="map:${esc(n.id)}">Show on dependency map</button>
+      </div></div>`;
+  }).join("") : `<div class="card pad"><p class="empty" style="padding:0">No alerts yet. Start the simulation above and alerts appear here as components degrade.</p></div>`}`;
+}
+
+
+
+function renderIt() {
+  if (PI2MAP_DRAG) return;
+  const fs = document.fullscreenElement;
+  if (fs && fs.id === "pi2map-card") { fs.innerHTML = pi2MapCardInner({}); pi2MapBind(); return; }
+  const searchEl = document.getElementById("pi2map-search");
+  const hadFocus = !!(searchEl && document.activeElement === searchEl), caret = hadFocus ? searchEl.selectionStart : null;
+  $("#main").innerHTML = piWorkspace({}) + pi2Drawer({});
+  if (S.piTab === "map") {
+    pi2MapBind();
+    const el = document.getElementById("pi2map-search");
+    if (hadFocus && el) { el.focus(); if (caret != null) el.setSelectionRange(caret, caret); }
+  }
+}
+function paintIt() { const y = window.scrollY; renderIt(); window.scrollTo(0, y); }
+document.addEventListener("click", (ev) => {
+  if (ev.target.closest("a") || ev.target.closest("summary")) return;
+  const pmn = ev.target.closest("[data-pi2map-node]");
+  if (pmn) {
+    if (PI2MAP_JUST_DRAGGED) { PI2MAP_JUST_DRAGGED = false; return; }
+    pi2MapState().selected = pmn.dataset.pi2mapNode;
+    PI2.drawer = { kind: "node", key: pmn.dataset.pi2mapNode }; pi2Save(); return renderIt();
+  }
+  const po = ev.target.closest("[data-pi2-open]");
+  if (po) { const [kind, key] = po.dataset.pi2Open.split(":"); PI2.drawer = { kind, key }; pi2Save(); return renderIt(); }
+  if (ev.target.closest("[data-pi2-close]")) { PI2.drawer = null; pi2Save(); return renderIt(); }
+  const b = ev.target.closest("button"); if (!b) return;
+  if (b.dataset.piTab) { S.piTab = b.dataset.piTab; store.set("cc.pitab", S.piTab); S.itPage = "predictive"; store.set("cc.itpage", "predictive"); S.piView = "model"; store.set("cc.piview", "model"); PI2.drawer = null; PI2MAP_DRAG = null; pi2Save(); window.scrollTo({ top: 0 }); return renderIt(); }
+  if (b.dataset.pi2Notif) {
+    const v = b.dataset.pi2Notif, i = v.indexOf(":"), act = v.slice(0, i), arg = v.slice(i + 1);
+    PI2.notif = PI2.notif || {};
+    if (act === "ack") PI2.notif[arg] = { ...(PI2.notif[arg] || {}), ack: true };
+    else if (act === "inv") { PI2.notif[arg] = { ...(PI2.notif[arg] || {}), ack: true, inv: true }; S.piTab = "causal"; toast("Investigation started for this alert."); }
+    else if (act === "map") { const M = pi2MapState(); M.selected = arg; M.mode = "overview"; M.trace = false; S.piTab = "map"; PI2.drawer = { kind: "node", key: arg }; }
+    store.set("cc.pitab", S.piTab); pi2Save(); return renderIt();
+  }
+  if (b.dataset.pi2) return pi2Control(b.dataset.pi2);
+  if (b.dataset.pi2wi) return pi2WhatIfControl(b.dataset.pi2wi);
+  if (b.dataset.pi2map) {
+    const v = b.dataset.pi2map, M = pi2MapState();
+    if (v === "fullscreen") { const c = document.getElementById("pi2map-card"); if (document.fullscreenElement) document.exitFullscreen(); else if (c && c.requestFullscreen) c.requestFullscreen(); return; }
+    if (v === "download") return pi2MapDownload();
+    if (v === "zoomin") pi2MapZoomBy(1.25);
+    else if (v === "zoomout") pi2MapZoomBy(0.8);
+    else if (v === "reset") pi2MapReset();
+    else if (v === "trace") M.trace = !M.trace;
+    else if (v === "clear") { M.selected = null; PI2.drawer = null; }
+    else if (v.startsWith("mode-")) { M.mode = v.slice(5); M.trace = false; }
+    else if (v.startsWith("view-")) { M.view = v.slice(5); pi2MapReset(); }
+    return renderIt();
+  }
+  if (b.dataset.pi2mapFilter) { pi2MapToggleFilter(b.dataset.pi2mapFilter); return renderIt(); }
+});
+document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement) renderIt(); });
+setInterval(() => {
+  let changed = false;
+  if (PI2.running && PI2.step < 4) { PI2.step++; PI2.peak = Math.max(PI2.peak || 0, PI2.step); changed = true; if (PI2.step >= 4) PI2.running = false; }
+  else if (PI2.recovering) { if (PI2.step > 0) { PI2.step--; changed = true; } else { PI2.recovering = false; PI2.applied[PI2.scenario] = true; PI2.autoRemediations = (PI2.autoRemediations || 0) + 1; changed = true; } }
+  if (changed) { pi2Save(); if (S.view === "it") paintIt(); }
+}, 1500);
+renderIt();
+</script>
+</body>
+</html>

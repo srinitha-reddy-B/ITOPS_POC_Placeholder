@@ -1,0 +1,23 @@
+[project]
+name = "aura-chat-builder"
+version = "0.1.0"
+description = "Tachyon Aura Agent Factory -- chat interface that turns a typed process description or SOP into a running multi-agent blueprint, then lets the resulting agents read/write against Salesforce/Databricks/Snowflake/Oracle/ServiceNow/M365 platforms with full tracing."
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "fastapi==0.111.0",
+  "uvicorn[standard]==0.30.1",
+  "pydantic==2.13.4",
+  "httpx==0.27.0",
+  "cohere>=7.0.9",
+  "python-dotenv>=1.2.3",
+  "pyyaml>=6.0.1",
+  "mcp>=1.0,<2.0",
+  "oracledb>=2.4.0",
+  "pypdf>=5.0.0",
+  "python-docx>=1.1.0",
+  "minio>=7.2.20",
+  "pyjwt[crypto]>=2.8",
+]
+
+[tool.uv]
+package = false

@@ -1,0 +1,1714 @@
+{
+  "version": 1,
+  "note": "Synthetic Point32Health proof-of-concept data for Predictive Incident Intelligence. Monitoring metrics, the employee directory mapping and the Controlled Demo Mode incident history are simulated. In Live Agent Mode the incident history comes from the POC ServiceNow instance.",
+  "config": {
+    "engine": "rules-v2",
+    "engine_label": "Rule-based risk engine (explainable, rules-v2, multi-signal)",
+    "weights": {
+      "deviation": 18,
+      "rate": 8,
+      "duration": 7,
+      "history": 10,
+      "similar": 5,
+      "recurrence": 6,
+      "correlated": 12,
+      "business": 10,
+      "criticality": 8,
+      "changes": 6,
+      "capacity": 5,
+      "reliability": 5
+    },
+    "employee_alert_threshold": 61,
+    "it_alert_threshold": 31,
+    "classes": [
+      [
+        30,
+        "Low"
+      ],
+      [
+        60,
+        "Moderate"
+      ],
+      [
+        80,
+        "High"
+      ],
+      [
+        100,
+        "Critical"
+      ]
+    ]
+  },
+  "factors": {
+    "deviation": {
+      "label": "Current metric deviation",
+      "how": "How far the current readings are from their normal baseline, measured against the critical threshold (worst metric 70%, average of all metrics 30%)."
+    },
+    "history": {
+      "label": "Historical incident frequency",
+      "how": "Incidents on this service family in the last 90 days (10 or more scores 100)."
+    },
+    "similar": {
+      "label": "Similar previous incidents",
+      "how": "Share of similar past incidents that caused a service disruption (priority 1 or 2), scaled down when there are fewer than 5 similar incidents."
+    },
+    "criticality": {
+      "label": "Service criticality",
+      "how": "Business criticality of the service, 1 to 5."
+    },
+    "recurrence": {
+      "label": "Incident recurrence",
+      "how": "Size of the largest cluster of the same problem on the same component (6 or more repeats scores 100)."
+    },
+    "duration": {
+      "label": "Duration of abnormal behaviour",
+      "how": "How long the metrics have been abnormal (60 minutes or more scores 100)."
+    },
+    "rate": {
+      "label": "Rate of change",
+      "how": "How fast the most deviated signal moved over the last readings, measured against the gap between its baseline and critical threshold."
+    },
+    "correlated": {
+      "label": "Correlated signals",
+      "how": "How many signal categories (infrastructure, application, database, network, business, user experience, capacity) are abnormal at the same time (5 or more scores 100)."
+    },
+    "business": {
+      "label": "Business impact",
+      "how": "The service's business impact level (1-5), raised when its business-transaction signals are also abnormal."
+    },
+    "changes": {
+      "label": "Recent changes",
+      "how": "A change, deployment or configuration event in the last 48 hours that touches the abnormal signals (suspected contributor, never a confirmed cause). More recent scores higher."
+    },
+    "capacity": {
+      "label": "Capacity forecast",
+      "how": "How soon the forecast says the service reaches its capacity limit (now scores 100; a week or more away scores 0)."
+    },
+    "reliability": {
+      "label": "Data reliability",
+      "how": "Quality rating of the data sources behind the abnormal signals, scaled by how many independent categories agree. Unreliable or single-source evidence adds little."
+    }
+  },
+  "directory": {
+    "note": "Synthetic employee directory mapping for the POC: department head counts, remote share and the applications each department depends on. No individual employee records.",
+    "departments": [
+      {
+        "name": "Finance",
+        "headcount": 120,
+        "remote_pct": 0.45,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Finance AP Console",
+          "Claims Payment Portal",
+          "Analytics Warehouse",
+          "Workday",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Claims Operations",
+        "headcount": 340,
+        "remote_pct": 0.6,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Claims Workbench",
+          "Claims Payment Portal",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Member Services",
+        "headcount": 410,
+        "remote_pct": 0.55,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Member Portal (member-facing)",
+          "Pharmacy Benefits Console",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Provider Relations",
+        "headcount": 150,
+        "remote_pct": 0.5,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Provider Directory",
+          "Provider Remittance Service",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Care Management",
+        "headcount": 280,
+        "remote_pct": 0.35,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Provider Directory",
+          "Care Management Suite",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Pharmacy Operations",
+        "headcount": 90,
+        "remote_pct": 0.3,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Pharmacy Benefits Console",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Actuarial & Analytics",
+        "headcount": 70,
+        "remote_pct": 0.65,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Analytics Warehouse",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "Human Resources",
+        "headcount": 60,
+        "remote_pct": 0.4,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Workday",
+          "Remote Access VPN"
+        ]
+      },
+      {
+        "name": "IT & Digital",
+        "headcount": 230,
+        "remote_pct": 0.7,
+        "apps": [
+          "SSO",
+          "Employee Center",
+          "Workday",
+          "Remote Access VPN"
+        ]
+      }
+    ],
+    "family_apps": {
+      "Identity & SSO": "SSO",
+      "Payment API": "Claims Payment Portal",
+      "Employee Center": "Employee Center",
+      "Member Portal": "Member Portal (member-facing)",
+      "Claims Processing": "Claims Workbench",
+      "Pharmacy Benefits": "Pharmacy Benefits Console",
+      "Provider Directory": "Provider Directory",
+      "Data Warehouse": "Analytics Warehouse",
+      "VPN": "Remote Access VPN",
+      "Workday": "Workday"
+    },
+    "family_groups": {
+      "Identity & SSO": "Identity & Access Management",
+      "Payment API": "Claims Platform Engineering",
+      "Employee Center": "Cloud Platform Operations",
+      "Member Portal": "Member Digital Engineering",
+      "Claims Processing": "Claims Platform Engineering",
+      "Pharmacy Benefits": "Integration Services",
+      "Provider Directory": "Provider Data Services",
+      "Data Warehouse": "Database Operations",
+      "VPN": "Network Operations",
+      "Workday": "Integration Services"
+    }
+  },
+  "employee": {
+    "name": "Maya Thompson",
+    "department": "Finance",
+    "work_pattern": "Hybrid (uses VPN when remote)"
+  },
+  "scenarios": [
+    {
+      "id": "sso",
+      "order": 1,
+      "title": "SSO authentication disruption",
+      "prediction": "Potential SSO authentication disruption",
+      "service": "Workforce SSO (Identity Provider)",
+      "short": "SSO Authentication",
+      "family": "Identity & SSO",
+      "criticality": 5,
+      "use_case": "IAM",
+      "ci": "sso-lb-04",
+      "owner_group": "Identity & Access Management",
+      "start": "normal",
+      "spike": {
+        "minutes": 35,
+        "label": "Simulate an increase in authentication failures"
+      },
+      "apps": [
+        "SSO"
+      ],
+      "impact_rule": "all",
+      "impact_reason": "Every employee signs in to Microsoft 365, the Employee Center and business applications through SSO.",
+      "dependents": [
+        "Microsoft 365 sign-in",
+        "Employee Center",
+        "Claims Workbench",
+        "Care Management Suite"
+      ],
+      "metrics": [
+        {
+          "key": "login_failures",
+          "kind": "auth",
+          "name": "Login failures",
+          "unit": "/hour",
+          "baseline": 10,
+          "warn": 20,
+          "crit": 35,
+          "better": "lower",
+          "abnormal": 45,
+          "dt": "builtin:apps.web.action.count.load.browser"
+        },
+        {
+          "key": "auth_latency",
+          "kind": "response",
+          "name": "Authentication response time",
+          "unit": "ms",
+          "baseline": 350,
+          "warn": 800,
+          "crit": 1500,
+          "better": "lower",
+          "abnormal": 1900,
+          "dt": "builtin:service.response.time"
+        },
+        {
+          "key": "availability",
+          "kind": "availability",
+          "name": "SSO availability",
+          "unit": "%",
+          "baseline": 99.95,
+          "warn": 99.5,
+          "crit": 99.0,
+          "better": "higher",
+          "abnormal": 99.2,
+          "dt": "builtin:synthetic.http.availability.location.total"
+        },
+        {
+          "key": "error_rate",
+          "kind": "error",
+          "name": "Token service error rate",
+          "unit": "%",
+          "baseline": 0.2,
+          "warn": 1,
+          "crit": 3,
+          "better": "lower",
+          "abnormal": 2.4,
+          "dt": "builtin:service.errors.total.rate"
+        }
+      ],
+      "sn_query": "short_descriptionSTARTSWITHIdentity & SSO^ORshort_descriptionLIKESSO",
+      "signature": [
+        "dns resolution failure",
+        "expired service credential",
+        "expired tls certificate",
+        "configuration drift",
+        "third-party api outage",
+        "unable to access"
+      ],
+      "actions": [
+        "Check identity provider node health behind sso-lb-04 and the token-signing service.",
+        "Review SSO and certificate changes from the last 48 hours.",
+        "Confirm DNS resolution for the SSO endpoints.",
+        "Prepare the service desk with a known-issue note before calls arrive."
+      ],
+      "employee_alert": {
+        "title": "Potential employee login disruption",
+        "message": "The sign-in service is showing an unusual increase in login failures. Past patterns suggest you may have trouble signing in to Point32Health applications.",
+        "recommended_action": "Please verify your authentication session now and keep it active. If you are asked to sign in again and it fails, wait a few minutes before retrying. The IT support team has been notified and is investigating.",
+        "status_text": "Early warning: investigation required"
+      },
+      "demo_history": {
+        "similar": 8,
+        "disruptive": 6,
+        "n90": 8,
+        "max_cluster": 4,
+        "mttr_hours": 3.2,
+        "records": [
+          {
+            "id": "SYN-SSO-01",
+            "days_ago": 6,
+            "title": "Identity & SSO: expired tls certificate on sso-lb-04",
+            "priority": "1 - Critical",
+            "state": "Resolved",
+            "ci": "sso-lb-04",
+            "resolution": "Certificate renewed on the load-balanced node; sign-ins recovered."
+          },
+          {
+            "id": "SYN-SSO-02",
+            "days_ago": 19,
+            "title": "Identity & SSO: configuration drift after deploy on sso-gw-02",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "sso-gw-02",
+            "resolution": "Gateway configuration rolled back to the approved baseline."
+          },
+          {
+            "id": "SYN-SSO-03",
+            "days_ago": 27,
+            "title": "Identity & SSO: dns resolution failure on sso-lb-04",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "sso-lb-04",
+            "resolution": "Stale DNS record for one IdP node corrected."
+          },
+          {
+            "id": "SYN-SSO-04",
+            "days_ago": 41,
+            "title": "Identity & SSO: dns resolution failure on sso-lb-04",
+            "priority": "1 - Critical",
+            "state": "Resolved",
+            "ci": "sso-lb-04",
+            "resolution": "DNS record corrected; TTL lowered."
+          },
+          {
+            "id": "SYN-SSO-05",
+            "days_ago": 55,
+            "title": "Identity & SSO: expired service credential on sso-gw-02",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "sso-gw-02",
+            "resolution": "Service credential rotated."
+          },
+          {
+            "id": "SYN-SSO-06",
+            "days_ago": 63,
+            "title": "Identity & SSO: dns resolution failure on sso-lb-04",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "sso-lb-04",
+            "resolution": "DNS record corrected."
+          },
+          {
+            "id": "SYN-SSO-07",
+            "days_ago": 72,
+            "title": "Identity & SSO: third-party api outage on sso-mq-02",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "sso-mq-02",
+            "resolution": "MFA provider recovered; no change made."
+          },
+          {
+            "id": "SYN-SSO-08",
+            "days_ago": 84,
+            "title": "Identity & SSO: dns resolution failure on sso-lb-04",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "sso-lb-04",
+            "resolution": "DNS record corrected."
+          }
+        ]
+      },
+      "rca": {
+        "id": "PRED-SSO",
+        "use_case": "IAM",
+        "title": "Predicted SSO sign-in disruption: login failures rising on the identity provider",
+        "description": "Raised proactively by AURA Predictive Intelligence before any employee report. Login failures rose from about 10 to 45 per hour and authentication response time from 350 ms to 1.9 s over the last 35 minutes. Similar past incidents on sso-lb-04 led to sign-in outages.",
+        "service": "Workforce SSO (Identity Provider)",
+        "ci": "sso-lb-04",
+        "reported_by": "AURA Predictive Intelligence (proactive, synthetic)",
+        "reported_min_ago": 5,
+        "priority": "2 - High",
+        "impact": "1 - High",
+        "urgency": "2 - Medium",
+        "category": "Access",
+        "group": "",
+        "business_impact": "All employees could be unable to sign in to Microsoft 365, the Employee Center and business applications.",
+        "complexity": "Multi-agent: needs a second evidence round",
+        "evidence": {
+          "logs": [
+            {
+              "id": "L1",
+              "t": 35,
+              "source": "Sign-in logs (simulated)",
+              "text": "Login failures climbed from 10/hour to 45/hour; failures cite 'token signature validation failed'."
+            },
+            {
+              "id": "L2",
+              "t": 30,
+              "source": "Load balancer logs (simulated)",
+              "text": "Health checks pass on all four identity provider nodes behind sso-lb-04."
+            }
+          ],
+          "metrics": [
+            {
+              "id": "M1",
+              "name": "Login failures",
+              "unit": "/hour",
+              "before": 45,
+              "threshold": 20,
+              "after": 8,
+              "after2": 8,
+              "better": "lower"
+            }
+          ],
+          "changes": [
+            {
+              "id": "CHG-DEMO-7101",
+              "t_hours": 20,
+              "title": "Identity provider token-signing certificate rotation",
+              "detail": "New signing certificate published; nodes updated by rolling restart."
+            }
+          ],
+          "history": [
+            {
+              "id": "SYN-SSO-01",
+              "title": "Expired TLS certificate on sso-lb-04",
+              "resolution": "Certificate renewed on the load-balanced node."
+            }
+          ],
+          "kb": [
+            {
+              "id": "KB-DEMO-2210",
+              "title": "Token-signing certificate rotation",
+              "summary": "Every IdP node must load the new signing key; a node that misses the restart keeps signing with the old key."
+            }
+          ],
+          "cmdb": {
+            "class": "Identity provider cluster",
+            "depends_on": [
+              "sso-lb-04",
+              "token-signing service",
+              "DNS"
+            ],
+            "owner_group": "Identity & Access Management",
+            "environment": "Production (synthetic)"
+          },
+          "deep": [
+            {
+              "id": "L3",
+              "t": 25,
+              "source": "Per-node sign-in failures (simulated)",
+              "text": "97% of failed sign-ins were served by idp-node-3; the other three nodes are clean."
+            },
+            {
+              "id": "L4",
+              "t": 24,
+              "source": "Node certificate inventory (simulated)",
+              "text": "idp-node-3 is still signing tokens with the previous certificate thumbprint; its restart in CHG-DEMO-7101 was skipped."
+            }
+          ]
+        },
+        "script": {
+          "hypotheses": [
+            {
+              "title": "One identity provider node is signing tokens with the old certificate after the rotation",
+              "why": "Failures cite signature validation and started after the rotation change.",
+              "evidence": [
+                "L1"
+              ],
+              "confidence": 0.55
+            },
+            {
+              "title": "Load balancer sso-lb-04 sending traffic to an unhealthy node",
+              "why": "Recurring sso-lb-04 incidents.",
+              "evidence": [],
+              "confidence": 0.25
+            },
+            {
+              "title": "DNS resolution failure for the SSO endpoint",
+              "why": "Most common past cause.",
+              "evidence": [],
+              "confidence": 0.2
+            }
+          ],
+          "critic": [
+            "Fits the timing, but which node? Need per-node failure split and certificate inventory.",
+            "Health checks pass on all nodes (L2), so the load balancer is routing correctly.",
+            "DNS failures would stop all sign-ins, not a fraction with signature errors."
+          ],
+          "selected": 0,
+          "needs_round2": true,
+          "root_cause": "The token-signing certificate rotation (CHG-DEMO-7101) skipped the restart of idp-node-3, which keeps signing tokens with the retired certificate, so about a quarter of sign-ins routed to it fail signature validation.",
+          "contributing": [
+            "Rolling restart had no post-check that every node serves the new thumbprint.",
+            "Load balancer health checks don't test token signing."
+          ],
+          "remediation": [
+            {
+              "step": "Drain idp-node-3 from sso-lb-04.",
+              "expected": "No new sign-ins reach the stale node."
+            },
+            {
+              "step": "Restart idp-node-3 so it loads the new signing certificate.",
+              "expected": "Node serves the new thumbprint."
+            },
+            {
+              "step": "Return idp-node-3 to the pool and watch sign-in failures for 15 minutes.",
+              "expected": "Login failures back under 20 per hour."
+            }
+          ],
+          "rollback": "Keep idp-node-3 drained; three nodes carry normal load.",
+          "prevention": [
+            "Add a certificate thumbprint check to the rotation runbook.",
+            "Extend health checks to validate a signed test token."
+          ],
+          "exec_fail": null,
+          "verify_fail_first": false
+        }
+      },
+      "live_signal": {
+        "label": "ServiceNow sign-in events (live)",
+        "how": "Real sign-in attempts on the POC ServiceNow instance: interactive sign-in posts in the transaction log minus successful 'login' events, over a rolling 60-minute window. Counts and timings only; no user names or IP addresses.",
+        "metrics": [
+          {
+            "key": "sn_login_failures",
+            "kind": "auth",
+            "name": "Failed sign-ins (last 60 min)",
+            "unit": "",
+            "warn": 5,
+            "crit": 10,
+            "better": "lower",
+            "from": "login_failures"
+          },
+          {
+            "key": "sn_failure_rate",
+            "kind": "auth",
+            "name": "Sign-in failure rate (last 60 min)",
+            "unit": "%",
+            "warn": 20,
+            "crit": 50,
+            "better": "lower",
+            "from": "failure_rate"
+          },
+          {
+            "key": "sn_auth_latency",
+            "kind": "response",
+            "name": "Sign-in response time",
+            "unit": "ms",
+            "warn": 2000,
+            "crit": 5000,
+            "better": "lower",
+            "from": "auth_latency"
+          }
+        ],
+        "drill_count": 12,
+        "actions": [
+          "Check where the failed sign-ins come from and whether they target real accounts.",
+          "Check identity provider and ServiceNow sign-in health.",
+          "Review authentication and SSO changes from the last 48 hours.",
+          "Prepare the service desk with a known-issue note before calls arrive."
+        ]
+      }
+    },
+    {
+      "id": "payment",
+      "order": 2,
+      "title": "Payment API degradation",
+      "prediction": "Potential Payment API disruption",
+      "service": "Claims Payment API",
+      "short": "Payment API",
+      "family": "Payment API",
+      "criticality": 4,
+      "use_case": "CLM",
+      "ci": "pay-gw-04",
+      "owner_group": "Claims Platform Engineering",
+      "start": "abnormal",
+      "spike": {
+        "minutes": 90,
+        "label": "Simulate API degradation"
+      },
+      "apps": [
+        "Claims Payment Portal",
+        "Finance AP Console",
+        "Provider Remittance Service"
+      ],
+      "impact_rule": "apps",
+      "impact_reason": "These teams use the Claims Payment Portal, the Finance AP console and provider remittance, which all call the Payment API.",
+      "dependents": [
+        "Claims Payment Portal",
+        "Provider Remittance Service",
+        "Finance AP Console",
+        "Member payment history"
+      ],
+      "metrics": [
+        {
+          "key": "api_latency",
+          "kind": "response",
+          "name": "Payment API response time",
+          "unit": "ms",
+          "baseline": 200,
+          "warn": 600,
+          "crit": 1200,
+          "better": "lower",
+          "abnormal": 2000,
+          "dt": "builtin:service.response.time"
+        },
+        {
+          "key": "http_504",
+          "kind": "api",
+          "name": "HTTP 504 errors",
+          "unit": "/hour",
+          "baseline": 2,
+          "warn": 10,
+          "crit": 25,
+          "better": "lower",
+          "abnormal": 38,
+          "dt": "builtin:service.errors.server.count"
+        },
+        {
+          "key": "timeouts",
+          "kind": "error",
+          "name": "Request timeout rate",
+          "unit": "%",
+          "baseline": 0.1,
+          "warn": 1,
+          "crit": 3,
+          "better": "lower",
+          "abnormal": 2.2,
+          "dt": "builtin:service.errors.total.rate"
+        },
+        {
+          "key": "availability",
+          "kind": "availability",
+          "name": "Payment API availability",
+          "unit": "%",
+          "baseline": 99.9,
+          "warn": 99.5,
+          "crit": 99.0,
+          "better": "higher",
+          "abnormal": 99.3,
+          "dt": "builtin:synthetic.http.availability.location.total"
+        }
+      ],
+      "sn_query": "short_descriptionSTARTSWITHPayment API^ORshort_descriptionLIKEHTTP 504^ORshort_descriptionLIKEpayment",
+      "signature": [
+        "504",
+        "timeout",
+        "idle",
+        "connection pool",
+        "network latency",
+        "cold-start"
+      ],
+      "actions": [
+        "Check Payment API gateway pay-gw-04 latency and upstream connection pool usage.",
+        "Compare the 504 pattern with the recurring 'HTTP 504 after idle period' incidents.",
+        "Confirm dependent applications (Claims Payment Portal, remittance) are retrying safely.",
+        "Prepare a rollback or failover plan for the payment gateway."
+      ],
+      "employee_alert": {
+        "title": "Possible delays in payment systems",
+        "message": "Payment services are responding more slowly than usual. You may see timeouts in the Claims Payment Portal or the Finance AP console.",
+        "recommended_action": "If a payment screen times out, wait a minute before retrying and don't submit the same payment twice. IT has been alerted and is looking into it.",
+        "status_text": "Alert: IT is monitoring"
+      },
+      "demo_history": {
+        "similar": 5,
+        "disruptive": 3,
+        "n90": 5,
+        "max_cluster": 3,
+        "mttr_hours": 4.1,
+        "records": [
+          {
+            "id": "SYN-PAY-01",
+            "days_ago": 9,
+            "title": "Payment API returning HTTP 504 after idle period",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "pay-gw-04",
+            "resolution": "Gateway connection pool recycled."
+          },
+          {
+            "id": "SYN-PAY-02",
+            "days_ago": 24,
+            "title": "Payment API returning HTTP 504 after idle period",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "pay-gw-04",
+            "resolution": "Gateway connection pool recycled."
+          },
+          {
+            "id": "SYN-PAY-03",
+            "days_ago": 38,
+            "title": "Payment API: database connection pool exhausted on pay-lb-02",
+            "priority": "1 - Critical",
+            "state": "Resolved",
+            "ci": "pay-lb-02",
+            "resolution": "Pool size raised; slow query fixed."
+          },
+          {
+            "id": "SYN-PAY-04",
+            "days_ago": 52,
+            "title": "Payment API returning HTTP 504 after idle period",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "pay-gw-04",
+            "resolution": "Gateway restarted."
+          },
+          {
+            "id": "SYN-PAY-05",
+            "days_ago": 77,
+            "title": "Payment API: network latency spike on pay-gw-04",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "pay-gw-04",
+            "resolution": "Network path recovered."
+          }
+        ]
+      },
+      "rca": {
+        "id": "PRED-PAY",
+        "use_case": "CLM",
+        "title": "Predicted Payment API disruption: response time and HTTP 504 errors rising",
+        "description": "Raised proactively by AURA Predictive Intelligence before any employee report. Payment API response time rose from 200 ms to about 2 s and HTTP 504 errors to 38 per hour over the last 90 minutes. The same pattern preceded several past Payment API outages.",
+        "service": "Claims Payment API",
+        "ci": "pay-gw-04",
+        "reported_by": "AURA Predictive Intelligence (proactive, synthetic)",
+        "reported_min_ago": 5,
+        "priority": "2 - High",
+        "impact": "2 - Medium",
+        "urgency": "1 - High",
+        "category": "Software",
+        "group": "",
+        "business_impact": "Claims payments, provider remittances and Finance payables could stall.",
+        "complexity": "Single round: evidence points directly at the cause",
+        "evidence": {
+          "logs": [
+            {
+              "id": "L1",
+              "t": 90,
+              "source": "Gateway logs (simulated)",
+              "text": "504s on pay-gw-04 occur on the first request after 30+ minutes idle; upstream connect takes 45 s and times out."
+            },
+            {
+              "id": "L2",
+              "t": 85,
+              "source": "Connection pool metrics (simulated)",
+              "text": "Pooled upstream connections older than 30 minutes fail with 'connection reset'; new connections succeed."
+            }
+          ],
+          "metrics": [
+            {
+              "id": "M1",
+              "name": "Payment API response time",
+              "unit": "ms",
+              "before": 2000,
+              "threshold": 600,
+              "after": 210,
+              "after2": 210,
+              "better": "lower"
+            }
+          ],
+          "changes": [
+            {
+              "id": "CHG-DEMO-7204",
+              "t_hours": 30,
+              "title": "Data centre firewall policy update",
+              "detail": "Idle TCP session timeout lowered from 60 to 30 minutes."
+            }
+          ],
+          "history": [
+            {
+              "id": "SYN-PAY-01",
+              "title": "Payment API returning HTTP 504 after idle period",
+              "resolution": "Gateway connection pool recycled."
+            }
+          ],
+          "kb": [
+            {
+              "id": "KB-DEMO-2305",
+              "title": "Gateway connection pooling",
+              "summary": "Pool idle eviction must be shorter than any firewall idle timeout on the path."
+            }
+          ],
+          "cmdb": {
+            "class": "API gateway",
+            "depends_on": [
+              "payments database",
+              "data centre firewall"
+            ],
+            "owner_group": "Claims Platform Engineering",
+            "environment": "Production (synthetic)"
+          },
+          "deep": []
+        },
+        "script": {
+          "hypotheses": [
+            {
+              "title": "Firewall drops idle pooled connections that the gateway still reuses",
+              "why": "504s only after idle periods; the firewall idle timeout was just lowered below the pool eviction time.",
+              "evidence": [
+                "L1",
+                "L2"
+              ],
+              "confidence": 0.8
+            },
+            {
+              "title": "Payments database connection pool exhausted",
+              "why": "A past incident had this cause.",
+              "evidence": [],
+              "confidence": 0.12
+            },
+            {
+              "title": "Network latency on the gateway path",
+              "why": "Latency is up.",
+              "evidence": [],
+              "confidence": 0.08
+            }
+          ],
+          "critic": [
+            "Evidence directly shows stale pooled connections failing after the firewall change.",
+            "New connections succeed, so the pool isn't exhausted.",
+            "Latency is only high on the first request after idle."
+          ],
+          "selected": 0,
+          "needs_round2": false,
+          "root_cause": "The firewall change CHG-DEMO-7204 cut the idle TCP timeout to 30 minutes while pay-gw-04 keeps pooled upstream connections for 60 minutes, so reused stale connections hang until the 45-second timeout and return HTTP 504.",
+          "contributing": [
+            "Pool eviction time not reviewed when the firewall policy changed.",
+            "No keep-alive on gateway upstream connections."
+          ],
+          "remediation": [
+            {
+              "step": "Set the gateway pool idle eviction to 20 minutes on pay-gw-04.",
+              "expected": "No pooled connection outlives the firewall timeout."
+            },
+            {
+              "step": "Enable TCP keep-alive on upstream connections.",
+              "expected": "Idle connections stay open through the firewall."
+            },
+            {
+              "step": "Recycle the current connection pool.",
+              "expected": "Stale connections cleared; response time under 600 ms."
+            }
+          ],
+          "rollback": "Restore the previous gateway pool settings.",
+          "prevention": [
+            "Add pool and keep-alive settings to the firewall change checklist.",
+            "Alert on first-request latency after idle."
+          ],
+          "exec_fail": null,
+          "verify_fail_first": false
+        }
+      }
+    },
+    {
+      "id": "portal",
+      "order": 3,
+      "title": "Employee Portal performance",
+      "prediction": "Employees may experience portal slowdown or access failures",
+      "service": "Employee Center portal",
+      "short": "Employee Portal",
+      "family": "Employee Center",
+      "criticality": 3,
+      "use_case": "IAM",
+      "ci": "ec-db-02",
+      "owner_group": "Cloud Platform Operations",
+      "start": "abnormal",
+      "spike": {
+        "minutes": 45,
+        "label": "Simulate portal slowdown"
+      },
+      "apps": [
+        "Employee Center"
+      ],
+      "impact_rule": "all",
+      "impact_reason": "Employees use the Employee Center for HR services, IT requests and knowledge articles.",
+      "dependents": [
+        "HR service requests",
+        "IT service catalog",
+        "Knowledge base"
+      ],
+      "metrics": [
+        {
+          "key": "page_time",
+          "kind": "response",
+          "name": "Portal page response time",
+          "unit": "ms",
+          "baseline": 900,
+          "warn": 2000,
+          "crit": 4000,
+          "better": "lower",
+          "abnormal": 2600,
+          "dt": "builtin:apps.web.action.duration.load.browser"
+        },
+        {
+          "key": "availability",
+          "kind": "availability",
+          "name": "Portal availability",
+          "unit": "%",
+          "baseline": 99.9,
+          "warn": 99.5,
+          "crit": 99.0,
+          "better": "higher",
+          "abnormal": 99.7,
+          "dt": "builtin:synthetic.http.availability.location.total"
+        },
+        {
+          "key": "error_rate",
+          "kind": "error",
+          "name": "Portal error rate",
+          "unit": "%",
+          "baseline": 0.3,
+          "warn": 1,
+          "crit": 3,
+          "better": "lower",
+          "abnormal": 1.4,
+          "dt": "builtin:apps.web.errorCount"
+        }
+      ],
+      "sn_query": "short_descriptionSTARTSWITHEmployee Center^ORshort_descriptionLIKEemployee portal",
+      "signature": [
+        "database connection pool",
+        "message queue backlog",
+        "scheduled batch job",
+        "network latency",
+        "cold-start",
+        "log volume"
+      ],
+      "actions": [
+        "Check database load on ec-db-02 and any batch or indexing jobs running in business hours.",
+        "Review portal error logs for slow queries.",
+        "Tell the service desk portal pages may be slow."
+      ],
+      "employee_alert": {
+        "title": "Employee Center may be slow",
+        "message": "The Employee Center is responding more slowly than usual. Pages may take longer to load.",
+        "recommended_action": "If a page doesn't load, refresh after a minute. For urgent requests you can call the service desk. IT has been alerted.",
+        "status_text": "Early warning: monitoring"
+      },
+      "demo_history": {
+        "similar": 4,
+        "disruptive": 1,
+        "n90": 4,
+        "max_cluster": 2,
+        "mttr_hours": 5.5,
+        "records": [
+          {
+            "id": "SYN-EC-01",
+            "days_ago": 12,
+            "title": "Employee Center: database connection pool exhausted on ec-gw-01",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "ec-gw-01",
+            "resolution": "Pool size increased."
+          },
+          {
+            "id": "SYN-EC-02",
+            "days_ago": 30,
+            "title": "Employee Center: scheduled batch job failed on ec-db-02",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "ec-db-02",
+            "resolution": "Batch job rescheduled."
+          },
+          {
+            "id": "SYN-EC-03",
+            "days_ago": 47,
+            "title": "Employee Center: message queue backlog on ec-db-02",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "ec-db-02",
+            "resolution": "Queue drained; consumer scaled."
+          },
+          {
+            "id": "SYN-EC-04",
+            "days_ago": 80,
+            "title": "Employee Center: network latency spike on ec-api-04",
+            "priority": "4 - Low",
+            "state": "Resolved",
+            "ci": "ec-api-04",
+            "resolution": "Recovered without change."
+          }
+        ]
+      },
+      "rca": {
+        "id": "PRED-EC",
+        "use_case": "IAM",
+        "title": "Predicted Employee Center slowdown: page response time and errors rising",
+        "description": "Raised proactively by AURA Predictive Intelligence before any employee report. Employee Center page response time rose from 0.9 s to 2.6 s and the error rate to 1.4% over the last 45 minutes.",
+        "service": "Employee Center portal",
+        "ci": "ec-db-02",
+        "reported_by": "AURA Predictive Intelligence (proactive, synthetic)",
+        "reported_min_ago": 5,
+        "priority": "3 - Moderate",
+        "impact": "2 - Medium",
+        "urgency": "2 - Medium",
+        "category": "Software",
+        "group": "",
+        "business_impact": "Employees wait longer for HR and IT self-service pages; some requests fail.",
+        "complexity": "Single round: evidence points directly at the cause",
+        "evidence": {
+          "logs": [
+            {
+              "id": "L1",
+              "t": 45,
+              "source": "Database monitoring (simulated)",
+              "text": "ec-db-02 disk I/O at 95% since the knowledge search re-index job started at 09:10."
+            },
+            {
+              "id": "L2",
+              "t": 40,
+              "source": "Portal application logs (simulated)",
+              "text": "Slow-query warnings on catalog and knowledge pages; queries waiting on I/O."
+            }
+          ],
+          "metrics": [
+            {
+              "id": "M1",
+              "name": "Portal page response time",
+              "unit": "ms",
+              "before": 2600,
+              "threshold": 2000,
+              "after": 950,
+              "after2": 950,
+              "better": "lower"
+            }
+          ],
+          "changes": [
+            {
+              "id": "CHG-DEMO-7311",
+              "t_hours": 18,
+              "title": "Knowledge search re-index schedule change",
+              "detail": "Full re-index moved from 02:00 to 09:00 to finish before a content release."
+            }
+          ],
+          "history": [
+            {
+              "id": "SYN-EC-02",
+              "title": "Scheduled batch job failed on ec-db-02",
+              "resolution": "Batch job rescheduled."
+            }
+          ],
+          "kb": [
+            {
+              "id": "KB-DEMO-2402",
+              "title": "Portal batch windows",
+              "summary": "Heavy batch work on ec-db-02 must run outside 07:00-19:00."
+            }
+          ],
+          "cmdb": {
+            "class": "Portal database",
+            "depends_on": [
+              "ec-db-02 storage"
+            ],
+            "owner_group": "Cloud Platform Operations",
+            "environment": "Production (synthetic)"
+          },
+          "deep": []
+        },
+        "script": {
+          "hypotheses": [
+            {
+              "title": "Search re-index job moved into business hours saturates ec-db-02 I/O",
+              "why": "I/O saturation starts with the job; slow queries wait on I/O.",
+              "evidence": [
+                "L1",
+                "L2"
+              ],
+              "confidence": 0.78
+            },
+            {
+              "title": "Portal application memory pressure",
+              "why": "Slow pages.",
+              "evidence": [],
+              "confidence": 0.12
+            },
+            {
+              "title": "Network latency to the portal",
+              "why": "Past incident.",
+              "evidence": [],
+              "confidence": 0.1
+            }
+          ],
+          "critic": [
+            "Timing and I/O evidence line up with the schedule change.",
+            "No memory evidence.",
+            "Latency is in the database, not the network."
+          ],
+          "selected": 0,
+          "needs_round2": false,
+          "root_cause": "CHG-DEMO-7311 moved the full knowledge search re-index to 09:00, so the job saturates ec-db-02 disk I/O during business hours and portal queries queue behind it.",
+          "contributing": [
+            "Schedule change not checked against the batch window policy.",
+            "No I/O throttle on the re-index job."
+          ],
+          "remediation": [
+            {
+              "step": "Pause the knowledge re-index job.",
+              "expected": "ec-db-02 I/O drops below 60%."
+            },
+            {
+              "step": "Reschedule the re-index to 02:00.",
+              "expected": "Job runs outside business hours."
+            },
+            {
+              "step": "Watch portal response time for 15 minutes.",
+              "expected": "Page response time under 2 s."
+            }
+          ],
+          "rollback": "Resume the job with I/O throttling if content must be indexed today.",
+          "prevention": [
+            "Validate batch schedules against the business-hours window.",
+            "Throttle re-index I/O."
+          ],
+          "exec_fail": null,
+          "verify_fail_first": false
+        }
+      }
+    },
+    {
+      "id": "vpn",
+      "order": 4,
+      "title": "VPN connectivity disruption",
+      "prediction": "Potential remote-access disruption",
+      "service": "Remote Access VPN",
+      "short": "Remote Access",
+      "family": "VPN",
+      "criticality": 4,
+      "use_case": "IAM",
+      "ci": "vpn-gw-01",
+      "owner_group": "Network Operations",
+      "start": "abnormal",
+      "spike": {
+        "minutes": 70,
+        "label": "Simulate VPN connection failures"
+      },
+      "apps": [
+        "Remote Access VPN"
+      ],
+      "impact_rule": "remote",
+      "impact_reason": "Remote and hybrid employees connect through the VPN when they work away from the office.",
+      "dependents": [
+        "Remote access to internal applications",
+        "Claims Workbench (remote)",
+        "Finance AP Console (remote)"
+      ],
+      "metrics": [
+        {
+          "key": "conn_failures",
+          "kind": "api",
+          "name": "VPN connection failures",
+          "unit": "/hour",
+          "baseline": 15,
+          "warn": 40,
+          "crit": 80,
+          "better": "lower",
+          "abnormal": 95,
+          "dt": "custom:vpn.connection.failures"
+        },
+        {
+          "key": "vpn_auth_errors",
+          "kind": "auth",
+          "name": "VPN authentication errors",
+          "unit": "/hour",
+          "baseline": 5,
+          "warn": 15,
+          "crit": 30,
+          "better": "lower",
+          "abnormal": 26,
+          "dt": "custom:vpn.auth.errors"
+        },
+        {
+          "key": "tunnel_drops",
+          "kind": "error",
+          "name": "Tunnel drops",
+          "unit": "/hour",
+          "baseline": 8,
+          "warn": 25,
+          "crit": 50,
+          "better": "lower",
+          "abnormal": 44,
+          "dt": "custom:vpn.tunnel.drops"
+        },
+        {
+          "key": "cpu",
+          "kind": "response",
+          "name": "VPN gateway CPU",
+          "unit": "%",
+          "baseline": 45,
+          "warn": 75,
+          "crit": 90,
+          "better": "lower",
+          "abnormal": 82,
+          "dt": "builtin:host.cpu.usage"
+        }
+      ],
+      "sn_query": "short_descriptionLIKEVPN^ORshort_descriptionLIKEremote access",
+      "signature": [
+        "disconnect",
+        "tunnel",
+        "can't launch",
+        "radius"
+      ],
+      "actions": [
+        "Check VPN gateway vpn-gw-01 session table and CPU.",
+        "Review RADIUS authentication timeouts.",
+        "Check whether a VPN client update is forcing re-authentication.",
+        "Notify remote employees and Network Operations."
+      ],
+      "employee_alert": {
+        "title": "Remote access may be unreliable",
+        "message": "The VPN used for remote work is showing more failed connections and dropped sessions than usual.",
+        "recommended_action": "If you're working remotely, save your work often. If the VPN drops, wait a minute before reconnecting. Network support has been alerted.",
+        "status_text": "Alert: network team notified"
+      },
+      "demo_history": {
+        "similar": 4,
+        "disruptive": 2,
+        "n90": 4,
+        "max_cluster": 2,
+        "mttr_hours": 2.6,
+        "records": [
+          {
+            "id": "SYN-VPN-01",
+            "days_ago": 3,
+            "title": "VPN disconnects every 10 minutes for remote Claims team",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "vpn-gw-01",
+            "resolution": "Client re-auth interval corrected."
+          },
+          {
+            "id": "SYN-VPN-02",
+            "days_ago": 3,
+            "title": "VPN disconnects every 10 minutes for remote Claims team",
+            "priority": "4 - Low",
+            "state": "Resolved",
+            "ci": "vpn-gw-01",
+            "resolution": "Duplicate of SYN-VPN-01."
+          },
+          {
+            "id": "SYN-VPN-03",
+            "days_ago": 46,
+            "title": "Remote access: RADIUS timeouts on vpn-gw-01",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "vpn-gw-01",
+            "resolution": "RADIUS server failover fixed."
+          },
+          {
+            "id": "SYN-VPN-04",
+            "days_ago": 81,
+            "title": "VPN client can't launch after software update",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "vpn-client",
+            "resolution": "Client package re-deployed."
+          }
+        ]
+      },
+      "rca": {
+        "id": "PRED-VPN",
+        "use_case": "IAM",
+        "title": "Predicted remote-access disruption: VPN connection failures and tunnel drops rising",
+        "description": "Raised proactively by AURA Predictive Intelligence before any employee report. VPN connection failures rose from 15 to 95 per hour, authentication errors to 26 per hour and gateway CPU to 82% over the last 70 minutes.",
+        "service": "Remote Access VPN",
+        "ci": "vpn-gw-01",
+        "reported_by": "AURA Predictive Intelligence (proactive, synthetic)",
+        "reported_min_ago": 5,
+        "priority": "2 - High",
+        "impact": "1 - High",
+        "urgency": "2 - Medium",
+        "category": "Network",
+        "group": "",
+        "business_impact": "Remote and hybrid employees could lose access to internal applications.",
+        "complexity": "Single round: evidence points directly at the cause",
+        "evidence": {
+          "logs": [
+            {
+              "id": "L1",
+              "t": 70,
+              "source": "VPN gateway logs (simulated)",
+              "text": "Clients on version 7.4.2 re-authenticate every 10 minutes; each re-auth opens a new session while the old one lingers."
+            },
+            {
+              "id": "L2",
+              "t": 65,
+              "source": "RADIUS logs (simulated)",
+              "text": "Authentication requests up 6x; 12% time out at the 5-second limit."
+            }
+          ],
+          "metrics": [
+            {
+              "id": "M1",
+              "name": "VPN connection failures",
+              "unit": "/hour",
+              "before": 95,
+              "threshold": 40,
+              "after": 14,
+              "after2": 14,
+              "better": "lower"
+            }
+          ],
+          "changes": [
+            {
+              "id": "CHG-DEMO-7420",
+              "t_hours": 26,
+              "title": "VPN client 7.4.2 rollout",
+              "detail": "Client auto-update pushed to 1,100 laptops."
+            }
+          ],
+          "history": [
+            {
+              "id": "SYN-VPN-01",
+              "title": "VPN disconnects every 10 minutes for remote Claims team",
+              "resolution": "Client re-auth interval corrected."
+            }
+          ],
+          "kb": [
+            {
+              "id": "KB-DEMO-2501",
+              "title": "VPN client profiles",
+              "summary": "The re-authentication interval is set in the client profile; the default in 7.4.x is 10 minutes."
+            }
+          ],
+          "cmdb": {
+            "class": "VPN concentrator",
+            "depends_on": [
+              "RADIUS",
+              "identity provider"
+            ],
+            "owner_group": "Network Operations",
+            "environment": "Production (synthetic)"
+          },
+          "deep": []
+        },
+        "script": {
+          "hypotheses": [
+            {
+              "title": "VPN client 7.4.2 re-authenticates every 10 minutes and floods the gateway and RADIUS",
+              "why": "Re-auth storm from 7.4.2 clients matches the rise in sessions and RADIUS timeouts.",
+              "evidence": [
+                "L1",
+                "L2"
+              ],
+              "confidence": 0.8
+            },
+            {
+              "title": "VPN gateway hardware fault",
+              "why": "CPU is high.",
+              "evidence": [],
+              "confidence": 0.1
+            },
+            {
+              "title": "Identity provider outage",
+              "why": "Auth errors.",
+              "evidence": [],
+              "confidence": 0.1
+            }
+          ],
+          "critic": [
+            "Logs tie the load to the 7.4.2 re-auth behaviour.",
+            "CPU follows session count; no hardware errors.",
+            "SSO sign-ins are healthy."
+          ],
+          "selected": 0,
+          "needs_round2": false,
+          "root_cause": "The VPN client 7.4.2 rollout (CHG-DEMO-7420) ships a 10-minute re-authentication default, so 1,100 laptops re-authenticate constantly, filling the vpn-gw-01 session table and overloading RADIUS.",
+          "contributing": [
+            "Client profile not overridden in the rollout package.",
+            "No capacity test for the new client."
+          ],
+          "remediation": [
+            {
+              "step": "Push the client profile with an 8-hour re-authentication interval.",
+              "expected": "Re-auth rate drops within one cycle."
+            },
+            {
+              "step": "Clear stale sessions on vpn-gw-01.",
+              "expected": "Session table below 60% and CPU below 60%."
+            },
+            {
+              "step": "Watch connection failures for 20 minutes.",
+              "expected": "Failures under 40 per hour."
+            }
+          ],
+          "rollback": "Pause the 7.4.2 rollout and redeploy 7.3.9 to affected laptops.",
+          "prevention": [
+            "Pilot client updates with 50 users first.",
+            "Pin client profile settings in the package."
+          ],
+          "exec_fail": null,
+          "verify_fail_first": false
+        }
+      }
+    },
+    {
+      "id": "recurring",
+      "order": 5,
+      "title": "Recurring incident prediction",
+      "prediction": "A previously resolved issue may reoccur",
+      "service": "Workday HR Integration",
+      "short": "HR Application",
+      "family": "Workday",
+      "criticality": 3,
+      "use_case": "INT",
+      "ci": "svc-workday-sync",
+      "owner_group": "Integration Services",
+      "start": "recurring",
+      "spike": {
+        "minutes": 0,
+        "label": ""
+      },
+      "apps": [
+        "Workday"
+      ],
+      "impact_rule": "apps",
+      "impact_reason": "HR, IT and Finance depend on the Workday worker sync for new starters, leavers and access changes.",
+      "dependents": [
+        "Access provisioning for new starters",
+        "Payroll worker changes",
+        "Leaver access removal"
+      ],
+      "metrics": [
+        {
+          "key": "recurrences_90d",
+          "kind": "recurrence",
+          "name": "Recurrences in 90 days",
+          "unit": "",
+          "baseline": 0,
+          "warn": 2,
+          "crit": 4,
+          "better": "lower",
+          "abnormal": 3,
+          "dt": ""
+        },
+        {
+          "key": "days_to_expiry",
+          "kind": "pattern",
+          "name": "Days until the pattern's next expected occurrence",
+          "unit": "days",
+          "baseline": 30,
+          "warn": 7,
+          "crit": 2,
+          "better": "higher",
+          "abnormal": 4,
+          "dt": ""
+        },
+        {
+          "key": "mttr",
+          "kind": "mttr",
+          "name": "Mean time to resolve",
+          "unit": "h",
+          "baseline": 2,
+          "warn": 4,
+          "crit": 8,
+          "better": "lower",
+          "abnormal": 6.5,
+          "dt": ""
+        }
+      ],
+      "sn_query": "short_descriptionLIKEWorkday^ORshort_descriptionLIKEHR application^ORshort_descriptionLIKEpayroll",
+      "signature": [
+        "expired service credential",
+        "credential",
+        "sync"
+      ],
+      "actions": [
+        "Rotate the Workday integration credential before it expires again.",
+        "Replace the 30-day manual credential with a managed secret that rotates automatically.",
+        "Link the previous incidents to a problem record."
+      ],
+      "employee_alert": {
+        "title": "HR system updates may be delayed",
+        "message": "A problem that has delayed HR updates before may happen again in the next few days.",
+        "recommended_action": "No action is needed from you. If a new starter's access is late, tell the service desk. IT is working on a permanent fix.",
+        "status_text": "Early warning: preventive work planned"
+      },
+      "demo_history": {
+        "similar": 6,
+        "disruptive": 2,
+        "n90": 3,
+        "max_cluster": 6,
+        "mttr_hours": 6.5,
+        "records": [
+          {
+            "id": "SYN-WD-01",
+            "days_ago": 26,
+            "title": "Workday worker sync failed: integration credential expired",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "svc-workday-sync",
+            "resolution": "Credential rotated manually."
+          },
+          {
+            "id": "SYN-WD-02",
+            "days_ago": 56,
+            "title": "Workday worker sync failed: integration credential expired",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "svc-workday-sync",
+            "resolution": "Credential rotated manually."
+          },
+          {
+            "id": "SYN-WD-03",
+            "days_ago": 86,
+            "title": "Workday worker sync failed: integration credential expired",
+            "priority": "2 - High",
+            "state": "Resolved",
+            "ci": "svc-workday-sync",
+            "resolution": "Credential rotated manually."
+          },
+          {
+            "id": "SYN-WD-04",
+            "days_ago": 116,
+            "title": "Workday worker sync failed: integration credential expired",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "svc-workday-sync",
+            "resolution": "Credential rotated manually."
+          },
+          {
+            "id": "SYN-WD-05",
+            "days_ago": 146,
+            "title": "Workday worker sync failed: integration credential expired",
+            "priority": "3 - Moderate",
+            "state": "Resolved",
+            "ci": "svc-workday-sync",
+            "resolution": "Credential rotated manually."
+          },
+          {
+            "id": "SYN-WD-06",
+            "days_ago": 176,
+            "title": "Workday worker sync failed: integration credential expired",
+            "priority": "4 - Low",
+            "state": "Resolved",
+            "ci": "svc-workday-sync",
+            "resolution": "Credential rotated manually."
+          }
+        ],
+        "rca_findings": "Previous RCAs: the integration uses a manually rotated credential that expires every 30 days; each incident was fixed by rotating it, with no permanent fix."
+      },
+      "rca": {
+        "id": "PRED-WD",
+        "use_case": "INT",
+        "title": "Predicted recurrence: Workday worker sync credential due to expire again",
+        "description": "Raised proactively by AURA Predictive Intelligence. The Workday worker sync has failed six times in six months, each time because its manually rotated integration credential expired (every ~30 days). The last rotation was 26 days ago, so the next failure is expected in about 4 days.",
+        "service": "Workday HR Integration",
+        "ci": "svc-workday-sync",
+        "reported_by": "AURA Predictive Intelligence (proactive, synthetic)",
+        "reported_min_ago": 5,
+        "priority": "3 - Moderate",
+        "impact": "2 - Medium",
+        "urgency": "3 - Low",
+        "category": "Software",
+        "group": "",
+        "business_impact": "New starters, leavers and role changes would stop syncing to access provisioning and payroll.",
+        "complexity": "Single round: evidence points directly at the cause",
+        "evidence": {
+          "logs": [
+            {
+              "id": "L1",
+              "t": 60,
+              "source": "Integration credential inventory (simulated)",
+              "text": "svc-workday-sync credential issued 26 days ago with a 30-day lifetime; no automatic rotation configured."
+            },
+            {
+              "id": "L2",
+              "t": 55,
+              "source": "Past incident pattern (synthetic)",
+              "text": "Six sync failures at ~30-day intervals, each resolved by a manual credential rotation."
+            }
+          ],
+          "metrics": [
+            {
+              "id": "M1",
+              "name": "Days until credential expiry",
+              "unit": "days",
+              "before": 4,
+              "threshold": 7,
+              "after": 365,
+              "after2": 365,
+              "better": "higher"
+            }
+          ],
+          "changes": [],
+          "history": [
+            {
+              "id": "SYN-WD-01",
+              "title": "Workday worker sync failed: integration credential expired",
+              "resolution": "Credential rotated manually."
+            }
+          ],
+          "kb": [
+            {
+              "id": "KB-DEMO-2607",
+              "title": "Managed integration secrets",
+              "summary": "Integration credentials should be stored in the vault with automatic rotation."
+            }
+          ],
+          "cmdb": {
+            "class": "Integration service account",
+            "depends_on": [
+              "Workday tenant",
+              "secrets vault"
+            ],
+            "owner_group": "Integration Services",
+            "environment": "Production (synthetic)"
+          },
+          "deep": []
+        },
+        "script": {
+          "hypotheses": [
+            {
+              "title": "Manually rotated 30-day integration credential will expire again in 4 days",
+              "why": "Six failures at 30-day intervals; current credential is 26 days old.",
+              "evidence": [
+                "L1",
+                "L2"
+              ],
+              "confidence": 0.85
+            },
+            {
+              "title": "Workday API change",
+              "why": "Integration failures.",
+              "evidence": [],
+              "confidence": 0.08
+            },
+            {
+              "title": "Network path to Workday",
+              "why": "Sync failures.",
+              "evidence": [],
+              "confidence": 0.07
+            }
+          ],
+          "critic": [
+            "Pattern and credential age match exactly.",
+            "Every past failure was fixed by a credential rotation, not an API change.",
+            "No network errors in past incidents."
+          ],
+          "selected": 0,
+          "needs_round2": false,
+          "root_cause": "The svc-workday-sync integration uses a manually rotated credential with a 30-day lifetime and no automatic rotation, so the sync fails each time it expires; the current credential expires in about 4 days.",
+          "contributing": [
+            "Previous incidents fixed the symptom (rotation) but no problem record was opened.",
+            "No expiry alerting on integration credentials."
+          ],
+          "remediation": [
+            {
+              "step": "Rotate the svc-workday-sync credential now.",
+              "expected": "New credential valid for 30 days."
+            },
+            {
+              "step": "Move the credential to the vault with automatic rotation.",
+              "expected": "Rotation happens without manual work."
+            },
+            {
+              "step": "Add an expiry alert 7 days before any integration credential expires.",
+              "expected": "Alert configured."
+            }
+          ],
+          "rollback": "Keep the manual credential in place until vault rotation is proven.",
+          "prevention": [
+            "Open a problem record for repeat incidents.",
+            "Inventory all integration credentials for expiry."
+          ],
+          "exec_fail": null,
+          "verify_fail_first": false
+        }
+      }
+    }
+  ]
+}

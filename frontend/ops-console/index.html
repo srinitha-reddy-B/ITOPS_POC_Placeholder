@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crystal Clean Ops Console</title>
+  <link rel="icon" href="/crystal-clean/logo.webp" />
+  <script>
+    /* The console needs the portal sign-in. No session (or a stale page restored by Back) goes to the login page. */
+    (function () {
+      function gate() { var s = null; try { s = JSON.parse(localStorage.getItem("cc-session") || "null"); } catch (e) {} if (!s) { document.documentElement.style.visibility = "hidden"; location.replace("/portal#/login?next=" + encodeURIComponent(location.pathname + location.hash)); } }
+      gate(); window.addEventListener("pageshow", function (e) { if (e.persisted) { document.body.style.opacity = ""; gate(); } });
+    })();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
